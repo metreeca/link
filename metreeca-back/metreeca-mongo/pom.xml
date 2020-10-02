@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Copyright © 2013-2020 Metreeca srl. All rights reserved.
 
@@ -20,27 +19,58 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.metreeca</groupId>
-        <artifactId>metreeca-link</artifactId>
-        <version>0.0.0-SNAPSHOT</version>
-    </parent>
+	<parent>
+		<groupId>com.metreeca</groupId>
+		<artifactId>metreeca-back</artifactId>
+		<version>0.0.0-SNAPSHOT</version>
+	</parent>
 
-    <artifactId>metreeca-back</artifactId>
-    <version>0.0.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+	<artifactId>metreeca-mongo</artifactId>
+	<version>0.0.0-SNAPSHOT</version>
 
-    <name>Metreeca Backend Adapters</name>
-    <description>Backend adapter kits.</description>
+	<name>Metreeca MongoDB Adapter</name>
+	<description>Adapter kit for MongoDB.</description>
 
-    <modules>
+	<dependencyManagement>
+		<dependencies>
 
-        <module>metreeca-mongo</module>
-        <module>metreeca-rdf4j</module>
-        <module>metreeca-gcp</module>
+			<dependency>
+				<groupId>org.mongodb</groupId>
+				<artifactId>mongodb-driver-sync</artifactId>
+				<version>4.1.0</version>
+			</dependency>
 
-    </modules>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>com.metreeca</groupId>
+			<artifactId>metreeca-rest</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mongodb</groupId>
+			<artifactId>mongodb-driver-sync</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.metreeca</groupId>
+			<artifactId>metreeca-json</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.metreeca</groupId>
+			<artifactId>metreeca-rest</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
 
 </project>

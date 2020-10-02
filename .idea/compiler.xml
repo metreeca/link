@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="metreeca-rdf4j" />
         <module name="metreeca-jse" />
+        <module name="metreeca-mongo" />
         <module name="metreeca-jee" />
         <module name="metreeca-rest" />
         <module name="metreeca-json" />
@@ -29,6 +30,7 @@
       <module name="metreeca-json" target="1.8" />
       <module name="metreeca-link" target="1.8" />
       <module name="metreeca-mime" target="1.8" />
+      <module name="metreeca-mongo" target="1.8" />
       <module name="metreeca-rdf" target="1.8" />
       <module name="metreeca-rdf4j" target="1.8" />
       <module name="metreeca-rest" target="1.8" />
