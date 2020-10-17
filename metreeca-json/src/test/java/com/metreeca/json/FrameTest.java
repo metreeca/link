@@ -1,31 +1,28 @@
 /*
- * Copyright © 2013-2020 Metreeca srl. All rights reserved.
+ * Copyright © 2013-2020 Metreeca srl
  *
- * This file is part of Metreeca/Link.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Metreeca/Link is free software: you can redistribute it and/or modify it under the terms
- * of the GNU Affero General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or(at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Metreeca/Link is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with Metreeca/Link.
- * If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.metreeca.json;
 
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.function.Function;
+import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static com.metreeca.json.Frame.*;
@@ -48,19 +45,27 @@ final class FrameTest {
 
 	@Nested final class Assembling {
 
-		@Test void testHandleDirectAndInverseFIelds() {
+		@Test void testHandleDirectAndInverseFields() {
 
-			final Frame frame=frame(x)
-					.set(RDF.VALUE, y)
-					.set(inverse(RDF.VALUE), z);
+			final Frame frame=frame(x).set(RDF.VALUE).value(y).set(inverse(RDF.VALUE)).value(z);
 
-			assertThat(frame.get(RDF.VALUE).findFirst().orElse(RDF.NIL)).isEqualTo(y);
-			assertThat(frame.get(inverse(RDF.VALUE)).findFirst().orElse(RDF.NIL)).isEqualTo(z);
+			assertThat(frame.get(RDF.VALUE).value().orElse(RDF.NIL)).isEqualTo(y);
+			assertThat(frame.get(inverse(RDF.VALUE)).value().orElse(RDF.NIL)).isEqualTo(z);
 		}
 
-		@Test void testReportLiteralValuesForInverseFields() {
-			assertThatIllegalArgumentException().isThrownBy(() -> frame(x).set(inverse(RDF.VALUE), literal(1))
-			);
+
+		@Test void testReportLiteralSubjectsForDirectFields() {
+			assertThatIllegalArgumentException()
+					.isThrownBy(() -> {
+						frame(literal(1)).set(RDF.VALUE).value(x);
+					});
+		}
+
+		@Test void testReportLiteralObjectsForInverseFields() {
+			assertThatIllegalArgumentException()
+					.isThrownBy(() -> {
+						frame(x).set(inverse(RDF.VALUE)).value(literal(1));
+					});
 		}
 
 	}
@@ -124,10 +129,8 @@ final class FrameTest {
 					statement(x, RDF.VALUE, y),
 					statement(y, RDF.VALUE, x)
 
-					))
-
-							.get(seq(RDF.VALUE, RDF.VALUE, RDF.VALUE))
-							.findFirst()
+					)).get(seq(RDF.VALUE, RDF.VALUE, RDF.VALUE))
+							.value()
 							.orElseGet(() -> fail("missing transitive value"))
 
 			).isEqualTo(y);
@@ -137,9 +140,7 @@ final class FrameTest {
 	@Nested final class Exporting {
 
 		@Test void testExportDirectStatements() {
-			assertThat(frame(x)
-
-					.set(RDF.VALUE, y)
+			assertThat(frame(x).set(RDF.VALUE).value(y)
 
 					.model()
 
@@ -151,9 +152,7 @@ final class FrameTest {
 		}
 
 		@Test void testExportInverseStatements() {
-			assertThat(frame(x)
-
-					.set(inverse(RDF.VALUE), y)
+			assertThat(frame(x).set(inverse(RDF.VALUE)).value(y)
 
 					.model()
 
@@ -167,9 +166,8 @@ final class FrameTest {
 		@Test void testExportTransitiveStatements() {
 			assertThat(frame(x)
 
-					.set(RDF.FIRST, frame(y)
-
-							.set(RDF.REST, z)
+					.set(RDF.FIRST).frame(frame(y)
+							.set(RDF.REST).value(z)
 					)
 
 					.model()
@@ -186,7 +184,7 @@ final class FrameTest {
 
 	@Nested final class Traversing {
 
-		private Set<Value> get(final Function<Frame, Stream<Value>> path) {
+		private Set<Value> get(final BiFunction<? super Value, ? super Collection<Statement>, Stream<Value>> path) {
 			return frame(x, asList(
 
 					statement(x, RDF.FIRST, y),
@@ -197,7 +195,7 @@ final class FrameTest {
 					statement(z, RDF.FIRST, literal(3)),
 					statement(z, RDF.REST, literal(4))
 
-			)).get(path).collect(toCollection(LinkedHashSet::new));
+			)).get(path).values().collect(toCollection(LinkedHashSet::new));
 		}
 
 

@@ -1,23 +1,23 @@
 /*
- * Copyright © 2013-2020 Metreeca srl. All rights reserved.
+ * Copyright © 2013-2020 Metreeca srl
  *
- * This file is part of Metreeca/Link.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Metreeca/Link is free software: you can redistribute it and/or modify it under the terms
- * of the GNU Affero General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or(at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Metreeca/Link is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with Metreeca/Link.
- * If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.metreeca.rest.formats;
 
 import com.metreeca.json.Shape;
+import com.metreeca.json.Values;
 import com.metreeca.json.shapes.Field;
 
 import org.eclipse.rdf4j.model.*;
@@ -34,12 +34,19 @@ import java.util.regex.Matcher;
 
 import static com.metreeca.json.Values.*;
 import static com.metreeca.rest.formats.JSONLDCodec.*;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
-import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.*;
+import static javax.json.Json.*;
 
 
 final class JSONLDEncoder {
+
+	private static final Collection<IRI> InternalTypes=new HashSet<>(asList(ValueType, ResourceType, LiteralType));
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private final IRI focus;
 	private final Shape shape;
@@ -98,15 +105,17 @@ final class JSONLDEncoder {
 			final Collection<Statement> model, final Predicate<Resource> trail
 	) {
 
-		if ( maxCount(shape).map(limit -> limit == 1).orElse(false) ) { // single subject
+		if ( tagged(shape) && values.stream().map(Values::lang).allMatch(Objects::nonNull) ) { // tagged literals
 
-			return values.isEmpty()
-					? JsonValue.EMPTY_JSON_OBJECT
-					: value(values.iterator().next(), shape, model, trail);
+			return taggeds(values, shape);
+
+		} else if ( scalar(shape) && values.size() == 1 ) { // single subject
+
+			return value(values.iterator().next(), shape, model, trail);
 
 		} else { // multiple subjects
 
-			final JsonArrayBuilder array=Json.createArrayBuilder();
+			final JsonArrayBuilder array=createArrayBuilder();
 
 			values.stream().map(value -> value(value, shape, model, trail)).forEach(array::add);
 
@@ -148,7 +157,7 @@ final class JSONLDEncoder {
 
 			return inlineable
 					? Json.createValue(id)
-					: Json.createObjectBuilder().add(aliaser.apply("@id"), id).build();
+					: createObjectBuilder().add(aliaser.apply("@id"), id).build();
 
 		} else if ( inlineable && resource instanceof IRI && fields.isEmpty() ) { // inline proved leaf IRI
 
@@ -156,7 +165,7 @@ final class JSONLDEncoder {
 
 		} else {
 
-			final JsonObjectBuilder object=Json.createObjectBuilder().add(aliaser.apply("@id"), id);
+			final JsonObjectBuilder object=createObjectBuilder().add(aliaser.apply("@id"), id);
 
 			final Collection<Resource> references=new ArrayList<>();
 
@@ -212,7 +221,7 @@ final class JSONLDEncoder {
 	private Optional<JsonObject> context(final Map<String, String> keywords, final Map<String, Field> fields) {
 		if ( keywords.isEmpty() && fields.isEmpty() ) { return Optional.empty(); } else {
 
-			final JsonObjectBuilder context=Json.createObjectBuilder();
+			final JsonObjectBuilder context=createObjectBuilder();
 
 			keywords.forEach((keyword, alias) ->
 
@@ -222,13 +231,54 @@ final class JSONLDEncoder {
 
 			fields.forEach((alias, field) -> {
 
-				final IRI iri=field.name();
-				final String value=iri.stringValue();
+				final IRI name=field.name();
+				final Shape shape=field.shape();
 
-				context.add(alias, direct(iri)
-						? Json.createValue(value)
-						: Json.createObjectBuilder().add("@reverse", value).build()
-				);
+				final boolean direct=direct(name);
+				final String iri=name.stringValue();
+
+				final Optional<IRI> datatype=datatype(shape);
+
+				if ( datatype.filter(IRIType::equals).isPresent() ) {
+
+					context.add(alias, createObjectBuilder()
+							.add(direct ? "@id" : "@reverse", iri)
+							.add("@type", "@id")
+					);
+
+				} else if ( datatype.filter(RDF.LANGSTRING::equals).isPresent() ) {
+
+					final Set<String> langs=langs(shape).orElseGet(Collections::emptySet);
+
+					context.add(alias, langs.size() == 1
+
+							? createObjectBuilder()
+							.add(direct ? "@id" : "@reverse", iri)
+							.add("@language", langs.iterator().next())
+
+							: createObjectBuilder()
+							.add(direct ? "@id" : "@reverse", iri)
+							.add("@container", "@language")
+					);
+
+				} else if ( datatype.filter(type -> !InternalTypes.contains(type)).isPresent() ) {
+
+					context.add(alias, createObjectBuilder()
+							.add(direct ? "@id" : "@reverse", iri)
+							.add("@type", datatype.get().stringValue())
+					);
+
+				} else if ( direct ) {
+
+					context.add(alias, iri);
+
+				} else {
+
+					context.add(alias, createObjectBuilder()
+							.add("@reverse", iri)
+					);
+
+				}
 
 			});
 
@@ -278,17 +328,81 @@ final class JSONLDEncoder {
 
 
 	private JsonValue literal(final Value literal, final String lang) {
-		return Json.createObjectBuilder()
+		return createObjectBuilder()
 				.add(aliaser.apply("@value"), literal.stringValue())
 				.add(aliaser.apply("@language"), lang)
 				.build();
 	}
 
 	private JsonValue literal(final Value literal, final IRI datatype) {
-		return Json.createObjectBuilder()
+		return createObjectBuilder()
 				.add(aliaser.apply("@value"), literal.stringValue())
 				.add(aliaser.apply("@type"), datatype.stringValue())
 				.build();
+	}
+
+
+	//// Tagged Literals //////////////////////////////////////////////////////////////////////////////////////////////
+
+	private JsonValue taggeds(final Collection<? extends Value> values, final Shape shape) {
+
+		final boolean unique=localized(shape) || scalar(shape);
+
+		final Set<String> langs=langs(shape).orElseGet(Collections::emptySet);
+
+		final Map<String, List<String>> langToStrings=values.stream()
+
+				.filter(Literal.class::isInstance)
+				.map(Literal.class::cast)
+
+				.collect(groupingBy(
+						literal -> literal.getLanguage().orElse(""),
+						LinkedHashMap::new,
+						mapping(Value::stringValue, toList())
+				));
+
+		if ( langs.size() == 1 && langToStrings.keySet().equals(langs) ) { // known language
+
+			final List<String> strings=langToStrings
+					.entrySet()
+					.stream()
+					.findFirst()
+					.map(Map.Entry::getValue)
+					.orElseGet(Collections::emptyList);
+
+			if ( unique && strings.size() == 1 ) { // single value
+
+				return createValue(strings.get(0));
+
+			} else { // multiple values
+
+				return createArrayBuilder(strings).build();
+
+			}
+
+		} else { // multiple languages
+
+			final JsonObjectBuilder builder=createObjectBuilder();
+
+			langToStrings.forEach((lang, strings) -> {
+
+				if ( unique && strings.size() == 1 ) { // single value
+
+					builder.add(lang, createValue(strings.get(0)));
+
+
+				} else { // multiple values
+
+					builder.add(lang, createArrayBuilder(strings));
+
+				}
+
+			});
+
+			return builder.build();
+
+		}
+
 	}
 
 

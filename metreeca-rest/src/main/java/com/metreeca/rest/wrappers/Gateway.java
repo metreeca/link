@@ -1,18 +1,17 @@
 /*
- * Copyright © 2013-2020 Metreeca srl. All rights reserved.
+ * Copyright © 2013-2020 Metreeca srl
  *
- * This file is part of Metreeca/Link.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Metreeca/Link is free software: you can redistribute it and/or modify it under the terms
- * of the GNU Affero General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or(at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Metreeca/Link is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with Metreeca/Link.
- * If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.metreeca.rest.wrappers;
@@ -29,6 +28,7 @@ import static com.metreeca.rest.MessageException.status;
 import static com.metreeca.rest.Request.*;
 import static com.metreeca.rest.Response.InternalServerError;
 import static com.metreeca.rest.assets.Logger.logger;
+import static com.metreeca.rest.formats.TextFormat.text;
 import static java.lang.String.format;
 import static java.util.function.Function.identity;
 
@@ -70,9 +70,10 @@ public final class Gateway implements Wrapper {
 			throw new NullPointerException("null handler");
 		}
 
-		return request -> consumer -> Either
+		return request -> consumer -> {
+			try {
 
-				.from(() -> request
+				request
 
 						.map(this::query)
 						.map(this::form)
@@ -82,17 +83,33 @@ public final class Gateway implements Wrapper {
 						.map(this::logging)
 						.map(this::charset)
 
-				)
+						.accept(response -> {
+							try {
 
-				.fold(e -> request
+								consumer.accept(response);
+
+							} catch ( final RuntimeException e ) { // after prolog is possibly sent >> logging only
+
+								logger.error(this,
+										format("%s %s > %d", request.method(), request.item(), InternalServerError),
+										e
+								);
+
+							}
+						});
+
+			} catch ( final RuntimeException e ) { // before prolog is possibly sent >> new response
+
+				request
 
 						.reply(status(InternalServerError, e))
 
 						.map(this::logging)
 
-				)
+						.accept(consumer);
 
-				.accept(consumer);
+			}
+		};
 	}
 
 
@@ -108,8 +125,7 @@ public final class Gateway implements Wrapper {
 		return request.parameters().isEmpty()
 				&& request.method().equals(POST)
 				&& URLEncodedPattern.matcher(request.header("Content-Type").orElse("")).lookingAt()
-				? request.parameters(search(request.body(TextFormat.text()).fold(e -> "", identity()))) // !!! error
-				// handling?
+				? request.parameters(search(request.body(text()).fold(e -> "", identity()))) // !!! error handling?
 				: request;
 	}
 

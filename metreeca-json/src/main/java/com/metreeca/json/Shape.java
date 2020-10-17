@@ -1,18 +1,17 @@
 /*
- * Copyright © 2013-2020 Metreeca srl. All rights reserved.
+ * Copyright © 2013-2020 Metreeca srl
  *
- * This file is part of Metreeca/Link.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Metreeca/Link is free software: you can redistribute it and/or modify it under the terms
- * of the GNU Affero General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or(at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Metreeca/Link is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with Metreeca/Link.
- * If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.metreeca.json;
@@ -39,11 +38,6 @@ import static com.metreeca.json.shapes.When.when;
 public abstract class Shape {
 
 	//// Shape Shorthands //////////////////////////////////////////////////////////////////////////////////////////////
-
-	public static Shape expanded(final Shape shape) {
-		return shape.map(new ShapeInferencer());
-	}
-
 
 	public static Shape required() { return and(minCount(1), maxCount(1)); }
 
@@ -80,19 +74,17 @@ public abstract class Shape {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Checks the validation outcome of this shape.
+	 * Checks if this shape is empty.
 	 *
-	 * @param outcome the expected validation outcome; {@code true} if this shape is always validated, {@code false}
-	 *                if this shape is never validated, {@code null} otherwise
-	 *
-	 * @return {@code true} if the validation {@code outcome} of this shape is proved to equal the expected value
+	 * @return {@code true} if this shape is equivalent to either {@link And#and()} or {@link Or#or()}; {@code false}
+	 * otherwise
 	 */
-	public boolean validates(final Boolean outcome) {
-		return outcome.equals(map(new ShapeEvaluator()));
+	public boolean empty() {
+		return map(new ShapeEvaluator()) != null;
 	}
 
 	/**
-	 * Redact {@linkplain Guard guard} annotations of this shape.
+	 * Redacts {@linkplain Guard guard} annotations of this shape.
 	 *
 	 * @param evaluators the guard evaluation functions; take as arguments a guard annotation and return {@code true},
 	 *                   if the guarded shape is to be included in the redacted shape, {@code false} if it is to be
@@ -109,6 +101,15 @@ public abstract class Shape {
 		}
 
 		return map(new ShapeRedactor(evaluators));
+	}
+
+	/**
+	 * Extends this shape with inferred constraints.
+	 *
+	 * @return a copy of this shape extended with inferred constraints
+	 */
+	public Shape expand() {
+		return map(new ShapeInferencer());
 	}
 
 
@@ -157,6 +158,8 @@ public abstract class Shape {
 
 		public V probe(final Range range) { return probe((Shape)range); }
 
+		public V probe(final Lang lang) { return probe((Shape)lang); }
+
 
 		public V probe(final MinExclusive minExclusive) { return probe((Shape)minExclusive); }
 
@@ -188,6 +191,9 @@ public abstract class Shape {
 		public V probe(final All all) { return probe((Shape)all); }
 
 		public V probe(final Any any) { return probe((Shape)any); }
+
+
+		public V probe(final Localized localized) { return probe((Shape)localized); }
 
 
 		//// Structural Constraints ////////////////////////////////////////////////////////////////////////////////////

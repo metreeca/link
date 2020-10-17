@@ -1,18 +1,17 @@
 /*
- * Copyright © 2013-2020 Metreeca srl. All rights reserved.
+ * Copyright © 2013-2020 Metreeca srl
  *
- * This file is part of Metreeca/Link.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Metreeca/Link is free software: you can redistribute it and/or modify it under the terms
- * of the GNU Affero General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or(at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Metreeca/Link is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with Metreeca/Link.
- * If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.metreeca.rest.formats;
@@ -37,6 +36,7 @@ import java.util.stream.Stream;
 import static com.metreeca.json.Values.*;
 import static com.metreeca.rest.formats.JSONLDCodec.*;
 import static java.lang.String.format;
+import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toMap;
 import static javax.json.Json.createObjectBuilder;
 
@@ -69,7 +69,7 @@ final class JSONLDDecoder {
 	}
 
 
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	Collection<Statement> decode(final JsonObject json) throws JsonException {
 
@@ -98,11 +98,38 @@ final class JSONLDDecoder {
 
 
 	Stream<Entry<Value, Stream<Statement>>> values(final JsonValue value, final Shape shape) {
-		return (value instanceof JsonArray ? value.asJsonArray().stream() : Stream.of(value))
-				.map(v -> value(v, shape))
-				.collect(toMap(Entry::getKey, Entry::getValue, Stream::concat))
-				.entrySet()
-				.stream();
+
+		final boolean tagged=tagged(shape);
+
+		final Set<String> langs=tagged ? langs(shape).orElseGet(Collections::emptySet) : emptySet();
+		final String lang=langs.size() == 1 ? langs.iterator().next() : "";
+
+		if ( tagged && value instanceof JsonArray && !lang.isEmpty() ) {
+
+			return value.asJsonArray().stream().map(v -> v instanceof JsonString
+					? literal((JsonString)v, lang)
+					: value(v, shape)
+			);
+
+		} else if ( tagged && value instanceof JsonString && !lang.isEmpty() ) {
+
+			return Stream.of(literal((JsonString)value, lang));
+
+		} else if ( tagged && value instanceof JsonObject
+				&& value.asJsonObject().keySet().stream().noneMatch(field -> field.startsWith("@"))
+		) {
+
+			return literals(value.asJsonObject());
+
+		} else {
+
+			return (value instanceof JsonArray ? value.asJsonArray().stream() : Stream.of(value))
+					.map(v -> value(v, shape))
+					.collect(toMap(Entry::getKey, Entry::getValue, Stream::concat))
+					.entrySet()
+					.stream();
+
+		}
 	}
 
 	Entry<Value, Stream<Statement>> value(final JsonValue value, final Shape shape) {
@@ -116,7 +143,7 @@ final class JSONLDDecoder {
 	}
 
 
-	//// Values ///////////////////////////////////////////////////////////////////////////////////////////////////////
+	//// Values ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private Entry<Value, Stream<Statement>> value(final JsonObject object, final Shape shape) {
 
@@ -219,7 +246,31 @@ final class JSONLDDecoder {
 	}
 
 
-	//// Factories ////////////////////////////////////////////////////////////////////////////////////////////////////
+	//// Tagged Literals ///////////////////////////////////////////////////////////////////////////////////////////////
+
+	private Stream<Entry<Value, Stream<Statement>>> literals(final JsonObject json) {
+		return json.entrySet().stream().flatMap(entry -> {
+
+			final String lang=entry.getKey();
+			final JsonValue value=entry.getValue();
+
+			if ( lang.isEmpty() ) {
+				error("empty language tag");
+			}
+
+			return (value instanceof JsonArray ? value.asJsonArray().stream() : Stream.of(value))
+					.map(v -> v instanceof JsonString ? v : error("<%s> is not a string", v))
+					.map(v -> literal((JsonString)v, lang));
+
+		});
+	}
+
+	private Entry<Value, Stream<Statement>> literal(final JsonString json, final String lang) {
+		return entry(literal(json.getString(), lang), Stream.empty());
+	}
+
+
+	//// Factories /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private Resource resource(final String id) {
 		return id.isEmpty() ? factory().createBNode()

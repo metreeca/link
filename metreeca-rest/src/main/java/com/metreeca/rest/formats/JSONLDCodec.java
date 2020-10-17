@@ -1,18 +1,17 @@
 /*
- * Copyright © 2013-2020 Metreeca srl. All rights reserved.
+ * Copyright © 2013-2020 Metreeca srl
  *
- * This file is part of Metreeca/Link.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Metreeca/Link is free software: you can redistribute it and/or modify it under the terms
- * of the GNU Affero General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or(at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Metreeca/Link is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with Metreeca/Link.
- * If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.metreeca.rest.formats;
@@ -21,6 +20,7 @@ import com.metreeca.json.Shape;
 import com.metreeca.json.shapes.*;
 
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.util.*;
 import java.util.function.BinaryOperator;
@@ -28,7 +28,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static com.metreeca.json.Shape.expanded;
 import static com.metreeca.json.Values.direct;
 import static com.metreeca.json.shapes.Guard.*;
 import static com.metreeca.rest.Xtream.entry;
@@ -40,79 +39,79 @@ import static java.util.stream.Collectors.toSet;
 final class JSONLDCodec {
 
 	static Shape driver(final Shape shape) { // !!! caching
-		return expanded(shape.redact( // add inferred constraints to drive json shorthands
+		return shape.redact(
+
 				retain(Role, true),
 				retain(Task, true),
 				retain(Area, true),
 				retain(Mode, Convey) // remove internal filtering shapes
-		));
+
+		).expand(); // add inferred constraints to drive json shorthands
 	}
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	static boolean scalar(final Shape shape) {
+		return maxCount(shape).filter(limit -> limit == 1).isPresent();
+	}
+
+	static boolean tagged(final Shape shape) {
+		return datatype(shape).filter(RDF.LANGSTRING::equals).isPresent();
+	}
+
+	static boolean localized(final Shape shape) {
+		return (shape == null ? Optional.empty() : Optional.ofNullable(shape.map(new ValueProbe<Object>() {
+
+			@Override public Object probe(final Localized localized) { return localized; }
+
+		}))).isPresent();
+	}
+
+
 	static Optional<IRI> datatype(final Shape shape) {
-		return shape == null ? Optional.empty() : Optional.ofNullable(shape.map(new DatatypeProbe()));
+		return shape == null ? Optional.empty() : Optional.ofNullable(shape.map(new ValueProbe<IRI>() {
+
+			@Override public IRI probe(final Datatype datatype) { return datatype.iri(); }
+
+		}));
 	}
 
 	static Optional<IRI> _clazz(final Shape shape) {
-		return shape == null ? Optional.empty() : Optional.ofNullable(shape.map(new ClazzProbe()));
+		return shape == null ? Optional.empty() : Optional.ofNullable(shape.map(new ValueProbe<IRI>() {
+
+			@Override public IRI probe(final Clazz clazz) { return clazz.iri(); }
+
+		}));
+	}
+
+	static Optional<Set<String>> langs(final Shape shape) {
+		return shape == null ? Optional.empty() : Optional.ofNullable(shape.map(new ValueProbe<Set<String>>() {
+
+			@Override public Set<String> probe(final Lang lang) { return lang.tags(); }
+
+		}));
 	}
 
 
-	private static final class DatatypeProbe extends Probe<IRI> {
+	private abstract static class ValueProbe<V> extends Probe<V> {
 
-		@Override public IRI probe(final Datatype datatype) {
-			return datatype.iri();
+		@Override public V probe(final And and) {
+			return value(and.shapes().stream());
 		}
 
-		@Override public IRI probe(final And and) {
-			return type(and.shapes().stream());
+		@Override public V probe(final Or or) {
+			return value(or.shapes().stream());
 		}
 
-		@Override public IRI probe(final Or or) {
-			return type(or.shapes().stream());
-		}
-
-		@Override public IRI probe(final When when) {
-			return type(Stream.of(when.pass(), when.fail()));
-		}
-
-		private IRI type(final Stream<Shape> shapes) {
-
-			final Set<IRI> names=shapes
-					.map(shape -> shape.map(this))
-					.filter(Objects::nonNull)
-					.collect(toSet());
-
-			return names.size() == 1 ? names.iterator().next() : null;
-
-		}
-
-	}
-
-	private static final class ClazzProbe extends Probe<IRI> {
-
-		@Override public IRI probe(final Clazz clazz) {
-			return clazz.iri();
-		}
-
-		@Override public IRI probe(final And and) {
-			return clazz(and.shapes().stream());
-		}
-
-		@Override public IRI probe(final Or or) {
-			return clazz(or.shapes().stream());
-		}
-
-		@Override public IRI probe(final When when) {
-			return clazz(Stream.of(when.pass(), when.fail()));
+		@Override public V probe(final When when) {
+			return value(Stream.of(when.pass(), when.fail()));
 		}
 
 
-		private IRI clazz(final Stream<Shape> shapes) {
+		private V value(final Stream<Shape> shapes) {
 
-			final Set<IRI> names=shapes
+			final Set<V> names=shapes
 					.map(shape -> shape.map(this))
 					.filter(Objects::nonNull)
 					.collect(toSet());

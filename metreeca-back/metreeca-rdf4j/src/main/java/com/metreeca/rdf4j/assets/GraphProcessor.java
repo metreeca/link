@@ -1,18 +1,17 @@
 /*
- * Copyright © 2013-2020 Metreeca srl. All rights reserved.
+ * Copyright © 2013-2020 Metreeca srl
  *
- * This file is part of Metreeca/Link.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Metreeca/Link is free software: you can redistribute it and/or modify it under the terms
- * of the GNU Affero General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or(at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Metreeca/Link is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with Metreeca/Link.
- * If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.metreeca.rdf4j.assets;
@@ -92,12 +91,10 @@ abstract class GraphProcessor {
 
 	static Shape anchor(final IRI resource, final Shape shape) {
 
-		final boolean empty=shape.validates(true);
-
 		return resource.stringValue().endsWith("/")
 
-				? empty ? field(inverse(LDP.CONTAINS), focus()) : shape // holders default to ldp:BasicContainer
-				: empty ? All.all(focus()) : and(All.all(focus()), shape); // members default to self
+				? shape.empty() ? field(inverse(LDP.CONTAINS), focus()) : shape // holders default to ldp:BasicContainer
+				: shape.empty() ? All.all(focus()) : and(All.all(focus()), shape); // members default to self
 
 	}
 
@@ -112,7 +109,7 @@ abstract class GraphProcessor {
 		return shape == null ? Optional.empty() : Optional.ofNullable(shape.map(new AllProbe()));
 	}
 
-	static Optional<Set<Value>> _any(final Shape shape) {
+	static Optional<Set<Value>> any(final Shape shape) {
 		return shape == null ? Optional.empty() : Optional.ofNullable(shape.map(new AnyProbe()));
 	}
 
@@ -573,7 +570,7 @@ abstract class GraphProcessor {
 				final int limit) {
 			return shape.equals(and()) ? nothing() : shape.equals(or()) ? snippet("filter (false)") : snippet(
 
-					"{ select {root} {\n"
+					"{ select distinct {root} {\n"
 							+"\n"
 							+"\t{roots}\n"
 							+"\n"
@@ -758,6 +755,10 @@ abstract class GraphProcessor {
 				throw new UnsupportedOperationException("focus range constraint");
 			}
 
+			@Override public Snippet probe(final Lang lang) {
+				throw new UnsupportedOperationException("focus lang constraint");
+			}
+
 
 			@Override public Snippet probe(final MinExclusive minExclusive) {
 				return snippet("filter ( {source} > {value} )", var(source), format(value(minExclusive.limit())));
@@ -824,6 +825,10 @@ abstract class GraphProcessor {
 
 			}
 
+			@Override public Snippet probe(final Localized localized) {
+				throw new UnsupportedOperationException("focus localized constraint");
+			}
+
 
 			@Override public Snippet probe(final Field field) {
 
@@ -831,7 +836,7 @@ abstract class GraphProcessor {
 				final Shape shape=field.shape();
 
 				final Optional<Set<Value>> all=all(shape).map(FetcherProbe.this::values);
-				final Optional<Set<Value>> any=_any(shape).map(FetcherProbe.this::values);
+				final Optional<Set<Value>> any=any(shape).map(FetcherProbe.this::values);
 
 				final Optional<Value> singleton=any
 						.filter(values -> values.size() == 1)

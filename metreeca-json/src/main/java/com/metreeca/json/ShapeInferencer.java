@@ -1,18 +1,17 @@
 /*
- * Copyright © 2013-2020 Metreeca srl. All rights reserved.
+ * Copyright © 2013-2020 Metreeca srl
  *
- * This file is part of Metreeca/Link.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Metreeca/Link is free software: you can redistribute it and/or modify it under the terms
- * of the GNU Affero General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or(at your option) any later version.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Metreeca/Link is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with Metreeca/Link.
- * If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.metreeca.json;
@@ -65,9 +64,13 @@ final class ShapeInferencer extends Shape.Probe<Shape> {
 		final Set<IRI> types=values.stream().map(Values::type).collect(toSet());
 
 		final Shape count=maxCount(values.size());
-		final Shape type=types.size() == 1 ? datatype(types.iterator().next()) : and();
+		final Shape datatype=types.size() == 1 ? datatype(types.iterator().next()) : and();
 
-		return and(range, count, type);
+		return and(range, count, datatype);
+	}
+
+	@Override public Shape probe(final Lang lang) {
+		return and(lang, datatype(RDF.LANGSTRING));
 	}
 
 
@@ -79,20 +82,59 @@ final class ShapeInferencer extends Shape.Probe<Shape> {
 		return and(any, minCount(1));
 	}
 
+	@Override public Shape probe(final Localized localized) {
+		return and(localized, datatype(RDF.LANGSTRING));
+	}
+
 
 	@Override public Shape probe(final Field field) {
 
 		final IRI iri=field.name();
 		final Shape shape=field.shape().map(this);
 
-		return iri.equals(RDF.TYPE) ? and(field(iri, and(shape, datatype(ResourceType))), datatype(IRIType))
+		return iri.equals(RDF.TYPE) ? and(field(iri, and(shape, datatype(IRIType))), datatype(ResourceType))
 				: direct(iri) ? and(field(iri, shape), datatype(ResourceType))
 				: field(iri, and(shape, datatype(ResourceType)));
 	}
 
 
 	@Override public Shape probe(final And and) {
-		return and(and.shapes().stream().map(s -> s.map(this)).collect(toList()));
+
+		final Shape shape=and(and.shapes().stream().map(s -> s.map(this)).collect(toList()));
+
+		final Boolean localized=shape.map(new Shape.Probe<Boolean>() {
+
+			@Override public Boolean probe(final Localized localized) {
+				return true;
+			}
+
+			@Override public Boolean probe(final And and) {
+				return and.shapes().stream().map(this).anyMatch(b -> b);
+			}
+
+			@Override public Boolean probe(final Shape shape) {
+				return false;
+			}
+
+		});
+
+		final int langs=shape.map(new Shape.Probe<Integer>() {
+
+			@Override public Integer probe(final Lang lang) {
+				return lang.tags().size();
+			}
+
+			@Override public Integer probe(final And and) {
+				return and.shapes().stream().map(this).max(Integer::compare).orElse(0);
+			}
+
+			@Override public Integer probe(final Shape shape) {
+				return 0;
+			}
+
+		});
+
+		return localized && langs > 0 ? and(shape, maxCount(langs)) : shape;
 	}
 
 	@Override public Shape probe(final Or or) {
