@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,29 @@ final class FrameTest {
 
 		@Test void testHandleDirectAndInverseFields() {
 
-			final Frame frame=frame(x).set(RDF.VALUE).value(y).set(inverse(RDF.VALUE)).value(z);
+			final Frame frame=frame(x)
+					.set(RDF.VALUE).value(y)
+					.set(inverse(RDF.VALUE)).value(z);
 
 			assertThat(frame.get(RDF.VALUE).value().orElse(RDF.NIL)).isEqualTo(y);
 			assertThat(frame.get(inverse(RDF.VALUE)).value().orElse(RDF.NIL)).isEqualTo(z);
+		}
+
+		@Test void testHandleNestedFrames() {
+
+			final Frame frame=frame(w)
+					.set(RDF.VALUE).value(x)
+					.set(RDF.VALUE).frame(frame(y)
+							.set(RDF.VALUE).value(w)
+					)
+					.set(RDF.VALUE).value(z);
+
+			assertThat(frame.model()).isIsomorphicTo(
+					statement(w, RDF.VALUE, x),
+					statement(w, RDF.VALUE, y),
+					statement(y, RDF.VALUE, w),
+					statement(w, RDF.VALUE, z)
+			);
 		}
 
 

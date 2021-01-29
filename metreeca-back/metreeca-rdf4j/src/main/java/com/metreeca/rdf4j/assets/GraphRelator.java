@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import static com.metreeca.json.queries.Items.items;
 import static com.metreeca.json.shapes.And.and;
 import static com.metreeca.json.shapes.Field.field;
 import static com.metreeca.rdf4j.assets.Graph.graph;
+import static com.metreeca.rdf4j.assets.GraphEngine.StatsShape;
+import static com.metreeca.rdf4j.assets.GraphEngine.TermsShape;
 import static com.metreeca.rest.Context.asset;
 import static com.metreeca.rest.MessageException.status;
 import static com.metreeca.rest.Response.*;
@@ -74,40 +76,34 @@ final class GraphRelator extends GraphProcessor {
 
 							final Collection<Statement> model=fetch(connection, item, query);
 
-							// containers are currently virtual and respond always with 200 OK even if not described in
-							// the graph
+							return response
 
-							final Message<Response> message=response
-
+									// containers are  virtual and respond with 200 OK even if not in the graph
 									// !!! 404 NotFound or 410 Gone if previously known for non-virtual containers
 
-									.status(OK)
+									.status(resource && model.isEmpty() ? NotFound : OK)
 
 									.header("+Preference-Applied",
 											minimal ? include(LDP.PREFER_MINIMAL_CONTAINER) : ""
-									);
+									)
 
-							// !!! 404 NotFound or 410 Gone if previously known for non-virtual containers
-							// !!! add ldp:contains if items.path is not empty
-
-							return resource && model.isEmpty() ? response.status(NotFound) :
-									message.attribute(shape(), query.map(new Query.Probe<Shape>() {
+									.attribute(shape(), query.map(new Query.Probe<Shape>() {
 
 										@Override public Shape probe(final Items items) {
 											return items.shape(); // !!! add ldp:contains if items.path is not empty
 										}
 
 										@Override public Shape probe(final Stats stats) {
-											return GraphEngine.StatsShape;
+											return StatsShape(stats);
 										}
 
 										@Override public Shape probe(final Terms terms) {
-											return GraphEngine.TermsShape;
+											return TermsShape(terms);
 										}
 
 									}))
 
-											.body(jsonld(), model);
+									.body(jsonld(), model);
 
 						})
 
@@ -117,7 +113,7 @@ final class GraphRelator extends GraphProcessor {
 
 				final IRI item=iri(request.item());
 
-				final Shape holder=target(request.attribute(shape()));
+				final Shape target=target(request.attribute(shape()));
 				final Shape digest=digest(request.attribute(shape()));
 
 				// containers are currently virtual and respond always with 200 OK even if not described in the graph
@@ -134,34 +130,33 @@ final class GraphRelator extends GraphProcessor {
 										.status(OK)
 										.attribute(shape(), query.map(new Query.Probe<Shape>() {
 
-													@Override public Shape probe(final Items items) {
-														return field(LDP.CONTAINS, items.shape());
-													}
+											@Override public Shape probe(final Items items) {
+												return field(LDP.CONTAINS, items.shape());
+											}
 
-													@Override public Shape probe(final Stats stats) {
+											@Override public Shape probe(final Stats stats) {
+												return StatsShape(stats);
+											}
 
-														return GraphEngine.StatsShape;
-													}
+											@Override public Shape probe(final Terms terms) {
+												return TermsShape(terms);
+											}
 
-													@Override public Shape probe(final Terms terms) {
-														return GraphEngine.TermsShape;
-													}
-
-												}))
+										}))
 												.body(jsonld(), matches);
 
 									} else { // include container description
 
-										// !!! 404 NotFound or 410 Gone if previously known for non-virtual containers
+								// !!! 404 NotFound or 410 Gone if previously known for non-virtual containers
 
-										matches.addAll(fetch(connection, item, items(holder)));
+								matches.addAll(fetch(connection, item, items(target)));
 
-										return response
-												.status(OK)
-												.attribute(shape(), and(holder, field(LDP.CONTAINS, digest)))
-												.body(jsonld(), matches);
+								return response
+										.status(OK)
+										.attribute(shape(), and(target, field(LDP.CONTAINS, digest)))
+										.body(jsonld(), matches);
 
-									}
+							}
 
 								})
 

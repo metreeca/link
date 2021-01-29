@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,9 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
+/**
+ * JSON-LD query parser.
+ */
 final class JSONLDParser {
 
 	private static final java.util.regex.Pattern StepPattern=java.util.regex.Pattern.compile("(?:^|\\.)(\\w+\\b)");
@@ -105,8 +108,8 @@ final class JSONLDParser {
 
 		final Shape filtered=and(baseline, Guard.filter().then(filter)); // filtering only >> don't include in results
 
-		return terms != null ? Terms.terms(filtered, terms)
-				: stats != null ? Stats.stats(filtered, stats)
+		return terms != null ? Terms.terms(filtered, terms, offset, limit)
+				: stats != null ? Stats.stats(filtered, stats, offset, limit)
 				: items(filtered, order, offset, limit);
 	}
 

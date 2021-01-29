@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,11 @@ import static java.util.stream.Collectors.toMap;
 import static javax.json.Json.createObjectBuilder;
 
 
+/**
+ * Shape-driven JSON-LD to RDF decoder.
+ *
+ * <p>Converts leniently compacted/framed JSON-LD descriptions to RDF models.</p>
+ */
 final class JSONLDDecoder {
 
 	private final IRI focus;

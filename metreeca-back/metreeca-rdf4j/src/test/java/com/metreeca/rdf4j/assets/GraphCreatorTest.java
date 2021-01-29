@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import static com.metreeca.json.shapes.Guard.*;
 import static com.metreeca.rdf4j.assets.Graph.graph;
 import static com.metreeca.rdf4j.assets.GraphTest.exec;
 import static com.metreeca.rdf4j.assets.GraphTest.model;
+import static com.metreeca.rest.Context.asset;
 import static com.metreeca.rest.ResponseAssert.assertThat;
 import static com.metreeca.rest.formats.JSONLDFormat.jsonld;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -143,7 +144,7 @@ final class GraphCreatorTest {
 						assertThat(response)
 								.hasStatus(Response.InternalServerError);
 
-						assertThat(com.metreeca.rest.Context.asset(graph()).exec(RepositoryConnection::isEmpty))
+						assertThat(asset(graph()).exec(RepositoryConnection::isEmpty))
 								.as("storage unchanged")
 								.isTrue();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,20 +42,7 @@ import static com.metreeca.rest.formats.JSONLDFormat.*;
  *
  * <p>Handles model-driven CRUD operations on resource managed by a specific storage backend.</p>
  *
- * <p>When acting as a wrapper, ensures that requests are handled within a storage transaction:</p>
- *
- * <ul>
- *
- *      <li>if a transaction is not already active on the underlying storage, begins one and commits it on successful
- *     handler completion;</li>
- *
- *      <li>if the handler throws an exception, rolls back the transaction and rethrows the exception;</li>
- *
- *      <li>in either case, no action is taken if the transaction was already terminated inside the handler.</li>
- *
- * </ul>
- *
- * <p>Falls back to plain handler execution if transactions are not supported by this engine.</p>
+ * <p>When acting as a wrapper, ensures that requests are handled on a single connection to the storage backend.</p>
  */
 public interface Engine extends Wrapper {
 
@@ -126,15 +113,15 @@ public interface Engine extends Wrapper {
 	}
 
 	/**
-	 * Creates a validator wrapper.
+	 * Creates a scanner wrapper.
 	 *
-	 * @return returns a wrapper performing model-driven {@linkplain JSONLDFormat#validate(IRI, Shape, JsonObject)
-	 * validation} of request JSON-LD bodies
+	 * @return returns a wrapper performing model-driven {@linkplain JSONLDFormat#scan(IRI, Shape, JsonObject)
+	 * scanning} of request JSON-LD bodies
 	 */
-	public static Wrapper validator() {
+	public static Wrapper scanner() {
 		return handler -> request -> request.body(json())
 
-				.flatMap(object -> validate(iri(request.item()), request.attribute(shape()), object).fold(
+				.flatMap(object -> scan(iri(request.item()), request.attribute(shape()), object).fold(
 						trace -> Left(status(UnprocessableEntity, trace.toJSON())),
 						model -> Right(handler.handle(request))
 				))

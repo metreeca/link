@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,11 @@ import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 
 
+/**
+ * Shape-driven JSON-LD trimmer.
+ *
+ * <p>Removes out of envelope fields from strictly compacted/framed JSON-LD descriptions.</p>
+ */
 final class JSONLDTrimmer {
 
 	private final IRI focus;
@@ -74,11 +79,11 @@ final class JSONLDTrimmer {
 
 					builder.add(label, value);
 
-				} else if ( langs.contains(label) && value instanceof JsonString ) {
+				} else if ( (langs.isEmpty() || langs.contains(label)) && value instanceof JsonString ) {
 
 					builder.add(label, value);
 
-				} else if ( langs.contains(label) && value instanceof JsonArray ) {
+				} else if ( (langs.isEmpty() || langs.contains(label)) && value instanceof JsonArray ) {
 
 					builder.add(label, createArrayBuilder(value.asJsonArray().stream()
 							.filter(JsonString.class::isInstance)

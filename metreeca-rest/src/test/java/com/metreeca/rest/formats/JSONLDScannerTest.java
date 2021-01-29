@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ import static java.util.Collections.emptyMap;
 import static javax.json.Json.*;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-final class JSONLDValidatorTest {
+final class JSONLDScannerTest {
 
 	private static final Literal x=literal("x");
 	private static final Literal y=literal("y");
@@ -76,7 +76,7 @@ final class JSONLDValidatorTest {
 	}
 
 	private Either<Trace, JsonObject> validate(final Shape shape, final JsonObjectBuilder builder) {
-		return new JSONLDValidator(iri("app:/"), shape.expand(), emptyMap()).validate(builder.build());
+		return new JSONLDScanner(iri("app:/"), shape.expand(), emptyMap()).validate(builder.build());
 	}
 
 
@@ -235,7 +235,30 @@ final class JSONLDValidatorTest {
 
 		}
 
-		@Test void testValidateLang() {
+		@Test void testValidateGenericLang() {
+
+			final Shape shape=lang();
+
+			assertThat(validate(shape, createObjectBuilder()
+					.add("@value", "one")
+					.add("@language", "en")
+			)).hasRight();
+
+
+			assertThat(validate(shape, createObjectBuilder()
+					.add("en", "one")
+					.add("it", "one")
+			)).hasRight();
+
+			assertThat(validate(shape, createObjectBuilder()
+					.add("@id", "http://example.com/")
+			)).hasLeft();
+
+			assertThat(validate(shape)).as("empty focus").hasRight();
+
+		}
+
+		@Test void testValidateRestrictedLang() {
 
 			final Shape shape=lang("en", "fr");
 
@@ -262,7 +285,9 @@ final class JSONLDValidatorTest {
 					.add("it", "one")
 			)).hasLeft();
 
-			assertThat(validate(shape, createObjectBuilder().add("@id", "http://example.com/"))).hasLeft();
+			assertThat(validate(shape, createObjectBuilder()
+					.add("@id", "http://example.com/")
+			)).hasLeft();
 
 			assertThat(validate(lang("en"), createValue("one"))).as("known language").hasRight();
 			assertThat(validate(shape)).as("empty focus").hasRight();

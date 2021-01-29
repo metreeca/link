@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,7 @@ import static com.metreeca.rest.assets.Engine.*;
  * {@linkplain Request#collection() collections}, or the {@linkplain Guard#Detail} area, when operating on other
  * resources;</li>
  *
- * <li>engine-assisted request payload {@linkplain JSONLDFormat#validate(IRI, Shape, javax.json.JsonObject) validation
- * };</li>
+ * <li>engine-assisted request payload {@linkplain JSONLDFormat#scan(IRI, Shape, javax.json.JsonObject) scanning};</li>
  *
  * <li>engine assisted resource {@linkplain Engine#update(Request) updating}.</li>
  *
@@ -79,7 +78,7 @@ public final class Updater extends Delegator {
 						throttler(Update, Detail)
 				))
 
-				.with(validator())
+				.with(scanner())
 
 		));
 	}

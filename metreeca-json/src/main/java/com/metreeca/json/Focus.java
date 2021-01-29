@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,7 @@ public abstract class Focus implements Value {
 	 * @param relative the relative IRI of the focus value
 	 *
 	 * @return a focus value resolving {@code relative} against the target IRI of a shape-driven operation; trailing
-	 * slashes
-	 * in the resolved IRI are removed unless {@code relative} includes one
+	 * slashes in the resolved IRI are removed unless {@code relative} includes one
 	 *
 	 * @throws NullPointerException if {@code relative} is null
 	 */

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -417,7 +417,7 @@ public final class Frame {
 				throw new NullPointerException("null frame");
 			}
 
-			return new Frame(frame.focus, Stream.concat(frame.model.stream(), test(path,
+			return new Frame(this.frame.focus, Stream.concat(this.frame.model.stream(), test(path,
 
 					direct -> {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Range value constraint.
  *
- * <p>States that each term in the focus set is a member of the given set of target values.</p>
+ * <p>States that each value in the focus set is a member of the given set of target values.</p>
  */
 public final class Range extends Shape {
 

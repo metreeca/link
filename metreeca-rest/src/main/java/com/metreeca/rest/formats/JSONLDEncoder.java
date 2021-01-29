@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013-2020 Metreeca srl
+ * Copyright © 2013-2021 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,11 @@ import static java.util.stream.Collectors.*;
 import static javax.json.Json.*;
 
 
+/**
+ * Shape-driven RDF to JSON-LD encoder.
+ *
+ * <p>Converts RDF models to strictly compacted/framed JSON-LD descriptions.</p>
+ */
 final class JSONLDEncoder {
 
 	private static final Collection<IRI> InternalTypes=new HashSet<>(asList(ValueType, ResourceType, LiteralType));
