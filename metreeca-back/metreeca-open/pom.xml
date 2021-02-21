@@ -17,7 +17,7 @@
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -27,27 +27,28 @@
 		<version>0.0.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>metreeca-gcp</artifactId>
+	<artifactId>metreeca-open</artifactId>
 	<version>0.0.0-SNAPSHOT</version>
 
-	<name>Metreeca Google Cloud Connector</name>
-	<description>Connector kit for Google Cloud services.</description>
+	<name>Metreeca Open Data Connector</name>
+	<description>Connector kit for open data sources.</description>
 
 	<dependencies>
 
 		<dependency>
 			<groupId>com.metreeca</groupId>
-			<artifactId>metreeca-rest</artifactId>
+			<artifactId>metreeca-rdf</artifactId>
+		</dependency>
+
+
+		<dependency>
+			<groupId>com.metreeca</groupId>
+			<artifactId>metreeca-rdf4j</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>com.google.cloud</groupId>
-			<artifactId>google-cloud-storage</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>com.google.cloud</groupId>
-			<artifactId>google-cloud-secretmanager</artifactId>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-repository-sparql</artifactId>
 		</dependency>
 
 	</dependencies>

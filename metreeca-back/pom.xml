@@ -38,6 +38,7 @@
 
 		<module>metreeca-mongo</module>
         <module>metreeca-rdf4j</module>
+		<module>metreeca-open</module>
 		<module>metreeca-gcp</module>
 
 	</modules>
