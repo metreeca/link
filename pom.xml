@@ -181,6 +181,12 @@
 
 			<dependency>
 				<groupId>com.metreeca</groupId>
+				<artifactId>metreeca-rdf4j-datastore</artifactId>
+				<version>0.0.0-SNAPSHOT</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.metreeca</groupId>
 				<artifactId>metreeca-open</artifactId>
 				<version>0.0.0-SNAPSHOT</version>
 			</dependency>
@@ -461,6 +467,7 @@
 							</groups>
 
 							<excludePackageNames> <!-- colon-separated patterns / multi line -->
+								:com.metreeca.rdf4j.datastore
 								:com.metreeca.gcp:com.metreeca.gcp.*
 								:com.metreeca.open:com.metreeca.open.*
 							</excludePackageNames>

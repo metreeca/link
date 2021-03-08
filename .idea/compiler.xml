@@ -9,6 +9,7 @@
         <module name="metreeca-rdf4j" />
         <module name="metreeca-jse" />
         <module name="metreeca-jee" />
+        <module name="metreeca-rdf4j-datastore" />
         <module name="metreeca-json" />
         <module name="metreeca-rest" />
         <module name="metreeca-xml" />
@@ -33,6 +34,7 @@
       <module name="metreeca-open" target="1.8" />
       <module name="metreeca-rdf" target="1.8" />
       <module name="metreeca-rdf4j" target="1.8" />
+      <module name="metreeca-rdf4j-datastore" target="1.8" />
       <module name="metreeca-rest" target="1.8" />
       <module name="metreeca-tree" target="1.8" />
       <module name="metreeca-xml" target="1.8" />
