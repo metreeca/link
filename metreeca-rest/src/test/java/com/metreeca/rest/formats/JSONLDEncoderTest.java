@@ -39,6 +39,7 @@ import static com.metreeca.json.shapes.Lang.lang;
 import static com.metreeca.json.shapes.Localized.localized;
 import static com.metreeca.json.shapes.MaxCount.maxCount;
 import static com.metreeca.json.shapes.Or.or;
+import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.rest.JSONAssert.assertThat;
 import static com.metreeca.rest.Xtream.entry;
 import static com.metreeca.rest.Xtream.map;
@@ -421,6 +422,24 @@ final class JSONLDEncoderTest {
 	}
 
 	@Nested final class Shapes {
+
+		@Test void testTraverseSameShapes() {
+			assertThat(encode(x,
+
+					same(field(RDF.VALUE)),
+
+					statement(x, RDF.VALUE, y)
+
+			)).isEqualTo(createObjectBuilder()
+					.add("@id", "/x")
+					.add("value", createArrayBuilder()
+							.add(createObjectBuilder()
+									.add("@id", "/y")
+							)
+					)
+			);
+		}
+
 
 		@Test void testOmitMissingValues() {
 			assertThat(encode(x,

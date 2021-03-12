@@ -52,6 +52,7 @@ import static com.metreeca.json.shapes.MinInclusive.minInclusive;
 import static com.metreeca.json.shapes.MinLength.minLength;
 import static com.metreeca.json.shapes.Pattern.pattern;
 import static com.metreeca.json.shapes.Range.range;
+import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.json.shapes.Stem.stem;
 
 import static org.assertj.core.api.Assertions.*;
@@ -257,6 +258,23 @@ final class JSONLDParserTest {
 			items("{ '_order': ['+first', '-first.rest'] }", shape, items -> assertThat(items.orders())
 					.as("list")
 					.containsExactly(increasing(RDF.FIRST), decreasing(RDF.FIRST, RDF.REST))
+			);
+
+		}
+
+
+		@Test void testTraverseSameShapes() {
+
+			final Shape traversable=field(RDF.FIRST, same(field(RDF.REST)));
+
+			items("{ 'first.rest' : 'any' }", traversable, items -> assertThat(items.shape())
+					.isEqualTo(and(
+							traversable, Guard.filter(field(RDF.FIRST, field(RDF.REST, any(literal("any")))))
+					))
+			);
+
+			terms("{ '_terms' : 'first.rest' }", traversable, terms -> assertThat(terms.path())
+					.containsExactly(RDF.FIRST, RDF.REST)
 			);
 
 		}

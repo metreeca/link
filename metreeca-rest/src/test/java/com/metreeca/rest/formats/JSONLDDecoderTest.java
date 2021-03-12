@@ -41,6 +41,7 @@ import static com.metreeca.json.shapes.Datatype.datatype;
 import static com.metreeca.json.shapes.Field.field;
 import static com.metreeca.json.shapes.Lang.lang;
 import static com.metreeca.json.shapes.Localized.localized;
+import static com.metreeca.json.shapes.Same.same;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -430,6 +431,24 @@ final class JSONLDDecoderTest {
 	}
 
 	@Nested final class Shapes {
+
+		@Test void testTraverseSameShapes() {
+			assertThat(decode(x,
+
+					same(field(RDF.VALUE, required())),
+
+					createObjectBuilder()
+							.add("value", createObjectBuilder()
+									.add("@id", "y")
+							)
+
+			)).isIsomorphicTo(
+
+					statement(x, RDF.VALUE, y)
+
+			);
+		}
+
 
 		@Test void testDecodeProvedResources() {
 			assertThat(decode(x,
