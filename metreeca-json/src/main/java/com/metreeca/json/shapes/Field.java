@@ -350,6 +350,10 @@ public final class Field extends Shape {
 
 	private static final class FieldsProbe extends Probe<Stream<Field>> {
 
+		@Override public Stream<Field> probe(final Same same) {
+			return same.shape().map(this);
+		}
+
 		@Override public Stream<Field> probe(final Field field) {
 			return Stream.of(field);
 		}

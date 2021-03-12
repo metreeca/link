@@ -126,6 +126,10 @@ public final class All extends Shape {
 			return all.values();
 		}
 
+		@Override public Set<Value> probe(final Same same) {
+			return same.shape().map(this);
+		}
+
 		@Override public Set<Value> probe(final And and) {
 			return and.shapes().stream()
 					.map(shape -> shape.map(this))

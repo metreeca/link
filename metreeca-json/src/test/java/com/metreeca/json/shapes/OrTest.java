@@ -31,12 +31,15 @@ import static com.metreeca.json.shapes.And.and;
 import static com.metreeca.json.shapes.Any.any;
 import static com.metreeca.json.shapes.Datatype.datatype;
 import static com.metreeca.json.shapes.Field.field;
+import static com.metreeca.json.shapes.Guard.guard;
 import static com.metreeca.json.shapes.Lang.lang;
 import static com.metreeca.json.shapes.Localized.localized;
 import static com.metreeca.json.shapes.MaxCount.maxCount;
 import static com.metreeca.json.shapes.MinCount.minCount;
 import static com.metreeca.json.shapes.Or.or;
 import static com.metreeca.json.shapes.Range.range;
+import static com.metreeca.json.shapes.Same.same;
+import static com.metreeca.json.shapes.When.when;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -64,8 +67,15 @@ final class OrTest {
 		}
 
 		@Test void testCollapseDuplicates() {
-			assertThat(or(datatype(RDF.NIL), datatype(RDF.NIL), minCount(1))).isEqualTo(or(datatype(RDF.NIL),
-					minCount(1)));
+			assertThat(
+
+					or(datatype(RDF.NIL), datatype(RDF.NIL), minCount(1))
+
+			).isEqualTo(
+
+					or(datatype(RDF.NIL), minCount(1))
+
+			);
 		}
 
 		@Test void testPreserveOrder() {
@@ -123,6 +133,20 @@ final class OrTest {
 
 		@Test void testOptimizeLocalized() {
 			assertThat(or(localized(), localized())).isEqualTo(localized());
+		}
+
+
+		@Test void testMergeSames() {
+			assertThat(or(
+
+					same(minCount(1)),
+					same(maxCount(3))
+
+			)).isEqualTo(
+
+					same(or(minCount(1), maxCount(3)))
+
+			);
 		}
 
 
@@ -190,6 +214,20 @@ final class OrTest {
 					field("y", RDF.VALUE)
 
 			));
+		}
+
+
+		@Test void testMergeCompatibleWhens() {
+			assertThat(or(
+
+					when(guard("axis", "value"), minCount(1)),
+					when(guard("axis", "value"), maxCount(3))
+
+			)).isEqualTo(
+
+					when(guard("axis", "value"), or(minCount(1), maxCount(3)))
+
+			);
 		}
 
 	}

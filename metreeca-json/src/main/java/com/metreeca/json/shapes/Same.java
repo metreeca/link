@@ -1,0 +1,79 @@
+/*
+ * Copyright © 2013-2021 Metreeca srl
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.metreeca.json.shapes;
+
+import com.metreeca.json.Shape;
+
+import java.util.Objects;
+
+import static com.metreeca.json.shapes.And.and;
+
+import static java.lang.String.format;
+import static java.util.Arrays.stream;
+
+public final class Same extends Shape {
+
+	public static Shape same(final Shape... shapes) {
+
+		if ( shapes == null || stream(shapes).anyMatch(Objects::isNull) ) {
+			throw new NullPointerException("null shapes");
+		}
+
+		final Shape shape=and(shapes);
+
+		return shape.empty() ? shape : new Same(shape);
+	}
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	private final Shape shape;
+
+
+	private Same(final Shape shape) {
+		this.shape=shape;
+	}
+
+
+	public Shape shape() {
+		return shape;
+	}
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	@Override public <V> V map(final Probe<V> probe) {
+		return probe.probe(this);
+	}
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	@Override public boolean equals(final Object object) {
+		return this == object || object instanceof Same
+				&& shape.equals(((Same)object).shape);
+	}
+
+	@Override public int hashCode() {
+		return shape.hashCode();
+	}
+
+	@Override public String toString() {
+		return format("same(%s)", shape);
+	}
+
+}

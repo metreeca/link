@@ -33,6 +33,7 @@ import static com.metreeca.json.shapes.MaxCount.maxCount;
 import static com.metreeca.json.shapes.MinCount.minCount;
 import static com.metreeca.json.shapes.Or.or;
 import static com.metreeca.json.shapes.Range.range;
+import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.json.shapes.When.when;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -125,6 +126,14 @@ final class ShapeInferencerTest {
 				.isEqualTo(and(localized, datatype(RDF.LANGSTRING)));
 	}
 
+
+	@Test void testSame() {
+
+		assertThat(expand(same(field(RDF.VALUE))))
+				.as("nested shapes are expanded")
+				.isEqualTo(same(datatype(ResourceType), field(RDF.VALUE)));
+
+	}
 
 	@Test void testField() {
 

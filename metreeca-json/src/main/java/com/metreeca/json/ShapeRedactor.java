@@ -24,6 +24,7 @@ import java.util.HashSet;
 import static com.metreeca.json.shapes.And.and;
 import static com.metreeca.json.shapes.Field.field;
 import static com.metreeca.json.shapes.Or.or;
+import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.json.shapes.When.when;
 
 
@@ -39,6 +40,10 @@ final class ShapeRedactor extends Shape.Probe<Shape> {
 		this.values=(values == null) ? null : new HashSet<>(values);
 	}
 
+
+	@Override public Shape probe(final Same same) {
+		return same(same.shape().map(this));
+	}
 
 	@Override public Shape probe(final Field field) {
 		return field(field.alias(), field.iri(), field.shape().map(this));

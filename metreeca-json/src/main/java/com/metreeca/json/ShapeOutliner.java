@@ -40,12 +40,24 @@ final class ShapeOutliner extends Shape.Probe<Stream<Statement>> {
 	}
 
 
+	private Stream<Value> values(final Stream<Value> values) {
+		return values.flatMap(value -> value instanceof Focus
+				? stream(sources).filter(IRI.class::isInstance).map(source -> ((Focus)value).resolve((IRI)source))
+				: Stream.of(value)
+		);
+	}
+
+
 	@Override public Stream<Statement> probe(final Clazz clazz) {
 		return stream(sources)
 				.filter(Resource.class::isInstance)
 				.map(source -> statement((Resource)source, RDF.TYPE, clazz.iri()));
 	}
 
+
+	@Override public Stream<Statement> probe(final Same same) {
+		return same.shape().map(this);
+	}
 
 	@Override public Stream<Statement> probe(final Field field) {
 		return Stream.concat(
@@ -91,14 +103,6 @@ final class ShapeOutliner extends Shape.Probe<Stream<Statement>> {
 
 	@Override public Stream<Statement> probe(final Shape shape) {
 		return Stream.empty();
-	}
-
-
-	private Stream<Value> values(final Stream<Value> values) {
-		return values.flatMap(value -> value instanceof Focus
-				? stream(sources).filter(IRI.class::isInstance).map(source -> ((Focus)value).resolve((IRI)source))
-				: Stream.of(value)
-		);
 	}
 
 }

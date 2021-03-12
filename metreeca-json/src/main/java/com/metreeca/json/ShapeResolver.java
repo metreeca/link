@@ -33,6 +33,7 @@ import static com.metreeca.json.shapes.MinExclusive.minExclusive;
 import static com.metreeca.json.shapes.MinInclusive.minInclusive;
 import static com.metreeca.json.shapes.Or.or;
 import static com.metreeca.json.shapes.Range.range;
+import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.json.shapes.When.when;
 
 import static java.util.stream.Collectors.toCollection;
@@ -90,6 +91,10 @@ final class ShapeResolver extends Shape.Probe<Shape> {
 		return any(values(any.values()));
 	}
 
+
+	@Override public Shape probe(final Same same) {
+		return same(same.shape().map(this));
+	}
 
 	@Override public Shape probe(final Field field) {
 		return field(field.alias(), field.iri(), field.shape().map(this));

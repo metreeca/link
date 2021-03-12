@@ -55,6 +55,7 @@ import static com.metreeca.json.shapes.MinLength.minLength;
 import static com.metreeca.json.shapes.Or.or;
 import static com.metreeca.json.shapes.Pattern.pattern;
 import static com.metreeca.json.shapes.Range.range;
+import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.json.shapes.Stem.stem;
 import static com.metreeca.json.shapes.When.when;
 import static com.metreeca.rdf4j.assets.GraphTest.graph;
@@ -203,63 +204,6 @@ final class GraphFetcherTest {
 
 			)));
 		}
-
-
-		@Test void testVirtualClassFilters() {
-			exec(() -> assertThat(query(Root, items(
-
-					filter(clazz(term("Alias")), field(OWL.SAMEAS))
-
-			))).isIsomorphicTo(graph(
-
-					"construct { <> ldp:contains ?item } where { ?item owl:sameAs/a :Office }"
-
-			)));
-		}
-
-		//@Test void testVirtualEdgeFilters() {
-		//	exec(() -> assertThat(query(
-		//
-		//			Root, items(virtual(OWL.SAMEAS, filter(field(RDF.TYPE, term("Office")))))
-		//
-		//	)).isIsomorphicTo(graph(
-		//
-		//			"construct {\n"
-		//					+"\n"
-		//					+"\t<> ldp:contains ?item. "
-		//					+"\n"
-		//					+"\n"
-		//					+"} where {\n"
-		//					+"\n"
-		//					+"\t?item owl:sameAs/a :Office\n"
-		//					+"\n"
-		//					+"}"
-		//
-		//	)));
-		//}
-
-		//@Test void testVirtualFieldPatterns() {
-		//	exec(() -> assertThat(query(Root, items(and(
-		//
-		//			filter(clazz(term("Alias"))),
-		//
-		//			field(OWL.SAMEAS, field(RDFS.LABEL))
-		//
-		//	)))).isIsomorphicTo(graph(
-		//
-		//			"construct {\n"
-		//					+"\n"
-		//					+"\t<> ldp:contains ?item. "
-		//					+"?item rdfs:label ?label.\n"
-		//					+"\n"
-		//					+"} where {\n"
-		//					+"\n"
-		//					+"\t?item a :Alias; owl:sameAs/rdfs:label ?label"
-		//					+"\n"
-		//					+"}"
-		//
-		//	)));
-		//}
 
 	}
 
@@ -730,6 +674,62 @@ final class GraphFetcherTest {
 	}
 
 	@Nested final class StructuralConstraints {
+
+		@Test void testSameClassFilters() {
+			exec(() -> assertThat(query(Root, items(
+
+					filter(same(clazz(term("Office"))))
+
+			))).isIsomorphicTo(graph(
+
+					"construct { <> ldp:contains ?item } where { ?item owl:sameAs/a :Office }"
+
+			)));
+		}
+
+		@Test void testSameEdgeFilters() {
+			exec(() -> assertThat(query(Root, items(
+
+					same(filter(field(RDF.TYPE, term("Office"))))
+
+			))).isIsomorphicTo(graph(
+
+					"construct {\n"
+							+"\n"
+							+"\t<> ldp:contains ?item. "
+							+"\n"
+							+"\n"
+							+"} where {\n"
+							+"\n"
+							+"\t?item owl:sameAs/a :Office\n"
+							+"\n"
+							+"}"
+
+			)));
+		}
+
+		@Test void testSameFieldPatterns() {
+			exec(() -> assertThat(query(Root, items(and(
+
+					filter(clazz(term("Alias"))),
+
+					same(field(RDFS.LABEL))
+
+			)))).isIsomorphicTo(graph(
+
+					"construct {\n"
+							+"\n"
+							+"\t<> ldp:contains ?item. "
+							+"?item rdfs:label ?label.\n"
+							+"\n"
+							+"} where {\n"
+							+"\n"
+							+"\t?item a :Alias; owl:sameAs/rdfs:label ?label"
+							+"\n"
+							+"}"
+
+			)));
+		}
 
 		@Test void testField() {
 			exec(() -> assertThat(query(

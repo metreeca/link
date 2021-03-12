@@ -34,6 +34,7 @@ import static com.metreeca.json.shapes.MaxCount.maxCount;
 import static com.metreeca.json.shapes.MinCount.minCount;
 import static com.metreeca.json.shapes.Or.or;
 import static com.metreeca.json.shapes.Range.range;
+import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.json.shapes.When.when;
 
 import static java.util.stream.Collectors.toList;
@@ -85,6 +86,10 @@ final class ShapeInferencer extends Shape.Probe<Shape> {
 	}
 
 
+	@Override public Shape probe(final Same same) {
+		return same(and(ResourceDatatype, same.shape().map(this)));
+	}
+
 	@Override public Shape probe(final Field field) {
 
 		final String alias=field.alias();
@@ -115,6 +120,10 @@ final class ShapeInferencer extends Shape.Probe<Shape> {
 				return true;
 			}
 
+			@Override public Boolean probe(final Same same) {
+				return same.shape().map(this);
+			}
+
 			@Override public Boolean probe(final And and) {
 				return and.shapes().stream().map(this).anyMatch(b -> b);
 			}
@@ -129,6 +138,10 @@ final class ShapeInferencer extends Shape.Probe<Shape> {
 
 			@Override public Integer probe(final Lang lang) {
 				return lang.tags().size();
+			}
+
+			@Override public Integer probe(final Same same) {
+				return same.shape().map(this);
 			}
 
 			@Override public Integer probe(final And and) {

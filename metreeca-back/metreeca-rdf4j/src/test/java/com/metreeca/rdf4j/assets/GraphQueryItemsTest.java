@@ -41,6 +41,7 @@ import static com.metreeca.json.shapes.And.and;
 import static com.metreeca.json.shapes.Clazz.clazz;
 import static com.metreeca.json.shapes.Field.field;
 import static com.metreeca.json.shapes.Guard.filter;
+import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.rdf4j.assets.GraphFetcherTest.exec;
 import static com.metreeca.rdf4j.assets.GraphTest.tuples;
 
@@ -156,29 +157,36 @@ final class GraphQueryItemsTest {
 		});
 	}
 
-	//@Test void testSortingOnVirtuals() {
-	//	exec(() -> assertThat(query(items(
-	//
-	//			virtual(OWL.SAMEAS, filter(clazz(term("Office")))), singletonList(decreasing(term("code")))
-	//
-	//	))
-	//			.stream()
-	//			.filter(Values.pattern(null, Shape.Contains, null))
-	//			.map(Statement::getObject)
-	//			.distinct()
-	//			.collect(toList())
-	//
-	//	).isEqualTo(tuples(
-	//
-	//			"select ?alias { ?alias a :Alias; owl:sameAs/birt:code ?code } order by desc(?code)"
-	//
-	//	)
-	//
-	//			.stream()
-	//			.map(map -> map.get("alias"))
-	//			.collect(toList())
-	//
-	//	));
-	//}
+	@Test void testSortingWithSame() {
+		exec(() -> assertThat(
+
+				query(items(
+
+						and(
+								filter(clazz(term("Alias"))),
+								same(field(term("code")))
+						),
+
+						singletonList(decreasing(term("code")))
+
+				))
+						.stream()
+						.filter(Values.pattern(null, Shape.Contains, null))
+						.map(Statement::getObject)
+						.distinct()
+						.collect(toList())
+
+		).isEqualTo(tuples(
+
+				"select ?alias { ?alias a :Alias; owl:sameAs/:code ?code } order by desc(?code)"
+
+				)
+
+						.stream()
+						.map(map -> map.get("alias"))
+						.collect(toList())
+
+		));
+	}
 
 }

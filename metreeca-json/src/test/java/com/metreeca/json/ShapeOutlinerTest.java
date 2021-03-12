@@ -31,6 +31,7 @@ import static com.metreeca.json.shapes.All.all;
 import static com.metreeca.json.shapes.And.and;
 import static com.metreeca.json.shapes.Clazz.clazz;
 import static com.metreeca.json.shapes.Field.field;
+import static com.metreeca.json.shapes.Same.same;
 
 import static java.util.stream.Collectors.toSet;
 
@@ -46,7 +47,22 @@ final class ShapeOutlinerTest {
 
 
 	private Collection<Statement> outline(final Shape shape, final Value... sources) {
-		return shape.map(new ShapeOutliner(sources)).collect(toSet());
+		return shape
+				.map(new ShapeOutliner(sources))
+				.collect(toSet());
+	}
+
+
+	@Test void testOutlineSames() {
+
+		assertThat(outline(same(field(p, all(y))), x))
+				.as("direct field")
+				.isIsomorphicTo(statement(x, p, y));
+
+		assertThat(outline(field(inverse(p), same(all(y))), x))
+				.as("inverse field")
+				.isIsomorphicTo(statement(y, p, x));
+
 	}
 
 	@Test void testOutlineFields() {

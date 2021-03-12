@@ -33,12 +33,15 @@ import static com.metreeca.json.shapes.All.all;
 import static com.metreeca.json.shapes.And.and;
 import static com.metreeca.json.shapes.Datatype.datatype;
 import static com.metreeca.json.shapes.Field.field;
+import static com.metreeca.json.shapes.Guard.guard;
 import static com.metreeca.json.shapes.Lang.lang;
 import static com.metreeca.json.shapes.Localized.localized;
 import static com.metreeca.json.shapes.MaxCount.maxCount;
 import static com.metreeca.json.shapes.MinCount.minCount;
 import static com.metreeca.json.shapes.Or.or;
 import static com.metreeca.json.shapes.Range.range;
+import static com.metreeca.json.shapes.Same.same;
+import static com.metreeca.json.shapes.When.when;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -162,6 +165,19 @@ final class AndTest {
 		}
 
 
+		@Test void testMergeSames() {
+			assertThat(and(
+
+					same(minCount(1)),
+					same(maxCount(3))
+
+			)).isEqualTo(
+
+					same(and(minCount(1), maxCount(3)))
+
+			);
+		}
+
 		@Test void testMergeCompatibleFields() {
 			assertThat(and(
 
@@ -226,6 +242,20 @@ final class AndTest {
 					field("y", RDF.VALUE)
 
 			));
+		}
+
+
+		@Test void testMergeCompatibleWhens() {
+			assertThat(and(
+
+					when(guard("axis", "value"), minCount(1)),
+					when(guard("axis", "value"), maxCount(3))
+
+			)).isEqualTo(
+
+					when(guard("axis", "value"), and(minCount(1), maxCount(3)))
+
+			);
 		}
 
 	}

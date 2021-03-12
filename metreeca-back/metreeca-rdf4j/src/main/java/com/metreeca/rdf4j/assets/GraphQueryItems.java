@@ -38,6 +38,7 @@ import static com.metreeca.json.shapes.And.and;
 import static com.metreeca.json.shapes.Field.field;
 import static com.metreeca.json.shapes.Field.fields;
 import static com.metreeca.json.shapes.Or.or;
+import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.json.shapes.When.when;
 import static com.metreeca.rdf4j.SPARQLScribe.*;
 import static com.metreeca.rdf4j.assets.Graph.graph;
@@ -232,6 +233,10 @@ final class GraphQueryItems extends GraphQueryBase {
 		}
 
 
+		@Override public Stream<Triple> probe(final Same same) {
+			return same.shape().map(this);
+		}
+
 		@Override public Stream<Triple> probe(final Field field) {
 
 			final Shape shape=field.shape();
@@ -276,6 +281,10 @@ final class GraphQueryItems extends GraphQueryBase {
 
 		SortingProbe(final Map<List<IRI>, String> labels) {this.labels=labels;}
 
+
+		@Override public Shape probe(final Same same) {
+			return same(same.shape().map(this));
+		}
 
 		@Override public Shape probe(final Field field) {
 

@@ -30,6 +30,8 @@ import static com.metreeca.json.shapes.MaxCount.maxCount;
 import static com.metreeca.json.shapes.MinCount.minCount;
 import static com.metreeca.json.shapes.Or.or;
 import static com.metreeca.json.shapes.Range.range;
+import static com.metreeca.json.shapes.Same.same;
+import static com.metreeca.json.shapes.When.when;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -113,7 +115,9 @@ public final class And extends Shape {
 				: clazz.equals(MaxCount.class) ? maxCounts(shapes.map(MaxCount.class::cast))
 				: clazz.equals(All.class) ? alls(shapes.map(All.class::cast))
 				: clazz.equals(Localized.class) ? localizeds(shapes.map(Localized.class::cast))
+				: clazz.equals(Same.class) ? sames(shapes.map(Same.class::cast))
 				: clazz.equals(Field.class) ? fields(shapes.map(Field.class::cast))
+				: clazz.equals(When.class) ? whens(shapes.map(When.class::cast))
 				: shapes;
 	}
 
@@ -180,6 +184,10 @@ public final class And extends Shape {
 		return localizeds.distinct();
 	}
 
+	private static Stream<? extends Shape> sames(final Stream<Same> sames) {
+		return Stream.of(same(and(sames.map(Same::shape))));
+	}
+
 	private static Stream<? extends Shape> fields(final Stream<Field> fields) {
 		return fields
 
@@ -198,6 +206,20 @@ public final class And extends Shape {
 				.map(Optional::get)
 
 				.map(field -> field.shape().equals(or()) ? and() : field);
+	}
+
+	private static Stream<? extends Shape> whens(final Stream<When> whens) {
+		return whens
+
+				.collect(groupingBy(When::test))
+
+				.entrySet()
+				.stream()
+
+				.map(entry -> when(entry.getKey(),
+						and(entry.getValue().stream().map(When::pass)),
+						and(entry.getValue().stream().map(When::fail))
+				));
 	}
 
 

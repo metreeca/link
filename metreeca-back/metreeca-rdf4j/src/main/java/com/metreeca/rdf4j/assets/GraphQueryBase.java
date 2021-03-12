@@ -98,11 +98,11 @@ abstract class GraphQueryBase {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	Scribe filters(final Shape shape) {
-		return skeleton(root, null, root, shape, true, false);
+		return skeleton(root, null, root, shape, true, false, this::label);
 	}
 
 	Scribe pattern(final Shape shape) {
-		return skeleton(root, null, root, shape, false, false);
+		return skeleton(root, null, root, shape, false, false, this::label);
 	}
 
 	Scribe anchor(final Collection<IRI> path, final String target) {
@@ -113,8 +113,8 @@ abstract class GraphQueryBase {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private static Scribe skeleton(
-			final String source, final IRI path, final String target,
-			final Shape shape, final boolean filter, final boolean nested
+			final String source, final IRI path, final String target, final Shape shape,
+			final boolean filter, final boolean nested, final Supplier<String> labels
 	) {
 
 		final Optional<Set<Value>> all=all(shape);
@@ -127,7 +127,8 @@ abstract class GraphQueryBase {
 
 				) : space( // node constraint edges
 
-						filter && all.isPresent() ? nothing() // (€) filtering hook already available on universal edges
+						filter && all.isPresent() && !nested ? nothing() // (€) filtering hook already available on
+								// universal edges
 								: line(edge(var(source), path, var(target))), // filtering or projection hook
 
 						list(all.map(values -> values.stream().map(value ->
@@ -136,7 +137,7 @@ abstract class GraphQueryBase {
 
 				),
 
-				space(shape.map(new SkeletonProbe(target, filter, nested)))
+				space(shape.map(new SkeletonProbe(target, filter, nested, labels)))
 
 		);
 	}
@@ -149,13 +150,18 @@ abstract class GraphQueryBase {
 		private final boolean filter;
 		private final boolean nested;
 
+		private final Supplier<String> labels;
 
-		private SkeletonProbe(final String anchor, final boolean filter, final boolean nested) {
+
+		private SkeletonProbe(final String anchor, final boolean filter, final boolean nested,
+				final Supplier<String> labels) {
 
 			this.anchor=anchor;
 
 			this.filter=filter;
 			this.nested=nested;
+
+			this.labels=labels;
 		}
 
 
@@ -279,20 +285,16 @@ abstract class GraphQueryBase {
 		}
 
 
+		@Override public Scribe probe(final Same same) {
+			return skeleton(anchor, OWL.SAMEAS, labels.get(), same.shape(), filter, true, labels).map(code ->
+					filter || nested ? code : optional(code)
+			);
+		}
+
 		@Override public Scribe probe(final Field field) {
-			if ( field.iri().equals(OWL.SAMEAS) ) {
-
-				return optional(
-						skeleton(anchor, OWL.SAMEAS, field.alias(), field.shape(), filter, true)
-				);
-
-			} else {
-
-				return skeleton(anchor, field.iri(), field.alias(), field.shape(), filter, false).map(code ->
-						filter || nested ? code : optional(code)
-				);
-
-			}
+			return skeleton(anchor, field.iri(), field.alias(), field.shape(), filter, false, labels).map(code ->
+					filter || nested ? code : optional(code)
+			);
 		}
 
 
