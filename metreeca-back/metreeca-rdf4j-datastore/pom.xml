@@ -48,7 +48,6 @@
 		<dependency>
 			<groupId>org.eclipse.rdf4j</groupId>
 			<artifactId>rdf4j-sail-extensible-store</artifactId>
-			<version>3.6.0</version> <!-- !!! remove -->
 		</dependency>
 
 		<dependency>
