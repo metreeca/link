@@ -23,7 +23,8 @@ import com.metreeca.rdf4j.assets.GraphEngine.Options;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.*;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -204,10 +205,10 @@ final class GraphFetcherTest {
 		}
 
 
-		@Disabled @Test void testVirtualClassFilters() {
+		@Test void testVirtualClassFilters() {
 			exec(() -> assertThat(query(Root, items(
 
-					filter(field(OWL.SAMEAS, clazz(term("Office"))))
+					filter(clazz(term("Alias")), field(OWL.SAMEAS))
 
 			))).isIsomorphicTo(graph(
 
@@ -236,13 +237,15 @@ final class GraphFetcherTest {
 		//
 		//	)));
 		//}
-		//
+
 		//@Test void testVirtualFieldPatterns() {
-		//	exec(() -> assertThat(query(
+		//	exec(() -> assertThat(query(Root, items(and(
 		//
-		//			Root, items(and(filter(clazz(term("Alias"))), virtual(OWL.SAMEAS, field(RDFS.LABEL))))
+		//			filter(clazz(term("Alias"))),
 		//
-		//	)).isIsomorphicTo(graph(
+		//			field(OWL.SAMEAS, field(RDFS.LABEL))
+		//
+		//	)))).isIsomorphicTo(graph(
 		//
 		//			"construct {\n"
 		//					+"\n"

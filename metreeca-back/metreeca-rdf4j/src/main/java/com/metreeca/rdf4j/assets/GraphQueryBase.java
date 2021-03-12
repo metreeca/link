@@ -25,6 +25,7 @@ import com.metreeca.rest.assets.Logger;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.util.*;
@@ -97,18 +98,11 @@ abstract class GraphQueryBase {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	Scribe filters(final Shape shape) {
-		return space(
-
-				space(all(shape).map(values -> values(root, values)).orElse(nothing())),  // root universal constraints
-
-				space(shape.map(new SkeletonProbe(root, true)))
-
-		);
+		return skeleton(root, null, root, shape, true, false);
 	}
 
-
 	Scribe pattern(final Shape shape) {
-		return space(shape.map(new SkeletonProbe(root, false)));
+		return skeleton(root, null, root, shape, false, false);
 	}
 
 	Scribe anchor(final Collection<IRI> path, final String target) {
@@ -118,15 +112,50 @@ abstract class GraphQueryBase {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	private static Scribe skeleton(
+			final String source, final IRI path, final String target,
+			final Shape shape, final boolean filter, final boolean nested
+	) {
+
+		final Optional<Set<Value>> all=all(shape);
+
+		return space(
+
+				target.equals(root) ? list( // root universal constraints
+
+						all.map(values -> space(values(root, values))).orElse(nothing())
+
+				) : space( // node constraint edges
+
+						filter && all.isPresent() ? nothing() // (€) filtering hook already available on universal edges
+								: line(edge(var(source), path, var(target))), // filtering or projection hook
+
+						list(all.map(values -> values.stream().map(value ->
+								line(edge(var(source), path, text(value)))
+						)).orElse(Stream.empty()))
+
+				),
+
+				space(shape.map(new SkeletonProbe(target, filter, nested)))
+
+		);
+	}
+
+
 	private static final class SkeletonProbe extends Shape.Probe<Scribe> {
 
 		private final String anchor;
-		private final boolean prune;
+
+		private final boolean filter;
+		private final boolean nested;
 
 
-		private SkeletonProbe(final String anchor, final boolean prune) {
+		private SkeletonProbe(final String anchor, final boolean filter, final boolean nested) {
+
 			this.anchor=anchor;
-			this.prune=prune;
+
+			this.filter=filter;
+			this.nested=nested;
 		}
 
 
@@ -152,7 +181,7 @@ abstract class GraphQueryBase {
 		}
 
 		@Override public Scribe probe(final Range range) {
-			if ( prune ) {
+			if ( filter ) {
 
 				return probe((Shape)range); // !!! tbi (filter not exists w/ special root treatment)
 
@@ -166,7 +195,7 @@ abstract class GraphQueryBase {
 		}
 
 		@Override public Scribe probe(final Lang lang) {
-			if ( prune ) {
+			if ( filter ) {
 
 				return probe((Shape)lang); // !!! tbi (filter not exists w/ special root treatment)
 
@@ -226,16 +255,16 @@ abstract class GraphQueryBase {
 
 
 		@Override public Scribe probe(final MinCount minCount) {
-			return prune ? probe((Shape)minCount) : nothing();
+			return filter ? probe((Shape)minCount) : nothing();
 		}
 
 		@Override public Scribe probe(final MaxCount maxCount) {
-			return prune ? probe((Shape)maxCount) : nothing();
+			return filter ? probe((Shape)maxCount) : nothing();
 		}
 
 
 		@Override public Scribe probe(final All all) {
-			return nothing(); // universal constraints handled by field probe
+			return nothing(); // universal constraints handled by skeleton()
 		}
 
 		@Override public Scribe probe(final Any any) {
@@ -246,31 +275,24 @@ abstract class GraphQueryBase {
 
 
 		@Override public Scribe probe(final Localized localized) {
-			return prune ? probe((Shape)localized) : nothing();
+			return filter ? probe((Shape)localized) : nothing();
 		}
 
 
 		@Override public Scribe probe(final Field field) {
+			if ( field.iri().equals(OWL.SAMEAS) ) {
 
-			final Shape shape=field.shape();
-			final String alias=field.alias();
+				return optional(
+						skeleton(anchor, OWL.SAMEAS, field.alias(), field.shape(), filter, true)
+				);
 
-			final Optional<Set<Value>> all=all(shape);
+			} else {
 
-			final Scribe constraints=list(
+				return skeleton(anchor, field.iri(), field.alias(), field.shape(), filter, false).map(code ->
+						filter || nested ? code : optional(code)
+				);
 
-					prune && all.isPresent() ? nothing() // (€) filtering hook already available on universal edges
-							: line(edge(var(anchor), field.iri(), var(alias))), // filtering or projection hook
-
-					list(all.map(values -> values.stream().map(value ->  // universal constraints edges
-							line(edge(var(anchor), field.iri(), text(value)))
-					)).orElse(Stream.empty())),
-
-					space(shape.map(new SkeletonProbe(alias, prune)))
-			);
-
-			return space(prune ? constraints : optional(space(constraints)));
-
+			}
 		}
 
 
