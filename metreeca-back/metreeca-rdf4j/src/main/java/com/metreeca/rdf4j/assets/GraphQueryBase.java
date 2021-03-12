@@ -50,6 +50,8 @@ abstract class GraphQueryBase {
 
 	static final String root="0";
 
+	private static final IRI SamePath=OWL.SAMEAS;  // !!! customizable
+
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -105,8 +107,8 @@ abstract class GraphQueryBase {
 		return skeleton(root, null, root, shape, false, false, this::label);
 	}
 
-	Scribe anchor(final Collection<IRI> path, final String target) {
-		return path.isEmpty() ? nothing() : space(edge(var(root), path(path), var(target)));
+	Scribe anchor(final Shape shape, final List<IRI> path, final String target) {
+		return path.isEmpty() ? nothing() : space(shape.map(new PathProbe(root, path, target, this::label)));
 	}
 
 
@@ -153,8 +155,11 @@ abstract class GraphQueryBase {
 		private final Supplier<String> labels;
 
 
-		private SkeletonProbe(final String anchor, final boolean filter, final boolean nested,
-				final Supplier<String> labels) {
+		private SkeletonProbe(
+				final String anchor,
+				final boolean filter, final boolean nested,
+				final Supplier<String> labels
+		) {
 
 			this.anchor=anchor;
 
@@ -286,7 +291,7 @@ abstract class GraphQueryBase {
 
 
 		@Override public Scribe probe(final Same same) {
-			return skeleton(anchor, OWL.SAMEAS, labels.get(), same.shape(), filter, true, labels).map(code ->
+			return skeleton(anchor, SamePath, labels.get(), same.shape(), filter, true, labels).map(code ->
 					filter || nested ? code : optional(code)
 			);
 		}
@@ -303,12 +308,92 @@ abstract class GraphQueryBase {
 		}
 
 		@Override public Scribe probe(final Or or) {
-			return union(or.shapes().stream().map(s -> block(space(s.map(this)))).toArray(Scribe[]::new));
+			return space(union(or.shapes().stream().map(s -> block(space(s.map(this)))).toArray(Scribe[]::new)));
 		}
 
 
 		@Override public Scribe probe(final Shape shape) {
 			throw new UnsupportedOperationException(shape.toString());
+		}
+
+	}
+
+	private static final class PathProbe extends Shape.Probe<Scribe> {
+
+		private final String source;
+		private final List<IRI> path;
+		private final String target;
+
+		private final Supplier<String> labels;
+
+
+		PathProbe(final String source, final List<IRI> path, final String target, final Supplier<String> labels) {
+			this.source=source;
+			this.path=path;
+			this.target=target;
+			this.labels=labels;
+		}
+
+
+		@Override public Scribe probe(final Same same) {
+
+			final String next=labels.get();
+
+			return list(
+
+					line(edge(var(source), SamePath, var(next))),
+					same.shape().map(new PathProbe(next, path, target, labels))
+
+			);
+		}
+
+		@Override public Scribe probe(final Field field) {
+			if ( field.iri().equals(path.get(0)) ) {
+
+				if ( path.size() == 1 ) {
+
+					return line(edge(var(source), path.get(0), var(target)));
+
+				} else {
+
+					final String next=labels.get();
+
+					return list(
+
+							line(edge(var(source), path.get(0), var(next))),
+							field.shape().map(new PathProbe(next, path.subList(1, path.size()), target, labels))
+
+					);
+
+				}
+
+			} else {
+
+				return nothing();
+
+			}
+		}
+
+
+		@Override public Scribe probe(final Guard guard) {
+			throw new UnsupportedOperationException(guard.toString());
+		}
+
+		@Override public Scribe probe(final When when) {
+			throw new UnsupportedOperationException(when.toString());
+		}
+
+		@Override public Scribe probe(final And and) {
+			return list(and.shapes().stream().map(this));
+		}
+
+		@Override public Scribe probe(final Or or) {
+			return space(union(or.shapes().stream().map(s -> block(space(s.map(this)))).toArray(Scribe[]::new)));
+		}
+
+
+		@Override protected Scribe probe(final Shape shape) {
+			return nothing();
 		}
 
 	}

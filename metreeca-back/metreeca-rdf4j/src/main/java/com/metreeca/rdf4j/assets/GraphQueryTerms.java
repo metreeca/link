@@ -56,10 +56,15 @@ final class GraphQueryTerms extends GraphQueryBase {
 		final int offset=terms.offset();
 		final int limit=terms.limit();
 
-		final String target=path.isEmpty() ? root : "hook";
+		final String target=path.isEmpty() ? root : label();
 
 		final Shape filter=shape
 				.filter(resource)
+				.resolve(resource)
+				.label(this::label);
+
+		final Shape convey=shape
+				.convey()
 				.resolve(resource)
 				.label(this::label);
 
@@ -90,7 +95,7 @@ final class GraphQueryTerms extends GraphQueryBase {
 
 									space(where(
 											filters(filter),
-											anchor(path, target)
+											anchor(convey, path, target)
 									)),
 
 									space(

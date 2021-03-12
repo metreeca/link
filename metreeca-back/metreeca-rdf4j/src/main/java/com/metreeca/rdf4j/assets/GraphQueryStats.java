@@ -58,10 +58,15 @@ final class GraphQueryStats extends GraphQueryBase {
 		final int offset=stats.offset();
 		final int limit=stats.limit();
 
-		final String target=path.isEmpty() ? root : "hook";
+		final String target=path.isEmpty() ? root : label();
 
 		final Shape filter=shape
 				.filter(resource)
+				.resolve(resource)
+				.label(this::label);
+
+		final Shape convey=shape
+				.convey()
 				.resolve(resource)
 				.label(this::label);
 
@@ -77,7 +82,7 @@ final class GraphQueryStats extends GraphQueryBase {
 
 					comment("stats query"),
 
-					prefix("", Engine.Base),
+					prefix(NS),
 					prefix(OWL.NS),
 					prefix(RDFS.NS),
 
@@ -114,7 +119,7 @@ final class GraphQueryStats extends GraphQueryBase {
 									space(where(
 
 											filters(filter),
-											anchor(path, target),
+											anchor(convey, path, target),
 
 											space(bind("type", is(
 													isBlank(var(target)),
