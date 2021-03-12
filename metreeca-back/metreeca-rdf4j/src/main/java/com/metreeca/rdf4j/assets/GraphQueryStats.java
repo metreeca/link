@@ -131,12 +131,16 @@ final class GraphQueryStats extends GraphQueryBase {
 													)
 											)))
 
+											// !!! sampling w/ options.stats()
+
 									)),
 
 									space(
 											line(group(var("type"))),
 											line(having(gt(count(true, var(target)), text(0)))),
-											line(order(desc(var("count")), var("type")))
+											line(order(desc(var("count")), var("type"))),
+											line(offset(offset)),
+											line(limit(limit))
 									)
 
 							)),
@@ -156,12 +160,7 @@ final class GraphQueryStats extends GraphQueryBase {
 									line(optional(edge(var("max"), "rdfs:comment", var("max_notes"))))
 							)
 
-					)),
-
-					space(
-							line(offset(offset)),
-							line(limit(limit, options.stats()))
-					)
+					))
 
 			)))).evaluate(new AbstractTupleQueryResultHandler() {
 
