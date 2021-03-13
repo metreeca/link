@@ -23,6 +23,7 @@ import com.metreeca.rest.Xtream;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
@@ -40,6 +41,9 @@ import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.rdf4j.assets.GraphFetcherTest.exec;
 import static com.metreeca.rdf4j.assets.GraphTest.graph;
 
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -100,7 +104,7 @@ final class GraphQueryTermsTest {
 	@Test void testRootConstraints() {
 		exec(() -> assertThat(query(terms(
 
-				all(item("employees/1370")),
+				and(all(item("employees/1370")), field(term("account"))),
 
 				singletonList(term("account")),
 
@@ -128,38 +132,60 @@ final class GraphQueryTermsTest {
 		)));
 	}
 
-	@Test void testAnchoringPathTraversingSame() {
-		exec(() -> assertThat(query(terms(
+	@Nested final class AnchoringPaths {
 
-				and(
-						filter(clazz(term("Alias"))),
-						same(field(term("country")))
-				),
+		@Test void testTraverseSame() {
+			exec(() -> assertThat(query(terms(
 
-				singletonList(term("country")),
+					and(
+							filter(clazz(term("Alias"))),
+							same(field(term("country")))
+					),
 
-				0, 0
+					singletonList(term("country")),
 
-		)).stream().filter(s -> !s.getPredicate().equals(RDFS.LABEL)).collect(toList())).isIsomorphicTo(graph(
+					0, 0
 
-				"construct { \n"
-						+"\n"
-						+"\t<> :terms [\n"
-						+"\t\t:value ?value;\n"
-						+"\t\t:count ?count\n"
-						+"\t].\n"
-						+"\n"
-						+"} where {\n"
-						+"\n"
-						+"\t{ select (?country as ?value) (count(distinct ?alias) as ?count) {\n"
-						+"\n"
-						+"\t\t?alias a :Alias; owl:sameAs/:country ?country\n"
-						+"\n"
-						+"\t} group by ?country }\n"
-						+"\n"
-						+"}"
+			)).stream().filter(s -> !s.getPredicate().equals(RDFS.LABEL)).collect(toList())).isIsomorphicTo(graph(
 
-		)));
+					"construct { \n"
+							+"\n"
+							+"\t<> :terms [\n"
+							+"\t\t:value ?value;\n"
+							+"\t\t:count ?count\n"
+							+"\t].\n"
+							+"\n"
+							+"} where {\n"
+							+"\n"
+							+"\t{ select (?country as ?value) (count(distinct ?alias) as ?count) {\n"
+							+"\n"
+							+"\t\t?alias a :Alias; owl:sameAs/:country ?country\n"
+							+"\n"
+							+"\t} group by ?country }\n"
+							+"\n"
+							+"}"
+
+			)));
+		}
+
+		@Test void testReportUnknownSteps() {
+			exec(() -> {
+
+				//assertThatIllegalArgumentException().isThrownBy(() -> query(terms(
+				//		field(term("country")),
+				//		singletonList(term("unknown")),
+				//		0, 0
+				//)));
+
+				assertThatIllegalArgumentException().isThrownBy(() -> query(terms(
+						field(term("country")),
+						asList(term("country"), term("unknown")),
+						0, 0
+				)));
+
+			});
+		}
+
 	}
 
 }

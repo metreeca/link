@@ -118,6 +118,21 @@ final class GraphFetcherTest {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	@Test void testHandlePatternFilters() {
+		exec(() -> assertThat(query(Root, items(and(
+
+				filter(clazz(term("Office"))),
+
+				field(RDFS.LABEL, convey(localized("en")))
+
+		)))).isIsomorphicTo(graph(
+
+				"construct { <> ldp:contains ?office. ?office rdfs:label ?label }"
+						+" where { ?office a :Office; rdfs:label ?label filter (lang(?label) = 'en') }"
+
+		)));
+	}
+
 	@Test void testUseIndependentPatternsAndFilters() {
 		exec(() -> assertThat(query(
 
@@ -140,22 +155,6 @@ final class GraphFetcherTest {
 						+"\t?office :employee ?employee, ?x filter (?x in (<employees/1002>, <employees/1188>))\n"
 						+"\n"
 						+"}"
-
-		)));
-	}
-
-
-	@Test void testHandlePatternFilters() {
-		exec(() -> assertThat(query(Root, items(and(
-
-				filter(clazz(term("Office"))),
-
-				field(RDFS.LABEL, convey(localized("en")))
-
-		)))).isIsomorphicTo(graph(
-
-				"construct { <> ldp:contains ?office. ?office rdfs:label ?label }"
-						+" where { ?office a :Office; rdfs:label ?label filter (lang(?label) = 'en') }"
 
 		)));
 	}

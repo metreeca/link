@@ -28,7 +28,7 @@ import static com.metreeca.json.Values.quote;
 import static com.metreeca.json.Values.traverse;
 import static com.metreeca.rest.Scribe.*;
 
-import static java.util.Arrays.stream;
+import static java.util.Arrays.asList;
 
 /**
  * SPARQL query composer.
@@ -116,7 +116,11 @@ public final class SPARQLScribe {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	public static Scribe union(final Scribe... patterns) {
-		return list(stream(patterns).flatMap(pattern -> Stream.of(text(" union "), pattern)).skip(1));
+		return union(asList(patterns));
+	}
+
+	public static Scribe union(final Collection<Scribe> patterns) {
+		return list(patterns.stream().flatMap(pattern -> Stream.of(text(" union "), pattern)).skip(1));
 	}
 
 	public static Scribe optional(final Scribe... pattern) {

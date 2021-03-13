@@ -19,6 +19,7 @@ package com.metreeca.rdf4j.assets;
 import com.metreeca.json.Shape;
 import com.metreeca.json.Values;
 import com.metreeca.json.shapes.*;
+import com.metreeca.rdf4j.SPARQLScribe;
 import com.metreeca.rdf4j.assets.GraphEngine.Options;
 import com.metreeca.rest.Scribe;
 import com.metreeca.rest.assets.Logger;
@@ -32,19 +33,23 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.metreeca.json.Values.*;
+import static com.metreeca.json.Values.BNodeType;
+import static com.metreeca.json.Values.IRIType;
+import static com.metreeca.json.Values.LiteralType;
+import static com.metreeca.json.Values.ResourceType;
+import static com.metreeca.json.Values.ValueType;
+import static com.metreeca.json.Values.format;
+import static com.metreeca.json.Values.quote;
 import static com.metreeca.json.shapes.All.all;
-import static com.metreeca.rdf4j.SPARQLScribe.lang;
-import static com.metreeca.rdf4j.SPARQLScribe.string;
 import static com.metreeca.rdf4j.SPARQLScribe.*;
 import static com.metreeca.rest.Context.asset;
-import static com.metreeca.rest.Scribe.text;
 import static com.metreeca.rest.Scribe.*;
 import static com.metreeca.rest.assets.Logger.logger;
 import static com.metreeca.rest.assets.Logger.time;
 
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
+import static java.util.stream.Collectors.toList;
 
 abstract class GraphQueryBase {
 
@@ -108,7 +113,14 @@ abstract class GraphQueryBase {
 	}
 
 	Scribe anchor(final Shape shape, final List<IRI> path, final String target) {
-		return path.isEmpty() ? nothing() : space(shape.map(new PathProbe(root, path, target, this::label)));
+		return path.isEmpty() ? nothing() : space(shape
+
+				.map(new PathProbe(root, path, target, this::label))
+
+				.orElseThrow(() ->
+						new IllegalArgumentException(format("unknown path step in %s", format(path)))
+				)
+		);
 	}
 
 
@@ -318,7 +330,7 @@ abstract class GraphQueryBase {
 
 	}
 
-	private static final class PathProbe extends Shape.Probe<Scribe> {
+	private static final class PathProbe extends Shape.Probe<Optional<Scribe>> {
 
 		private final String source;
 		private final List<IRI> path;
@@ -335,65 +347,88 @@ abstract class GraphQueryBase {
 		}
 
 
-		@Override public Scribe probe(final Same same) {
+		@Override public Optional<Scribe> probe(final Same same) {
 
-			final String next=labels.get();
+			final String node=labels.get();
 
-			return list(
+			return same.shape()
+					.map(new PathProbe(node, path, target, labels))
+					.map(scribe -> list(
 
-					line(edge(var(source), SamePath, var(next))),
-					same.shape().map(new PathProbe(next, path, target, labels))
+							line(edge(var(source), SamePath, var(node))), scribe
 
-			);
+					));
 		}
 
-		@Override public Scribe probe(final Field field) {
+		@Override public Optional<Scribe> probe(final Field field) {
 			if ( field.iri().equals(path.get(0)) ) {
 
 				if ( path.size() == 1 ) {
 
-					return line(edge(var(source), path.get(0), var(target)));
+					return Optional.of(line(edge(var(source), path.get(0), var(target))));
 
 				} else {
 
-					final String next=labels.get();
+					final String node=labels.get();
 
-					return list(
+					return field.shape()
+							.map(new PathProbe(node, path.subList(1, path.size()), target, labels))
+							.map(scribe -> list(
 
-							line(edge(var(source), path.get(0), var(next))),
-							field.shape().map(new PathProbe(next, path.subList(1, path.size()), target, labels))
+									line(edge(var(source), path.get(0), var(node))),
+									scribe
 
-					);
+							));
 
 				}
 
 			} else {
 
-				return nothing();
+				return Optional.empty();
 
 			}
 		}
 
 
-		@Override public Scribe probe(final Guard guard) {
+		@Override public Optional<Scribe> probe(final Guard guard) {
 			throw new UnsupportedOperationException(guard.toString());
 		}
 
-		@Override public Scribe probe(final When when) {
+		@Override public Optional<Scribe> probe(final When when) {
 			throw new UnsupportedOperationException(when.toString());
 		}
 
-		@Override public Scribe probe(final And and) {
-			return list(and.shapes().stream().map(this));
+		@Override public Optional<Scribe> probe(final And and) {
+			return Optional
+
+					.of(and.shapes().stream().map(this)
+							.filter(Optional::isPresent)
+							.map(Optional::get)
+							.collect(toList())
+					)
+
+					.filter(scribes -> !scribes.isEmpty())
+
+					.map(Scribe::list);
 		}
 
-		@Override public Scribe probe(final Or or) {
-			return space(union(or.shapes().stream().map(s -> block(space(s.map(this)))).toArray(Scribe[]::new)));
+		@Override public Optional<Scribe> probe(final Or or) {
+			return Optional
+
+					.of(or.shapes().stream().map(this)
+							.filter(Optional::isPresent).map(Optional::get)
+							.map(scribe -> block(space(scribe)))
+							.collect(toList())
+					)
+
+					.filter(scribes -> !scribes.isEmpty())
+
+					.map(SPARQLScribe::union);
 		}
 
 
-		@Override protected Scribe probe(final Shape shape) {
-			return nothing();
+		@Override protected Optional<Scribe> probe(final Shape shape) {
+			return Optional.empty();
 		}
 
 	}

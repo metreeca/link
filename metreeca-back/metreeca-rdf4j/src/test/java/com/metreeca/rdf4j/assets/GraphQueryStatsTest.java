@@ -24,11 +24,13 @@ import com.metreeca.rest.Xtream;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 
 import static com.metreeca.json.ModelAssert.assertThat;
+import static com.metreeca.json.Values.item;
 import static com.metreeca.json.Values.term;
 import static com.metreeca.json.ValuesTest.decode;
 import static com.metreeca.json.queries.Stats.stats;
@@ -41,6 +43,9 @@ import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.rdf4j.assets.GraphFetcherTest.exec;
 import static com.metreeca.rdf4j.assets.GraphTest.graph;
 
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -110,11 +115,15 @@ final class GraphQueryStatsTest {
 	}
 
 	@Test void testRootConstraints() {
-		exec(() -> assertThat(query(
+		exec(() -> assertThat(query(stats(
 
-				stats(all(Values.item("employees/1370")), singletonList(term("account")), 0, 0)
+				and(all(item("employees/1370")), field(term("account"))),
 
-		)).isIsomorphicTo(graph(
+				singletonList(term("account")),
+
+				0, 0
+
+		))).isIsomorphicTo(graph(
 
 				"construct { \n"
 						+"\n"
@@ -134,38 +143,60 @@ final class GraphQueryStatsTest {
 		)));
 	}
 
+	@Nested final class AnchoringPaths {
 
-	@Test void testAnchoringPathTraversingSame() {
-		exec(() -> assertThat(query(stats(
+		@Test void testTraverseSame() {
+			exec(() -> assertThat(query(stats(
 
-				and(
-						filter(clazz(term("Alias"))),
-						same(field(term("country")))
-				),
+					and(
+							filter(clazz(term("Alias"))),
+							same(field(term("country")))
+					),
 
-				singletonList(term("country")),
+					singletonList(term("country")),
 
-				0, 0
+					0, 0
 
-		)).stream().filter(s -> !s.getPredicate().equals(RDFS.LABEL)).collect(toList())).isIsomorphicTo(graph(
+			)).stream().filter(s -> !s.getPredicate().equals(RDFS.LABEL)).collect(toList())).isIsomorphicTo(graph(
 
-				"construct { \n"
-						+"\n"
-						+"\t<> :count ?count; :min ?min; :max ?max; :stats :iri.\n"
-						+"\t:iri :count ?count; :min ?min; :max ?max.\n"
-						+"\n"
-						+"} where {\n"
-						+"\n"
-						+"\tselect (count(distinct ?alias) as ?count) (min(?country) as ?min) (max(?country) as ?max) "
-						+"{\n"
-						+"\n"
-						+"\t\t?alias a :Alias; owl:sameAs/:country ?country\n"
-						+"\n"
-						+"\t}\n"
-						+"\n"
-						+"}"
+					"construct { \n"
+							+"\n"
+							+"\t<> :count ?count; :min ?min; :max ?max; :stats :iri.\n"
+							+"\t:iri :count ?count; :min ?min; :max ?max.\n"
+							+"\n"
+							+"} where {\n"
+							+"\n"
+							+"\tselect (count(distinct ?alias) as ?count) (min(?country) as ?min) (max(?country) as "
+							+ "?max) "
+							+"{\n"
+							+"\n"
+							+"\t\t?alias a :Alias; owl:sameAs/:country ?country\n"
+							+"\n"
+							+"\t}\n"
+							+"\n"
+							+"}"
 
-		)));
+			)));
+		}
+
+		@Test void testReportUnknownSteps() {
+			exec(() -> {
+
+				assertThatIllegalArgumentException().isThrownBy(() -> query(stats(
+						field(term("country")),
+						singletonList(term("unknown")),
+						0, 0
+				)));
+
+				assertThatIllegalArgumentException().isThrownBy(() -> query(stats(
+						field(term("country")),
+						asList(term("country"), term("unknown")),
+						0, 0
+				)));
+
+			});
+		}
+
 	}
 
 }
