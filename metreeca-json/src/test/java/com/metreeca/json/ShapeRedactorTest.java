@@ -23,8 +23,9 @@ import org.junit.jupiter.api.Test;
 import static com.metreeca.json.Values.iri;
 import static com.metreeca.json.shapes.And.and;
 import static com.metreeca.json.shapes.Field.field;
-import static com.metreeca.json.shapes.Guard.guard;
+import static com.metreeca.json.shapes.Guard.*;
 import static com.metreeca.json.shapes.Or.or;
+import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.json.shapes.When.when;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -116,6 +117,19 @@ final class ShapeRedactorTest {
 	@Test void testOptimizeAnds() {
 		assertThat(and(and(value("first"))).redact("value", "first"))
 				.isEqualTo(and());
+	}
+
+
+	@Test void testLimitSameToRelateTask() {
+
+		final Shape same=same(field(RDF.NIL));
+
+		assertThat(same.redact(Task)).as("retain on wildcard task").isEqualTo(same);
+		assertThat(same.redact(Task, Relate)).as("retain on relate task").isEqualTo(same);
+		assertThat(same.redact(Task, Update)).as("redact on other tasks").isEqualTo(and());
+
+		assertThat(same.redact(View, Detail)).as("immaterial axis").isEqualTo(same);
+
 	}
 
 }

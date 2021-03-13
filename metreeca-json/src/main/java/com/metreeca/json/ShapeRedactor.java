@@ -23,6 +23,8 @@ import java.util.HashSet;
 
 import static com.metreeca.json.shapes.And.and;
 import static com.metreeca.json.shapes.Field.field;
+import static com.metreeca.json.shapes.Guard.Relate;
+import static com.metreeca.json.shapes.Guard.Task;
 import static com.metreeca.json.shapes.Or.or;
 import static com.metreeca.json.shapes.Same.same;
 import static com.metreeca.json.shapes.When.when;
@@ -31,7 +33,7 @@ import static com.metreeca.json.shapes.When.when;
 final class ShapeRedactor extends Shape.Probe<Shape> {
 
 	private final String axis;
-	private final Collection<Object> values;
+	private final Collection<Object> values; // null for wildcard
 
 
 	ShapeRedactor(final String axis, final Collection<Object> values) {
@@ -42,7 +44,8 @@ final class ShapeRedactor extends Shape.Probe<Shape> {
 
 
 	@Override public Shape probe(final Same same) {
-		return same(same.shape().map(this));
+		return axis.equals(Task) && values != null && !values.contains(Relate) ?
+				and() : same(same.shape().map(this));
 	}
 
 	@Override public Shape probe(final Field field) {
