@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Copyright © 2023 Metreeca srl
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.metreeca</groupId>
+    <artifactId>kona</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+
+    <name>Metreeca/Kona</name>
+    <description>A model‑driven Java framework for rapid REST/JSON‑LD development.</description>
+    <url>https://github.com/metreeca/kona</url>
+    <inceptionYear>2023</inceptionYear>
+
+    <organization>
+        <name>Metreeca</name>
+        <url>https://www.metreeca.com/</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Metreeca</name>
+            <email>info@metreeca.com</email>
+            <organization>Metreeca</organization>
+            <organizationUrl>https://www.metreeca.com/</organizationUrl>
+        </developer>
+    </developers>
+
+    <properties>
+
+        <revision>0.0.0-SNAPSHOT</revision>
+        <timestamp>${maven.build.timestamp}</timestamp>
+
+        <maven.version>3.6</maven.version>
+        <java.version>11</java.version>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.build.timestamp.format>yyyy:MM:dd'T'HH:mm:ss</maven.build.timestamp.format>
+
+        <maven.site.skip>true</maven.site.skip>
+        <maven.deploy.skip>true</maven.deploy.skip>
+
+    </properties>
+
+    <modules>
+
+        <module>kona-core</module>
+        <module>kona-json</module>
+        <module>kona-mart</module>
+
+    </modules>
+
+    <scm>
+        <connection>scm:git:git@github.com:metreeca/kona.git</connection>
+        <developerConnection>scm:git:git@github.com:metreeca/kona.git</developerConnection>
+        <url>https://github.com/metreeca/kona</url>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/metreeca/kona/issues</url>
+    </issueManagement>
+
+    <distributionManagement>
+
+        <site>
+            <url>https://metreeca.github.io/kona/</url>
+        </site>
+
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/releases</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+
+    </distributionManagement>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Core Modules -->
+
+            <dependency>
+                <groupId>com.metreeca</groupId>
+                <artifactId>kona-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.metreeca</groupId>
+                <artifactId>kona-core</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+
+
+            <!-- JSON Connectors -->
+
+            <dependency>
+                <groupId>com.metreeca</groupId>
+                <artifactId>kona-gson</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+
+            <!-- Storage Connectors -->
+
+            <dependency>
+                <groupId>com.metreeca</groupId>
+                <artifactId>kona-rdf4j</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+
+            <!-- Exported dependencies -->
+
+            <dependency> <!-- https://search.maven.org/artifact/com.google.code.gson/gson -->
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.9.0</version>
+            </dependency>
+
+            <dependency> <!-- https://search.maven.org/artifact/org.eclipse.rdf4j/rdf4j-bom -->
+                <groupId>org.eclipse.rdf4j</groupId>
+                <artifactId>rdf4j-bom</artifactId>
+                <version>4.2.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency> <!-- https://search.maven.org/artifact/org.slf4j/slf4j-parent -->
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-parent</artifactId>
+                <version>2.0.6</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+
+            <!-- Test Harness -->
+
+            <dependency>  <!-- https://search.maven.org/artifact/org.junit/junit-bom -->
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.9.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency> <!-- https://search.maven.org/artifact/org.assertj/assertj-core -->
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>3.24.2</version>
+                <scope>test</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+
+        <resources>
+            <resource>
+                <filtering>true</filtering>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+        </resources>
+
+        <plugins>
+
+            <plugin> <!-- https://maven.apache.org/enforcer/maven-enforcer-plugin/ -->
+
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.1.0</version>
+
+                <executions>
+                    <execution>
+
+                        <id>enforce-maven</id>
+
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>${maven.version}</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin> <!-- https://www.mojohaus.org/flatten-maven-plugin/ -->
+
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.3.0</version>
+
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                    <flattenedPomFilename>pom-flattened.xml</flattenedPomFilename>
+                </configuration>
+
+                <executions>
+
+                    <execution>
+
+                        <id>clean-flattened-poms</id>
+                        <phase>clean</phase>
+
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+
+                    </execution>
+
+                    <execution>
+
+                        <id>flatten-poms</id>
+                        <phase>process-resources</phase>
+
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+
+                    </execution>
+
+                </executions>
+
+            </plugin>
+
+            <plugin> <!-- https://maven.apache.org/plugins/maven-compiler-plugin/ -->
+
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+
+            </plugin>
+
+
+            <plugin> <!-- https://maven.apache.org/surefire/maven-surefire-plugin/ -->
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M8</version>
+            </plugin>
+
+            <plugin> <!-- https://maven.apache.org/plugins/maven-jar-plugin/ -->
+
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+
+            </plugin>
+
+            <plugin> <!-- https://maven.apache.org/plugins/maven-source-plugin/ -->
+
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+
+                <executions>
+                    <execution>
+
+                        <id>attach-sources</id>
+
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+
+                </executions>
+
+            </plugin>
+
+        </plugins>
+
+    </build>
+
+    <profiles>
+        <profile>
+
+            <id>release</id>
+
+            <build>
+                <plugins>
+
+                    <plugin>
+
+                        <groupId>com.metreeca</groupId>
+                        <artifactId>mark-maven-plugin</artifactId>
+                        <version>0.8.11</version>
+
+                        <inherited>false</inherited>
+
+                        <configuration>
+
+                            <readme>true</readme>
+
+                            <options>
+                                <markdown-smart-links>true</markdown-smart-links>
+                                <markdown-external-links>true</markdown-external-links>
+                            </options>
+
+                        </configuration>
+
+                        <executions>
+                            <execution>
+
+                                <goals>
+                                    <goal>clean</goal>
+                                    <goal>build</goal>
+                                </goals>
+
+                            </execution>
+                        </executions>
+
+                    </plugin>
+
+                    <plugin> <!-- https://maven.apache.org/plugins/maven-javadoc-plugin/ -->
+
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.4.1</version>
+
+                        <configuration>
+
+                            <quiet>true</quiet>
+
+                            <tags>
+                                <tag>
+                                    <name>apiNote</name>
+                                    <placement>a</placement>
+                                    <head>API Note:</head>
+                                </tag>
+                                <tag>
+                                    <name>implSpec</name>
+                                    <placement>a</placement>
+                                    <head>Implementation Specification:</head>
+                                </tag>
+                                <tag>
+                                    <name>implNote</name>
+                                    <placement>a</placement>
+                                    <head>Implementation Note:</head>
+                                </tag>
+                            </tags>
+
+                            <links>
+
+
+                                <link>https://javadoc.io/doc/com.metreeca/kona-core/latest/</link>
+                                <link>https://javadoc.io/doc/com.metreeca/kona-gson/latest/</link>
+                                <link>https://javadoc.io/doc/com.metreeca/kona-rdf4j/latest/</link>
+
+                                <link>https://javadoc.io/doc/com.google.code.gson/gson/latest/</link>
+                                <link>https://rdf4j.org/javadoc/latest/</link>
+
+                            </links>
+
+                        </configuration>
+
+
+                        <executions>
+                            <execution>
+
+                                <id>attach-javadocs</id>
+                                <phase>package</phase>
+
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+
+                            </execution>
+                        </executions>
+
+                    </plugin>
+
+                    <plugin> <!-- https://maven.apache.org/plugins/maven-gpg-plugin/ -->
+
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.0.1</version>
+
+                        <executions>
+                            <execution>
+
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+
+                                <configuration>
+                                    <executable>gpg</executable>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+
+                            </execution>
+                        </executions>
+
+                    </plugin>
+
+                    <plugin> <!-- https://github.com/sonatype/nexus-maven-plugins -->
+
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.13</version>
+
+                        <extensions>true</extensions>
+
+                        <executions>
+                            <execution>
+
+                                <id>injected-nexus-deploy</id>
+                                <phase>deploy</phase>
+
+                                <goals>
+                                    <goal>deploy</goal>
+                                </goals>
+
+                                <configuration>
+                                    <serverId>ossrh</serverId>
+                                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                                </configuration>
+
+                            </execution>
+                        </executions>
+
+                        <dependencies> <!-- !!! https://issues.sonatype.org/browse/NEXUS-26993 -->
+
+                            <dependency>
+                                <groupId>com.thoughtworks.xstream</groupId>
+                                <artifactId>xstream</artifactId>
+                                <version>1.4.15</version>
+                                <scope>compile</scope>
+                            </dependency>
+
+                        </dependencies>
+
+                    </plugin>
+
+                </plugins>
+            </build>
+
+        </profile>
+    </profiles>
+
+</project>
