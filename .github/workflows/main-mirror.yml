@@ -1,0 +1,22 @@
+name: main-mirror
+
+on:
+
+  push:
+    tags:
+      - '0.*'
+
+jobs:
+
+  mirror:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Mirror the release branch to main
+        uses: google/mirror-branch-action@v1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          source: ${{ github.ref_name }}
+          dest: 'main'
