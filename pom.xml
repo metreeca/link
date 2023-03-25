@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  Copyright © 2023 Metreeca srl
+  Copyright © 2023-2024 Metreeca srl
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.metreeca</groupId>
-    <artifactId>kona</artifactId>
+    <artifactId>link</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
 
-    <name>Metreeca/Kona</name>
-    <description>A model‑driven Java framework for rapid REST/JSON‑LD development.</description>
-    <url>https://github.com/metreeca/kona</url>
+    <name>Metreeca/Link</name>
+    <description>A model‑driven Java framework for rapid REST/JSON‑LD API development.</description>
+    <url>https://github.com/metreeca/link</url>
     <inceptionYear>2023</inceptionYear>
 
     <organization>
@@ -55,7 +55,7 @@
 
     <properties>
 
-        <revision>0.0.0-SNAPSHOT</revision>
+        <revision>0.3-SNAPSHOT</revision>
         <timestamp>${maven.build.timestamp}</timestamp>
 
         <maven.version>3.6</maven.version>
@@ -71,27 +71,27 @@
 
     <modules>
 
-        <module>kona-core</module>
-        <module>kona-json</module>
-        <module>kona-mart</module>
+        <module>link-core</module>
+        <module>link-data</module>
+        <module>link-wire</module>
 
     </modules>
 
     <scm>
-        <connection>scm:git:git@github.com:metreeca/kona.git</connection>
-        <developerConnection>scm:git:git@github.com:metreeca/kona.git</developerConnection>
-        <url>https://github.com/metreeca/kona</url>
+        <connection>scm:git:git@github.com:metreeca/link.git</connection>
+        <developerConnection>scm:git:git@github.com:metreeca/link.git</developerConnection>
+        <url>https://github.com/metreeca/link</url>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/metreeca/kona/issues</url>
+        <url>https://github.com/metreeca/link/issues</url>
     </issueManagement>
 
     <distributionManagement>
 
         <site>
-            <url>https://metreeca.github.io/kona/</url>
+            <url>https://metreeca.github.io/link/</url>
         </site>
 
         <repository>
@@ -109,52 +109,46 @@
     <dependencyManagement>
         <dependencies>
 
-            <!-- Core Modules -->
+            <!-- Framework -->
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>kona-core</artifactId>
-                <version>${project.version}</version>
+                <artifactId>link-core</artifactId>
+                <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>kona-core</artifactId>
-                <version>${project.version}</version>
+                <artifactId>link-core</artifactId>
+                <version>${revision}</version>
                 <type>test-jar</type>
             </dependency>
 
 
-            <!-- JSON Connectors -->
+            <!-- Data Storage Engines -->
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>kona-gson</artifactId>
-                <version>${project.version}</version>
+                <artifactId>link-rdf4j</artifactId>
+                <version>${revision}</version>
             </dependency>
 
 
-            <!-- Storage Connectors -->
+            <!-- Wire Format Codecs -->
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>kona-rdf4j</artifactId>
-                <version>${project.version}</version>
+                <artifactId>link-jsonld</artifactId>
+                <version>${revision}</version>
             </dependency>
 
 
             <!-- Exported dependencies -->
 
-            <dependency> <!-- https://search.maven.org/artifact/com.google.code.gson/gson -->
-                <groupId>com.google.code.gson</groupId>
-                <artifactId>gson</artifactId>
-                <version>2.9.0</version>
-            </dependency>
-
             <dependency> <!-- https://search.maven.org/artifact/org.eclipse.rdf4j/rdf4j-bom -->
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-bom</artifactId>
-                <version>4.2.2</version>
+                <version>4.3.9</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -162,7 +156,7 @@
             <dependency> <!-- https://search.maven.org/artifact/org.slf4j/slf4j-parent -->
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-parent</artifactId>
-                <version>2.0.6</version>
+                <version>1.7.36</version> <!-- ;( 2.* not working for default test dependency -->
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -173,7 +167,7 @@
             <dependency>  <!-- https://search.maven.org/artifact/org.junit/junit-bom -->
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.9.2</version>
+                <version>5.10.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -181,7 +175,7 @@
             <dependency> <!-- https://search.maven.org/artifact/org.assertj/assertj-core -->
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.24.2</version>
+                <version>3.25.2</version>
                 <scope>test</scope>
             </dependency>
 
@@ -189,12 +183,6 @@
     </dependencyManagement>
 
     <dependencies>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-jdk14</artifactId>
-            <scope>test</scope>
-        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -208,23 +196,25 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
 
-        <resources>
-            <resource>
-                <filtering>true</filtering>
-                <directory>${project.basedir}/src/main/resources</directory>
-            </resource>
-        </resources>
+        <finalName>metreeca-${project.artifactId}-${project.version}</finalName>
 
         <plugins>
 
             <plugin> <!-- https://maven.apache.org/enforcer/maven-enforcer-plugin/ -->
 
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.4.1</version>
 
                 <executions>
                     <execution>
@@ -245,13 +235,14 @@
 
                     </execution>
                 </executions>
+
             </plugin>
 
             <plugin> <!-- https://www.mojohaus.org/flatten-maven-plugin/ -->
 
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.3.0</version>
+                <version>1.6.0</version>
 
                 <configuration>
                     <updatePomFile>true</updatePomFile>
@@ -289,8 +280,9 @@
 
             <plugin> <!-- https://maven.apache.org/plugins/maven-compiler-plugin/ -->
 
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.12.1</version>
 
                 <configuration>
                     <source>${java.version}</source>
@@ -299,14 +291,15 @@
 
             </plugin>
 
-
             <plugin> <!-- https://maven.apache.org/surefire/maven-surefire-plugin/ -->
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M8</version>
+                <version>3.2.5</version>
             </plugin>
 
             <plugin> <!-- https://maven.apache.org/plugins/maven-jar-plugin/ -->
 
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.3.0</version>
 
@@ -322,8 +315,9 @@
 
             <plugin> <!-- https://maven.apache.org/plugins/maven-source-plugin/ -->
 
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.3.0</version>
 
                 <executions>
                     <execution>
@@ -333,8 +327,8 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
-                    </execution>
 
+                    </execution>
                 </executions>
 
             </plugin>
@@ -344,6 +338,7 @@
     </build>
 
     <profiles>
+
         <profile>
 
             <id>release</id>
@@ -351,43 +346,11 @@
             <build>
                 <plugins>
 
-                    <plugin>
-
-                        <groupId>com.metreeca</groupId>
-                        <artifactId>mark-maven-plugin</artifactId>
-                        <version>0.8.11</version>
-
-                        <inherited>false</inherited>
-
-                        <configuration>
-
-                            <readme>true</readme>
-
-                            <options>
-                                <markdown-smart-links>true</markdown-smart-links>
-                                <markdown-external-links>true</markdown-external-links>
-                            </options>
-
-                        </configuration>
-
-                        <executions>
-                            <execution>
-
-                                <goals>
-                                    <goal>clean</goal>
-                                    <goal>build</goal>
-                                </goals>
-
-                            </execution>
-                        </executions>
-
-                    </plugin>
-
                     <plugin> <!-- https://maven.apache.org/plugins/maven-javadoc-plugin/ -->
 
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.4.1</version>
+                        <version>3.6.3</version>
 
                         <configuration>
 
@@ -413,18 +376,11 @@
 
                             <links>
 
-
-                                <link>https://javadoc.io/doc/com.metreeca/kona-core/latest/</link>
-                                <link>https://javadoc.io/doc/com.metreeca/kona-gson/latest/</link>
-                                <link>https://javadoc.io/doc/com.metreeca/kona-rdf4j/latest/</link>
-
-                                <link>https://javadoc.io/doc/com.google.code.gson/gson/latest/</link>
                                 <link>https://rdf4j.org/javadoc/latest/</link>
 
                             </links>
 
                         </configuration>
-
 
                         <executions>
                             <execution>
@@ -443,8 +399,9 @@
 
                     <plugin> <!-- https://maven.apache.org/plugins/maven-gpg-plugin/ -->
 
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>3.1.0</version>
 
                         <executions>
                             <execution>
@@ -496,7 +453,7 @@
                             </execution>
                         </executions>
 
-                        <dependencies> <!-- !!! https://issues.sonatype.org/browse/NEXUS-26993 -->
+                        <dependencies> <!-- !!! https://github.com/sonatype/nexus-public/issues/110 -->
 
                             <dependency>
                                 <groupId>com.thoughtworks.xstream</groupId>
@@ -513,6 +470,57 @@
             </build>
 
         </profile>
+
+        <profile>
+
+            <id>publish</id>
+
+            <build>
+                <plugins>
+
+                    <plugin> <!-- https://maven.apache.org/plugins/maven-resources-plugin/ -->
+
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.3.0</version>
+
+                        <inherited>false</inherited>
+
+                        <executions>
+                            <execution>
+
+                                <phase>site</phase>
+
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+
+                                <configuration>
+
+                                    <outputDirectory>${basedir}</outputDirectory>
+
+                                    <resources>
+                                        <resource>
+                                            <filtering>true</filtering>
+                                            <directory>docs</directory>
+                                            <includes>
+                                                <include>README.md</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+
+                                </configuration>
+
+                            </execution>
+                        </executions>
+
+                    </plugin>
+
+                </plugins>
+            </build>
+
+        </profile>
+
     </profiles>
 
 </project>

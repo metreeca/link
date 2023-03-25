@@ -1,14 +1,14 @@
 ---
 name: "Bug Report"
 about: "Create a report to help us improve"
-title: "What's wrong with metreeca/kona?"
+title: "What's wrong with metreeca/link?"
 labels: "Issue"
 assignees: ""
 ---
 
 **environment**
 
-- metreeca/kona: *version*
+- metreeca/link: *version*
 - operating system: *name/version*
 - java vm: *vendor/version*
 

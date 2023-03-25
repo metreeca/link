@@ -1,0 +1,821 @@
+/*
+ * Copyright © 2023-2024 Metreeca srl
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.metreeca.link;
+
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
+
+import java.net.URI;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Supplier;
+
+import static com.metreeca.link.Frame.*;
+
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
+import static java.util.function.Predicate.not;
+import static java.util.stream.Collectors.*;
+
+public abstract class Shape {
+
+    private static boolean derives(final IRI upper, final IRI lower) {
+        return upper.equals(VALUE)
+                || upper.equals(RESOURCE) && resource(lower)
+                || upper.equals(LITERAL) && literal(lower);
+    }
+
+
+    private static boolean resource(final IRI type) {
+        return type.equals(RESOURCE) || type.equals(BNODE) || type.equals(IRI);
+    }
+
+    private static boolean literal(final IRI type) {
+        return type.equals(LITERAL) || !type.equals(VALUE) && !resource(type);
+    }
+
+
+    private static String label(final IRI predicate) {
+        return predicate.equals(ID) ? _ID
+                : predicate.equals(TYPE) ? _TYPE
+                : predicate.getLocalName();
+    }
+
+
+    //// !!! ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    private static final Shape EMPTY=shape(List.of());
+
+
+    public static Shape virtual(final boolean virtual) {
+
+        return new Shape() {
+
+            @Override public boolean virtual() { return virtual; }
+
+        };
+
+    }
+
+    public static Shape composite(final boolean composite) {
+
+        return new Shape() {
+
+            @Override public boolean composite() { return composite; }
+
+        };
+
+    }
+
+
+    public static Shape base(final String base) {
+
+        if ( base == null ) {
+            throw new NullPointerException("null base");
+        }
+
+        return base(URI.create(base));
+
+    }
+
+    private static Shape base(final URI base) {
+
+        if ( base == null ) {
+            throw new NullPointerException("null base");
+        }
+
+        if ( !base.isAbsolute() ) {
+            throw new IllegalArgumentException(format("relative base <%s>", base));
+        }
+
+        final Optional<URI> value=Optional.of(base);
+
+        return new Shape() {
+
+            @Override public Optional<URI> base() { return value; }
+
+        };
+    }
+
+
+    public static Shape clazz(final IRI clazz) {
+
+        if ( clazz == null ) {
+            throw new NullPointerException("null class");
+        }
+
+        final Optional<IRI> value=Optional.of(clazz)
+                .filter(not(NIL::equals))
+                .filter(not(RDFS.RESOURCE::equals));
+
+        return new Shape() {
+
+            @Override public Optional<IRI> clazz() { return value; }
+
+        };
+    }
+
+    public static Shape datatype(final IRI datatype) {
+
+        if ( datatype == null ) {
+            throw new NullPointerException("null datatype");
+        }
+
+        final Optional<IRI> value=Optional.of(datatype)
+                .filter(not(NIL::equals));
+
+        return new Shape() {
+
+            @Override public Optional<IRI> datatype() { return value; }
+
+        };
+    }
+
+
+    public static Shape minExclusive(final Value limit) {
+
+        if ( limit == null ) {
+            throw new NullPointerException("null limit");
+        }
+
+        final Optional<Value> value=Optional.of(limit)
+                .filter(not(NIL::equals));
+
+        return new Shape() {
+
+            @Override public Optional<Value> minExclusive() { return value; }
+
+        };
+
+    }
+
+    public static Shape maxExclusive(final Value limit) {
+
+        if ( limit == null ) {
+            throw new NullPointerException("null limit");
+        }
+
+        final Optional<Value> value=Optional.of(limit)
+                .filter(not(NIL::equals));
+
+        return new Shape() {
+
+            @Override public Optional<Value> maxExclusive() { return value; }
+
+        };
+
+    }
+
+    public static Shape minInclusive(final Value limit) {
+
+        if ( limit == null ) {
+            throw new NullPointerException("null limit");
+        }
+
+        final Optional<Value> value=Optional.of(limit)
+                .filter(not(NIL::equals));
+
+        return new Shape() {
+
+            @Override public Optional<Value> minInclusive() { return value; }
+
+        };
+
+    }
+
+    public static Shape maxInclusive(final Value limit) {
+
+        if ( limit == null ) {
+            throw new NullPointerException("null limit");
+        }
+
+        final Optional<Value> value=Optional.of(limit)
+                .filter(not(NIL::equals));
+
+        return new Shape() {
+
+            @Override public Optional<Value> maxInclusive() { return value; }
+
+        };
+
+    }
+
+
+    public static Shape minLength(final int limit) {
+
+        if ( limit < 0 ) {
+            throw new IllegalArgumentException("negative limit");
+        }
+
+        final Optional<Integer> value=Optional.of(limit)
+                .filter(v -> v != 0);
+
+        return new Shape() {
+
+            @Override public Optional<Integer> minLength() { return value; }
+
+        };
+    }
+
+    public static Shape maxLength(final int limit) {
+
+        if ( limit < 0 ) {
+            throw new IllegalArgumentException("negative limit");
+        }
+
+        final Optional<Integer> value=Optional.of(limit)
+                .filter(v -> v != 0);
+
+        return new Shape() {
+
+            @Override public Optional<Integer> maxLength() { return value; }
+
+        };
+    }
+
+    public static Shape pattern(final String pattern) {
+
+        if ( pattern == null ) {
+            throw new NullPointerException("null pattern");
+        }
+
+        final Optional<String> value=Optional.of(pattern)
+                .filter(not(String::isBlank));
+
+        return new Shape() {
+
+            @Override public Optional<String> pattern() { return value; }
+
+        };
+    }
+
+
+    public static Shape required() {
+        return shape(minCount(1), maxCount(1));
+    }
+
+    public static Shape optional() {
+        return shape(maxCount(1));
+    }
+
+    public static Shape repeatable() {
+        return shape(minCount(1));
+    }
+
+    public static Shape multiple() {
+        return shape();
+    }
+
+
+    public static Shape minCount(final int limit) {
+
+        if ( limit < 0 ) {
+            throw new IllegalArgumentException("negative limit");
+        }
+
+        final Optional<Integer> value=Optional.of(limit)
+                .filter(v -> v != 0);
+
+        return new Shape() {
+
+            @Override public Optional<Integer> minCount() { return value; }
+
+        };
+    }
+
+    public static Shape maxCount(final int limit) {
+
+        if ( limit < 0 ) {
+            throw new IllegalArgumentException("negative limit");
+        }
+
+        final Optional<Integer> value=Optional.of(limit)
+                .filter(v -> v != 0);
+
+        return new Shape() {
+
+            @Override public Optional<Integer> maxCount() { return value; }
+
+        };
+    }
+
+
+    public static Shape in(final Value... values) {
+
+        if ( values == null || Arrays.stream(values).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null values");
+        }
+
+        return in(List.of(values));
+    }
+
+    public static Shape in(final Collection<Value> values) {
+
+        if ( values == null || values.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null values");
+        }
+
+        final Optional<Set<Value>> value=Optional.of(values.stream()
+                        .filter(not(NIL::equals))
+                        .collect(toUnmodifiableSet())
+                )
+                .filter(not(Set::isEmpty));
+
+        return new Shape() {
+
+            @Override public Optional<Set<Value>> in() { return value; }
+
+        };
+    }
+
+
+    public static Shape property(final IRI predicate, final Shape shape) {
+
+        if ( predicate == null ) {
+            throw new NullPointerException("null predicate");
+        }
+
+        if ( shape == null ) {
+            throw new NullPointerException("null shape");
+        }
+
+        return property(label(predicate), predicate, () -> shape);
+    }
+
+    public static Shape property(final IRI predicate, final Shape... shapes) {
+
+        if ( predicate == null ) {
+            throw new NullPointerException("null predicate");
+        }
+
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return property(label(predicate), predicate, () -> shape(shapes));
+    }
+
+    public static Shape property(final IRI predicate, final Collection<Shape> shapes) {
+
+        if ( predicate == null ) {
+            throw new NullPointerException("null predicate");
+        }
+
+        if ( shapes == null || shapes.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return property(label(predicate), predicate, () -> shape(shapes));
+    }
+
+    public static Shape property(final IRI predicate, final Supplier<? extends Shape> shape) {
+
+        if ( predicate == null ) {
+            throw new NullPointerException("null predicate");
+        }
+
+        if ( shape == null ) {
+            throw new NullPointerException("null shape");
+        }
+
+        return property(label(predicate), predicate, shape);
+    }
+
+    public static Shape property(final String label, final IRI predicate, final Shape shape) {
+
+        if ( label == null ) {
+            throw new NullPointerException("null label");
+        }
+
+        if ( predicate == null ) {
+            throw new NullPointerException("null predicate");
+        }
+
+        if ( shape == null ) {
+            throw new NullPointerException("null shape");
+        }
+
+        return property(label, predicate, () -> shape);
+    }
+
+    public static Shape property(final String label, final IRI predicate, final Shape... shapes) {
+
+        if ( label == null ) {
+            throw new NullPointerException("null label");
+        }
+
+        if ( predicate == null ) {
+            throw new NullPointerException("null predicate");
+        }
+
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return property(label, predicate, () -> shape(shapes));
+    }
+
+    public static Shape property(final String label, final IRI predicate, final Collection<Shape> shapes) {
+
+        if ( label == null ) {
+            throw new NullPointerException("null label");
+        }
+
+        if ( predicate == null ) {
+            throw new NullPointerException("null predicate");
+        }
+
+        if ( shapes == null || shapes.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return property(label, predicate, () -> shape(shapes));
+    }
+
+    public static Shape property(final String label, final IRI predicate, final Supplier<? extends Shape> shape) {
+
+        if ( label == null ) {
+            throw new NullPointerException("null alias");
+        }
+
+        if ( predicate == null ) {
+            throw new NullPointerException("null predicate");
+        }
+
+        if ( shape == null ) {
+            throw new NullPointerException("null shape");
+        }
+
+
+        final Optional<IRI> datatype=forward(predicate)
+                ? Optional.of(RESOURCE)
+                : Optional.empty();
+
+        final Supplier<Shape> supplier=new Memo<>(() -> {
+
+            if ( predicate.equals(ID) ) {
+
+                return shape(shape.get(), datatype(RESOURCE), maxCount(1));
+
+            } else if ( predicate.equals(TYPE) ) {
+
+                return shape(shape.get(), datatype(RESOURCE));
+
+            } else {
+
+                return shape.get();
+
+            }
+
+        });
+
+        final Map<String, Entry<IRI, Supplier<Shape>>> properties=Map.of(label, Map.entry(predicate, supplier));
+        final Map<IRI, Entry<String, Supplier<Shape>>> labels=Map.of(predicate, Map.entry(label, supplier));
+
+        return new Shape() {
+
+            @Override public Optional<IRI> datatype() { return datatype; }
+
+            @Override public Map<String, Entry<IRI, Supplier<Shape>>> labels() { return properties; }
+
+            @Override public Map<IRI, Entry<String, Supplier<Shape>>> predicates() { return labels; }
+
+        };
+    }
+
+
+    public static Shape shape() {
+        return EMPTY;
+    }
+
+    public static Shape shape(final Shape... shapes) {
+
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return shape(asList(shapes));
+    }
+
+    public static Shape shape(final Collection<Shape> shapes) {
+
+        if ( shapes == null || shapes.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        final boolean virtual=shapes.stream().anyMatch(Shape::virtual);
+        final boolean composite=shapes.stream().anyMatch(Shape::composite);
+
+
+        final Optional<URI> base=shapes.stream()
+                .flatMap(s -> s.base().stream())
+                .reduce((x, y) -> x.equals(y) ? x : error("conflicting <base> definition <%s> / <%s>", x, y));
+
+
+        final Optional<IRI> clazz=shapes.stream()
+                .flatMap(s -> s.clazz().stream())
+                .reduce((x, y) -> x.equals(y) ? x : error("conflicting <class> constraints <%s> / <%s>", x, y));
+
+        final Optional<IRI> datatype=shapes.stream()
+                .flatMap(s -> s.datatype().stream())
+                .reduce((x, y) -> x.equals(y) ? x
+                        : derives(x, y) ? y
+                        : derives(y, x) ? x
+                        : error("conflicting <datatype> constraints <%s> / <%s>", x, y)
+                );
+
+
+        final Optional<Value> minExclusive=shapes.stream()
+                .flatMap(s -> s.minExclusive().stream())
+                .reduce((x, y) -> compare(x, y) <= 0 ? x : y);
+
+        final Optional<Value> maxExclusive=shapes.stream()
+                .flatMap(s -> s.maxExclusive().stream())
+                .reduce((x, y) -> compare(x, y) >= 0 ? x : y
+                );
+
+        final Optional<Value> minInclusive=shapes.stream()
+                .flatMap(s -> s.minInclusive().stream())
+                .reduce((x, y) -> compare(x, y) <= 0 ? x : y);
+
+        final Optional<Value> maxInclusive=shapes.stream()
+                .flatMap(s -> s.maxInclusive().stream())
+                .reduce((x, y) -> compare(x, y) >= 0 ? x : y);
+
+
+        final Optional<Integer> minLength=shapes.stream()
+                .flatMap(s -> s.minCount().stream())
+                .reduce((x, y) -> x >= y ? x : y);
+
+        final Optional<Integer> maxLength=shapes.stream()
+                .flatMap(s -> s.maxCount().stream())
+                .reduce((x, y) -> x <= y ? x : y);
+
+        final Optional<String> pattern=shapes.stream()
+                .flatMap(s -> s.pattern().stream())
+                .reduce((x, y) -> x.equals(y) ? x : error("conflicting <pattern> constraints <%s> / <%s>", x, y));
+
+
+        final Optional<Integer> minCount=shapes.stream()
+                .flatMap(s -> s.minCount().stream())
+                .reduce((x, y) -> x >= y ? x : y);
+
+        final Optional<Integer> maxCount=shapes.stream()
+                .flatMap(s -> s.maxCount().stream())
+                .reduce((x, y) -> x <= y ? x : y);
+
+        final Optional<Set<Value>> in=shapes.stream()
+                .flatMap(s -> s.in().stream())
+                .reduce((x, y) -> {
+
+                    final Set<Value> i=x.stream().filter(y::contains).collect(toSet());
+
+                    return i.isEmpty() ? error("conflicting <in> constraints <%s> / <%s>", x, y) : i;
+
+                });
+
+
+        final Map<String, Entry<IRI, Supplier<Shape>>> properties=shapes.stream()
+                .flatMap(shape -> shape.labels().entrySet().stream())
+                .collect(toUnmodifiableMap(Entry::getKey, Entry::getValue, (x, y) ->
+                        x.getKey().equals(y.getKey())
+                                ? Map.entry(x.getKey(), () -> shape(x.getValue().get(), y.getValue().get()))
+                                : error("conflicting property predicate <%s> / <%s>", x.getKey(), y.getKey())
+                ));
+
+        final Map<IRI, Entry<String, Supplier<Shape>>> labels=shapes.stream()
+                .flatMap(shape -> shape.predicates().entrySet().stream())
+                .collect(toUnmodifiableMap(Entry::getKey, Entry::getValue, (x, y) ->
+                        x.getKey().equals(y.getKey())
+                                ? Map.entry(x.getKey(), () -> shape(x.getValue().get(), y.getValue().get()))
+                                : error("conflicting property label <%s> / <%s>", x.getKey(), y.getKey())
+                ));
+
+
+        return new Shape() {
+
+            @Override public boolean virtual() {
+                return virtual;
+            }
+
+            @Override public boolean composite() {
+                return composite;
+            }
+
+
+            @Override public Optional<URI> base() { return base; }
+
+
+            @Override public Optional<IRI> clazz() { return clazz; }
+
+            @Override public Optional<IRI> datatype() { return datatype; }
+
+
+            @Override public Optional<Value> minExclusive() { return minExclusive; }
+
+            @Override public Optional<Value> maxExclusive() { return maxExclusive; }
+
+            @Override public Optional<Value> minInclusive() { return minInclusive; }
+
+            @Override public Optional<Value> maxInclusive() { return maxInclusive; }
+
+
+            @Override public Optional<Integer> minLength() { return minLength; }
+
+            @Override public Optional<Integer> maxLength() { return maxLength; }
+
+            @Override public Optional<String> pattern() { return pattern; }
+
+
+            @Override public Optional<Integer> minCount() { return minCount; }
+
+            @Override public Optional<Integer> maxCount() { return maxCount; }
+
+
+            @Override public Optional<Set<Value>> in() { return in; }
+
+
+            @Override public Map<String, Entry<IRI, Supplier<Shape>>> labels() {
+                return properties;
+            }
+
+            @Override public Map<IRI, Entry<String, Supplier<Shape>>> predicates() {
+                return labels;
+            }
+
+        };
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private Shape() { }
+
+
+    public boolean virtual() { return false; }
+
+    public boolean composite() { return false; }
+
+
+    public Optional<URI> base() { return Optional.empty(); }
+
+
+    public Optional<IRI> clazz() { return Optional.empty(); }
+
+    public Optional<IRI> datatype() { return Optional.empty(); }
+
+
+    public Optional<Value> minExclusive() { return Optional.empty(); }
+
+    public Optional<Value> maxExclusive() { return Optional.empty(); }
+
+    public Optional<Value> minInclusive() { return Optional.empty(); }
+
+    public Optional<Value> maxInclusive() { return Optional.empty(); }
+
+
+    public Optional<Integer> minLength() { return Optional.empty(); }
+
+    public Optional<Integer> maxLength() { return Optional.empty(); }
+
+    public Optional<String> pattern() { return Optional.empty(); }
+
+
+    public Optional<Integer> minCount() { return Optional.empty(); }
+
+    public Optional<Integer> maxCount() { return Optional.empty(); }
+
+
+    public Optional<Set<Value>> in() { return Optional.empty(); }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public Map<String, Entry<IRI, Supplier<Shape>>> labels() {
+        return Map.of();
+    }
+
+    public Map<IRI, Entry<String, Supplier<Shape>>> predicates() {
+        return Map.of();
+    }
+
+
+    public Optional<Entry<IRI, Shape>> entry(final String label) {
+
+        if ( label == null ) {
+            throw new NullPointerException("null label");
+        }
+
+        return Optional.ofNullable(labels().get(label)).map(e -> Map.entry(e.getKey(), e.getValue().get()));
+    }
+
+    public Optional<Entry<String, Shape>> entry(final IRI property) {
+
+        if ( property == null ) {
+            throw new NullPointerException("null property");
+        }
+
+        return Optional.ofNullable(predicates().get(property)).map(e -> Map.entry(e.getKey(), e.getValue().get()));
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public String resolve(final String uri) {
+
+        if ( uri == null ) {
+            throw new NullPointerException("null uri");
+        }
+
+        return resolve(URI.create(uri)).toASCIIString();
+    }
+
+    public URI resolve(final URI uri) {
+
+        if ( uri == null ) {
+            throw new NullPointerException("null uri");
+        }
+
+        return base()
+                .map(base -> base.resolve(uri))
+                .orElseGet(() -> uri.isAbsolute() ? uri : error("relative uri <%s>", uri));
+    }
+
+
+    public String relativize(final String uri) {
+
+        if ( uri == null ) {
+            throw new NullPointerException("null uri");
+        }
+
+        return relativize(URI.create(uri)).toASCIIString();
+    }
+
+    public URI relativize(final URI uri) {
+
+        if ( uri == null ) {
+            throw new NullPointerException("null uri");
+        }
+
+        return base()
+                .filter(base
+                        -> Objects.equals(base.getScheme(), uri.getScheme())
+                        && Objects.equals(base.getRawAuthority(), uri.getRawAuthority())
+                )
+                .map(base -> URI.create(uri.getRawSchemeSpecificPart()
+                        .substring(uri.getRawAuthority().length()+2)
+                ))
+                .orElse(uri);
+    }
+
+
+    public Optional<Trace> validate(final Frame frame) {
+
+        if ( frame == null ) {
+            throw new NullPointerException("null frame");
+        }
+
+        return Optional.empty(); // !!!
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static final class Memo<T> implements Supplier<T> {
+
+        private final Supplier<? extends T> factory;
+
+        private T value;
+
+
+        private Memo(final Supplier<? extends T> factory) {
+            this.factory=factory;
+        }
+
+
+        @Override public T get() {
+            return (value != null) ? value : (value=requireNonNull(
+                    factory.get(), "null factory return value"
+            ));
+        }
+
+    }
+
+}

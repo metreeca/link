@@ -1,0 +1,397 @@
+<https://data.example.com/employees/1002> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "dmurphy@example.com" ;
+    <https://data.example.com/terms/surname> "Murphy" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Diane Murphy" ;
+    <https://data.example.com/terms/title> "President" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/1> ;
+    <https://data.example.com/terms/report>
+        <https://data.example.com/employees/1056>,
+        <https://data.example.com/employees/1076> ;
+    <https://data.example.com/terms/active> "2023-05-29T18:45:42.001Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/> ;
+    <https://data.example.com/terms/birthdate> "1958-06-04"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 5 ;
+    <https://data.example.com/terms/forename> "Diane" ;
+    <https://data.example.com/terms/code> "1002" .
+
+<https://data.example.com/employees/1056> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "mpatterso@example.com" ;
+    <https://data.example.com/terms/surname> "Patterson" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Mary Patterson" ;
+    <https://data.example.com/terms/title> "VP Sales" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/1> ;
+    <https://data.example.com/terms/report>
+        <https://data.example.com/employees/1088>,
+        <https://data.example.com/employees/1102>,
+        <https://data.example.com/employees/1143>,
+        <https://data.example.com/employees/1621> ;
+    <https://data.example.com/terms/active> "2023-05-23T18:47:34.008Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1002> ;
+    <https://data.example.com/terms/birthdate> "1987-05-28"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 4 ;
+    <https://data.example.com/terms/forename> "Mary" ;
+    <https://data.example.com/terms/code> "1056" .
+
+<https://data.example.com/employees/1076> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "jfirrelli@example.com" ;
+    <https://data.example.com/terms/surname> "Firrelli" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Jeff Firrelli" ;
+    <https://data.example.com/terms/title> "VP Marketing" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/1> ;
+    <https://data.example.com/terms/active> "2023-05-20T10:48:33.004Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1002> ;
+    <https://data.example.com/terms/birthdate> "1982-05-29"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 4 ;
+    <https://data.example.com/terms/forename> "Jeff" ;
+    <https://data.example.com/terms/code> "1076" .
+
+<https://data.example.com/employees/1088> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "wpatterson@example.com" ;
+    <https://data.example.com/terms/surname> "Patterson" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "William Patterson" ;
+    <https://data.example.com/terms/title> "Sales Manager (APAC)" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/6> ;
+    <https://data.example.com/terms/report>
+        <https://data.example.com/employees/1611>,
+        <https://data.example.com/employees/1612>,
+        <https://data.example.com/employees/1619> ;
+    <https://data.example.com/terms/active> "2023-05-29T09:50:35.007Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1056> ;
+    <https://data.example.com/terms/birthdate> "1979-05-30"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 3 ;
+    <https://data.example.com/terms/forename> "William" ;
+    <https://data.example.com/terms/code> "1088" .
+
+<https://data.example.com/employees/1102> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "gbondur@example.com" ;
+    <https://data.example.com/terms/surname> "Bondur" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Gerard Bondur" ;
+    <https://data.example.com/terms/title> "Sale Manager (EMEA)" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/4> ;
+    <https://data.example.com/terms/report>
+        <https://data.example.com/employees/1337>,
+        <https://data.example.com/employees/1370>,
+        <https://data.example.com/employees/1401>,
+        <https://data.example.com/employees/1501>,
+        <https://data.example.com/employees/1504>,
+        <https://data.example.com/employees/1702> ;
+    <https://data.example.com/terms/active> "2023-05-26T15:43:32.008Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1056> ;
+    <https://data.example.com/terms/birthdate> "1968-06-01"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 4 ;
+    <https://data.example.com/terms/forename> "Gerard" ;
+    <https://data.example.com/terms/code> "1102" .
+
+<https://data.example.com/employees/1143> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "abow@example.com" ;
+    <https://data.example.com/terms/surname> "Bow" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Anthony Bow" ;
+    <https://data.example.com/terms/title> "Sales Manager (NA)" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/1> ;
+    <https://data.example.com/terms/report>
+        <https://data.example.com/employees/1165>,
+        <https://data.example.com/employees/1166>,
+        <https://data.example.com/employees/1188>,
+        <https://data.example.com/employees/1216>,
+        <https://data.example.com/employees/1286>,
+        <https://data.example.com/employees/1323> ;
+    <https://data.example.com/terms/active> "2023-05-27T19:45:41.01Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1056> ;
+    <https://data.example.com/terms/birthdate> "1991-05-27"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 3 ;
+    <https://data.example.com/terms/forename> "Anthony" ;
+    <https://data.example.com/terms/code> "1143" .
+
+<https://data.example.com/employees/1165> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "ljennings@example.com" ;
+    <https://data.example.com/terms/surname> "Jennings" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Leslie Jennings" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/1> ;
+    <https://data.example.com/terms/active> "2023-05-28T10:43:34.002Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1143> ;
+    <https://data.example.com/terms/birthdate> "2002-05-24"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 1 ;
+    <https://data.example.com/terms/last> 332370.22 ;
+    <https://data.example.com/terms/ytd> 335940.47 ;
+    <https://data.example.com/terms/forename> "Leslie" ;
+    <https://data.example.com/terms/delta> 3570.25 ;
+    <https://data.example.com/terms/code> "1165" .
+
+<https://data.example.com/employees/1166> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "lthompson@example.com" ;
+    <https://data.example.com/terms/surname> "Thompson" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Leslie Thompson" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/1> ;
+    <https://data.example.com/terms/active> "2023-05-29T12:41:35.008Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1143> ;
+    <https://data.example.com/terms/birthdate> "2003-05-24"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 1 ;
+    <https://data.example.com/terms/last> 185038.4 ;
+    <https://data.example.com/terms/ytd> 43033.35 ;
+    <https://data.example.com/terms/forename> "Leslie" ;
+    <https://data.example.com/terms/delta> -142005.05 ;
+    <https://data.example.com/terms/code> "1166" .
+
+<https://data.example.com/employees/1188> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "jfirrelli@example.com" ;
+    <https://data.example.com/terms/surname> "Firrelli" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Julie Firrelli" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/2> ;
+    <https://data.example.com/terms/active> "2023-05-23T16:40:38.005Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1143> ;
+    <https://data.example.com/terms/birthdate> "2003-05-24"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 1 ;
+    <https://data.example.com/terms/last> 129916.12 ;
+    <https://data.example.com/terms/ytd> 36630.11 ;
+    <https://data.example.com/terms/forename> "Julie" ;
+    <https://data.example.com/terms/delta> -93286.01 ;
+    <https://data.example.com/terms/code> "1188" .
+
+<https://data.example.com/employees/1216> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "spatterson@example.com" ;
+    <https://data.example.com/terms/surname> "Patterson" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Steve Patterson" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/2> ;
+    <https://data.example.com/terms/active> "2023-05-20T19:45:39.007Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1143> ;
+    <https://data.example.com/terms/birthdate> "1994-05-26"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 2 ;
+    <https://data.example.com/terms/last> 337260.95 ;
+    <https://data.example.com/terms/ytd> 86950.06 ;
+    <https://data.example.com/terms/forename> "Steve" ;
+    <https://data.example.com/terms/delta> -250310.89 ;
+    <https://data.example.com/terms/code> "1216" .
+
+<https://data.example.com/employees/1286> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "ftseng@example.com" ;
+    <https://data.example.com/terms/surname> "Tseng" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Foon Yue Tseng" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/3> ;
+    <https://data.example.com/terms/active> "2023-05-23T18:50:37.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1143> ;
+    <https://data.example.com/terms/birthdate> "1998-05-25"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 1 ;
+    <https://data.example.com/terms/last> 237255.26 ;
+    <https://data.example.com/terms/ytd> 29070.38 ;
+    <https://data.example.com/terms/forename> "Foon Yue" ;
+    <https://data.example.com/terms/delta> -208184.88 ;
+    <https://data.example.com/terms/code> "1286" .
+
+<https://data.example.com/employees/1323> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "gvanauf@example.com" ;
+    <https://data.example.com/terms/surname> "Vanauf" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "George Vanauf" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/3> ;
+    <https://data.example.com/terms/active> "2023-05-25T10:47:37.005Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1143> ;
+    <https://data.example.com/terms/birthdate> "1999-05-25"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 1 ;
+    <https://data.example.com/terms/last> 428062.73 ;
+    <https://data.example.com/terms/ytd> 72025.82 ;
+    <https://data.example.com/terms/forename> "George" ;
+    <https://data.example.com/terms/delta> -356036.91 ;
+    <https://data.example.com/terms/code> "1323" .
+
+<https://data.example.com/employees/1337> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "lbondur@example.com" ;
+    <https://data.example.com/terms/surname> "Bondur" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Loui Bondur" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/4> ;
+    <https://data.example.com/terms/active> "2023-05-26T14:50:37.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1102> ;
+    <https://data.example.com/terms/birthdate> "2003-05-24"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 1 ;
+    <https://data.example.com/terms/last> 312915.21 ;
+    <https://data.example.com/terms/ytd> 78610.44 ;
+    <https://data.example.com/terms/forename> "Loui" ;
+    <https://data.example.com/terms/delta> -234304.77 ;
+    <https://data.example.com/terms/code> "1337" .
+
+<https://data.example.com/employees/1370> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "ghernande@example.com" ;
+    <https://data.example.com/terms/surname> "Hernandez" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Gerard Hernandez" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/4> ;
+    <https://data.example.com/terms/active> "2023-05-29T11:43:40.004Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1102> ;
+    <https://data.example.com/terms/birthdate> "1996-05-25"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 2 ;
+    <https://data.example.com/terms/last> 534575.67 ;
+    <https://data.example.com/terms/ytd> 428755.7 ;
+    <https://data.example.com/terms/forename> "Gerard" ;
+    <https://data.example.com/terms/delta> -105819.97 ;
+    <https://data.example.com/terms/code> "1370" .
+
+<https://data.example.com/employees/1401> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "pcastillo@example.com" ;
+    <https://data.example.com/terms/surname> "Castillo" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Pamela Castillo" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/4> ;
+    <https://data.example.com/terms/active> "2023-05-26T11:43:38.006Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1102> ;
+    <https://data.example.com/terms/birthdate> "1991-05-27"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 2 ;
+    <https://data.example.com/terms/last> 409910.07 ;
+    <https://data.example.com/terms/ytd> 141205.7 ;
+    <https://data.example.com/terms/forename> "Pamela" ;
+    <https://data.example.com/terms/delta> -268704.37 ;
+    <https://data.example.com/terms/code> "1401" .
+
+<https://data.example.com/employees/1501> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "lbott@example.com" ;
+    <https://data.example.com/terms/surname> "Bott" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Larry Bott" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/7> ;
+    <https://data.example.com/terms/active> "2023-05-23T18:40:40.005Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1102> ;
+    <https://data.example.com/terms/birthdate> "1995-05-26"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 2 ;
+    <https://data.example.com/terms/last> 317142.14 ;
+    <https://data.example.com/terms/ytd> 153417.7 ;
+    <https://data.example.com/terms/forename> "Larry" ;
+    <https://data.example.com/terms/delta> -163724.44 ;
+    <https://data.example.com/terms/code> "1501" .
+
+<https://data.example.com/employees/1504> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "bjones@example.com" ;
+    <https://data.example.com/terms/surname> "Jones" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Barry Jones" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/7> ;
+    <https://data.example.com/terms/active> "2023-05-21T13:42:42.01Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1102> ;
+    <https://data.example.com/terms/birthdate> "2002-05-24"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 1 ;
+    <https://data.example.com/terms/last> 388872.38 ;
+    <https://data.example.com/terms/ytd> 27966.54 ;
+    <https://data.example.com/terms/forename> "Barry" ;
+    <https://data.example.com/terms/delta> -360905.84 ;
+    <https://data.example.com/terms/code> "1504" .
+
+<https://data.example.com/employees/1611> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "afixter@example.com" ;
+    <https://data.example.com/terms/surname> "Fixter" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Andy Fixter" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/6> ;
+    <https://data.example.com/terms/active> "2023-05-23T09:49:39.008Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1088> ;
+    <https://data.example.com/terms/birthdate> "1999-05-25"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 1 ;
+    <https://data.example.com/terms/last> 204213.18 ;
+    <https://data.example.com/terms/ytd> 131561.38 ;
+    <https://data.example.com/terms/forename> "Andy" ;
+    <https://data.example.com/terms/delta> -72651.8 ;
+    <https://data.example.com/terms/code> "1611" .
+
+<https://data.example.com/employees/1612> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "pmarsh@example.com" ;
+    <https://data.example.com/terms/surname> "Marsh" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Peter Marsh" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/6> ;
+    <https://data.example.com/terms/active> "2023-05-19T11:47:38.008Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1088> ;
+    <https://data.example.com/terms/birthdate> "2001-05-24"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 1 ;
+    <https://data.example.com/terms/last> 338782.84 ;
+    <https://data.example.com/terms/ytd> 167669.84 ;
+    <https://data.example.com/terms/forename> "Peter" ;
+    <https://data.example.com/terms/delta> -171113.0 ;
+    <https://data.example.com/terms/code> "1612" .
+
+<https://data.example.com/employees/1619> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "tking@example.com" ;
+    <https://data.example.com/terms/surname> "King" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Tom King" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/6> ;
+    <https://data.example.com/terms/active> "2023-05-25T15:45:33.005Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1088> ;
+    <https://data.example.com/terms/birthdate> "1994-05-26"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 2 ;
+    <https://data.example.com/terms/last> 0.0 ;
+    <https://data.example.com/terms/ytd> 0.0 ;
+    <https://data.example.com/terms/forename> "Tom" ;
+    <https://data.example.com/terms/delta> 0.0 ;
+    <https://data.example.com/terms/code> "1619" .
+
+<https://data.example.com/employees/1621> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "mnishi@example.com" ;
+    <https://data.example.com/terms/surname> "Nishi" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Mami Nishi" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/5> ;
+    <https://data.example.com/terms/report> <https://data.example.com/employees/1625> ;
+    <https://data.example.com/terms/active> "2023-05-19T11:48:39.003Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1056> ;
+    <https://data.example.com/terms/birthdate> "1991-05-27"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 2 ;
+    <https://data.example.com/terms/last> 151761.45 ;
+    <https://data.example.com/terms/ytd> 38099.22 ;
+    <https://data.example.com/terms/forename> "Mami" ;
+    <https://data.example.com/terms/delta> -113662.23 ;
+    <https://data.example.com/terms/code> "1621" .
+
+<https://data.example.com/employees/1625> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "ykato@example.com" ;
+    <https://data.example.com/terms/surname> "Kato" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Yoshimi Kato" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/5> ;
+    <https://data.example.com/terms/active> "2023-05-19T16:46:33.01Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1621> ;
+    <https://data.example.com/terms/birthdate> "1992-05-26"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 2 ;
+    <https://data.example.com/terms/last> 0.0 ;
+    <https://data.example.com/terms/ytd> 0.0 ;
+    <https://data.example.com/terms/forename> "Yoshimi" ;
+    <https://data.example.com/terms/delta> 0.0 ;
+    <https://data.example.com/terms/code> "1625" .
+
+<https://data.example.com/employees/1702> a <https://data.example.com/terms/Employee> ;
+    <https://data.example.com/terms/email> "mgerard@example.com" ;
+    <https://data.example.com/terms/surname> "Gerard" ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Martin Gerard" ;
+    <https://data.example.com/terms/title> "Sales Rep" ;
+    <https://data.example.com/terms/office> <https://data.example.com/offices/4> ;
+    <https://data.example.com/terms/active> "2023-05-20T17:43:34.002Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+    <https://data.example.com/terms/supervisor> <https://data.example.com/employees/1102> ;
+    <https://data.example.com/terms/birthdate> "1991-05-27"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    <https://data.example.com/terms/seniority> 2 ;
+    <https://data.example.com/terms/last> 207828.89 ;
+    <https://data.example.com/terms/ytd> 0.0 ;
+    <https://data.example.com/terms/forename> "Martin" ;
+    <https://data.example.com/terms/delta> -207828.89 ;
+    <https://data.example.com/terms/code> "1702" .
+
+<https://data.example.com/offices/1> a <https://data.example.com/terms/Office> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "San Francisco (United States)" .
+
+<https://data.example.com/offices/2> a <https://data.example.com/terms/Office> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Boston (United States)" .
+
+<https://data.example.com/offices/3> a <https://data.example.com/terms/Office> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "New York (United States)" .
+
+<https://data.example.com/offices/4> a <https://data.example.com/terms/Office> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Paris (France)" .
+
+<https://data.example.com/offices/5> a <https://data.example.com/terms/Office> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Tokyo (Japan)" .
+
+<https://data.example.com/offices/6> a <https://data.example.com/terms/Office> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Sydney (Australia)" .
+
+<https://data.example.com/offices/7> a <https://data.example.com/terms/Office> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "London (United Kingdom)" .
