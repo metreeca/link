@@ -3,7 +3,7 @@
 /.idea/
 /.vscode/
 
-/kona.*
+/rest.*
 
 target/
 pom-flattened.xml

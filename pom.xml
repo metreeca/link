@@ -22,13 +22,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.metreeca</groupId>
-    <artifactId>kona</artifactId>
+    <artifactId>rest</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
 
-    <name>Metreeca/Kona</name>
-    <description>A model‑driven Java framework for rapid REST/JSON‑LD development.</description>
-    <url>https://github.com/metreeca/kona</url>
+    <name>Metreeca/REST</name>
+    <description>A model‑driven Java framework for rapid REST/JSON‑LD API development.</description>
+    <url>https://github.com/metreeca/rest</url>
     <inceptionYear>2023</inceptionYear>
 
     <organization>
@@ -55,7 +55,7 @@
 
     <properties>
 
-        <revision>0.0.0-SNAPSHOT</revision>
+        <revision>0.1-SNAPSHOT</revision>
         <timestamp>${maven.build.timestamp}</timestamp>
 
         <maven.version>3.6</maven.version>
@@ -71,27 +71,27 @@
 
     <modules>
 
-        <module>kona-core</module>
-        <module>kona-json</module>
-        <module>kona-mart</module>
+        <module>rest-core</module>
+        <module>rest-data</module>
+        <module>rest-wire</module>
 
     </modules>
 
     <scm>
-        <connection>scm:git:git@github.com:metreeca/kona.git</connection>
-        <developerConnection>scm:git:git@github.com:metreeca/kona.git</developerConnection>
-        <url>https://github.com/metreeca/kona</url>
+        <connection>scm:git:git@github.com:metreeca/rest.git</connection>
+        <developerConnection>scm:git:git@github.com:metreeca/rest.git</developerConnection>
+        <url>https://github.com/metreeca/rest</url>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/metreeca/kona/issues</url>
+        <url>https://github.com/metreeca/rest/issues</url>
     </issueManagement>
 
     <distributionManagement>
 
         <site>
-            <url>https://metreeca.github.io/kona/</url>
+            <url>https://metreeca.github.io/rest/</url>
         </site>
 
         <repository>
@@ -109,47 +109,41 @@
     <dependencyManagement>
         <dependencies>
 
-            <!-- Core Modules -->
+            <!-- Framework -->
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>kona-core</artifactId>
-                <version>${project.version}</version>
+                <artifactId>rest-core</artifactId>
+                <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>kona-core</artifactId>
-                <version>${project.version}</version>
+                <artifactId>rest-core</artifactId>
+                <version>${revision}</version>
                 <type>test-jar</type>
             </dependency>
 
 
-            <!-- JSON Connectors -->
+            <!-- Data Storage Engines -->
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>kona-gson</artifactId>
-                <version>${project.version}</version>
+                <artifactId>rest-rdf4j</artifactId>
+                <version>${revision}</version>
             </dependency>
 
 
-            <!-- Storage Connectors -->
+            <!-- Wire Format Codecs -->
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>kona-rdf4j</artifactId>
-                <version>${project.version}</version>
+                <artifactId>rest-jsonld</artifactId>
+                <version>${revision}</version>
             </dependency>
 
 
             <!-- Exported dependencies -->
-
-            <dependency> <!-- https://search.maven.org/artifact/com.google.code.gson/gson -->
-                <groupId>com.google.code.gson</groupId>
-                <artifactId>gson</artifactId>
-                <version>2.9.0</version>
-            </dependency>
 
             <dependency> <!-- https://search.maven.org/artifact/org.eclipse.rdf4j/rdf4j-bom -->
                 <groupId>org.eclipse.rdf4j</groupId>
@@ -191,12 +185,6 @@
     <dependencies>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-jdk14</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
@@ -212,12 +200,7 @@
 
     <build>
 
-        <resources>
-            <resource>
-                <filtering>true</filtering>
-                <directory>${project.basedir}/src/main/resources</directory>
-            </resource>
-        </resources>
+        <finalName>metreeca-${project.artifactId}-${project.version}</finalName>
 
         <plugins>
 
@@ -245,6 +228,7 @@
 
                     </execution>
                 </executions>
+
             </plugin>
 
             <plugin> <!-- https://www.mojohaus.org/flatten-maven-plugin/ -->
@@ -299,7 +283,6 @@
 
             </plugin>
 
-
             <plugin> <!-- https://maven.apache.org/surefire/maven-surefire-plugin/ -->
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M8</version>
@@ -320,25 +303,6 @@
 
             </plugin>
 
-            <plugin> <!-- https://maven.apache.org/plugins/maven-source-plugin/ -->
-
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.1</version>
-
-                <executions>
-                    <execution>
-
-                        <id>attach-sources</id>
-
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-
-                </executions>
-
-            </plugin>
-
         </plugins>
 
     </build>
@@ -351,31 +315,56 @@
             <build>
                 <plugins>
 
-                    <plugin>
+                    <plugin> <!-- https://maven.apache.org/plugins/maven-resources-plugin/ -->
 
-                        <groupId>com.metreeca</groupId>
-                        <artifactId>mark-maven-plugin</artifactId>
-                        <version>0.8.11</version>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.3.0</version>
 
                         <inherited>false</inherited>
-
-                        <configuration>
-
-                            <readme>true</readme>
-
-                            <options>
-                                <markdown-smart-links>true</markdown-smart-links>
-                                <markdown-external-links>true</markdown-external-links>
-                            </options>
-
-                        </configuration>
 
                         <executions>
                             <execution>
 
+                                <phase>site</phase>
+
                                 <goals>
-                                    <goal>clean</goal>
-                                    <goal>build</goal>
+                                    <goal>copy-resources</goal>
+                                </goals>
+
+                                <configuration>
+
+                                    <outputDirectory>${basedir}</outputDirectory>
+
+                                    <resources>
+                                        <resource>
+                                            <filtering>true</filtering>
+                                            <directory>docs</directory>
+                                            <includes>
+                                                <include>README.md</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+
+                                </configuration>
+
+                            </execution>
+                        </executions>
+
+                    </plugin>
+
+                    <plugin> <!-- https://maven.apache.org/plugins/maven-source-plugin/ -->
+
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.2.1</version>
+
+                        <executions>
+                            <execution>
+
+                                <id>attach-sources</id>
+
+                                <goals>
+                                    <goal>jar</goal>
                                 </goals>
 
                             </execution>
@@ -413,18 +402,15 @@
 
                             <links>
 
+                                <link>https://javadoc.io/doc/com.metreeca/rest-core/latest/</link>
+                                <link>https://javadoc.io/doc/com.metreeca/rest-json/latest/</link>
+                                <link>https://javadoc.io/doc/com.metreeca/rest-rdf4j/latest/</link>
 
-                                <link>https://javadoc.io/doc/com.metreeca/kona-core/latest/</link>
-                                <link>https://javadoc.io/doc/com.metreeca/kona-gson/latest/</link>
-                                <link>https://javadoc.io/doc/com.metreeca/kona-rdf4j/latest/</link>
-
-                                <link>https://javadoc.io/doc/com.google.code.gson/gson/latest/</link>
                                 <link>https://rdf4j.org/javadoc/latest/</link>
 
                             </links>
 
                         </configuration>
-
 
                         <executions>
                             <execution>
@@ -473,7 +459,7 @@
 
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.13</version>
+                        <version>1.6.8</version>
 
                         <extensions>true</extensions>
 
