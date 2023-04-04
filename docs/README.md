@@ -1,4 +1,5 @@
-[![Maven Central](https://img.shields.io/maven-central/v/com.metreeca/rest.svg)](https://search.maven.org/artifact/com.metreeca/rest/)
+[![Maven Central](https://img.shields.io/maven-central/v/com.metreeca/rest.svg)](https://central.sonatype.
+com/artifact/com.metreeca/rest/0.51.0/versions)
 
 # Metreeca/REST
 
