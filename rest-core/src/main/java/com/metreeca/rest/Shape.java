@@ -403,21 +403,15 @@ public abstract class Shape {
 
     private static Set<String> types(final Glass<?> glass, final Lingo lingo) {
         return glass.classes().stream()
-                .map(c -> type(c, lingo))
+                .flatMap(c -> type(c, lingo).stream())
                 .collect(toCollection(LinkedHashSet::new));
     }
 
-    private static String type(final Class<?> clazz, final Lingo lingo) {
-
-        final String iri=Optional
+    private static Optional<String> type(final Class<?> clazz, final Lingo lingo) {
+        return Optional
                 .ofNullable(clazz.getAnnotation(Type.class))
                 .map(Type::value)
-                .orElse("");
-
-        return lingo.expand(iri, clazz.getSimpleName()).orElseThrow(() ->
-                new IllegalArgumentException(format(
-                        "malformed type IRI <%s>", iri
-                )));
+                .map(iri -> lingo.expand(iri, clazz.getSimpleName()));
     }
 
 
@@ -431,13 +425,9 @@ public abstract class Shape {
                     .map(Property::value)
                     .orElse(field);
 
-            return lingo.expand(value, field)
+            final String iri=lingo.expand(value, field);
 
-                    .map(iri -> property.annotation(Reverse.class).isPresent() ? reverse(iri) : iri)
-
-                    .orElseThrow(() -> new IllegalArgumentException(format(
-                            "malformed property IRI <%s>", value
-                    )));
+            return property.annotation(Reverse.class).isPresent() ? reverse(iri) : iri;
 
         }));
     }

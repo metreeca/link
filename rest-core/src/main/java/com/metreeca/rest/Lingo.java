@@ -97,7 +97,7 @@ final class Lingo {
     }
 
 
-    Optional<String> expand(final String iri, final String label) {
+    String expand(final String iri, final String label) {
         return compact(iri)
 
                 .flatMap(matcher -> {
@@ -120,7 +120,11 @@ final class Lingo {
 
                 .or(() -> absolute(iri)
                         .map(Matcher::group)
-                );
+                )
+
+                .orElseThrow(() -> new IllegalArgumentException(format(
+                        "malformed IRI <%s>", iri
+                )));
     }
 
 }
