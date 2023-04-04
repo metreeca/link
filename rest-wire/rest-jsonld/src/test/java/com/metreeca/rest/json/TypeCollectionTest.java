@@ -19,9 +19,7 @@ package com.metreeca.rest.json;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.metreeca.rest.json.JSONTest.*;
 
@@ -31,19 +29,19 @@ final class TypeCollectionTest {
 
     @Nested final class Encode {
 
-        @Test void testEncodeEmptyCollection() throws IOException {
+        @Test void testEncodeEmptyCollection() {
             assertThat(encode(List.of())).isEqualTo("[]");
         }
 
-        @Test void testEncodeSingletonCollection() throws IOException {
+        @Test void testEncodeSingletonCollection() {
             assertThat(encode(List.of(1))).isEqualTo("[1]");
         }
 
-        @Test void testEncodeExtendedCollection() throws IOException {
+        @Test void testEncodeExtendedCollection() {
             assertThat(encode(List.of(1, 2, 3))).isEqualTo("[1,2,3]");
         }
 
-        @Test void testEncodePrettyCollection() throws IOException {
+        @Test void testEncodePrettyCollection() {
 
             final List<Object> collection=List.of(
                     List.of(),
@@ -62,30 +60,30 @@ final class TypeCollectionTest {
 
     @Nested final class Decode {
 
-        @Test void testDecodeEmptyCollection() throws IOException {
-            assertThat(decode("[]", VCollection.class))
+        @Test void testDecodeEmptyCollection() {
+            assertThat(decode("[]", Collection.class))
                     .isEmpty();
         }
 
-        @Test void testDecodeSingletonCollection() throws IOException {
-            assertThat(decode("[1]", VCollection.class))
+        @Test void testDecodeSingletonCollection() {
+            assertThat(decode("[1]", Collection.class))
                     .containsExactly(integer(1));
         }
 
-        @Test void testDecodeExtendedCollection() throws IOException {
-            assertThat(decode("[1,2,3]", VCollection.class))
+        @Test void testDecodeExtendedCollection() {
+            assertThat(decode("[1,2,3]", Collection.class))
                     .containsExactly(integer(1), integer(2), integer(3));
         }
 
 
-        @Test void testDecodeSets() throws IOException {
-            assertThat(decode("[1,1,2,2,3,3]", VSet.class))
+        @Test void testDecodeSets() {
+            assertThat(decode("[1,1,2,2,3,3]", Set.class))
                     .isInstanceOf(Set.class)
                     .containsExactly(integer(1), integer(2), integer(3));
         }
 
-        @Test void testDecodeLists() throws IOException {
-            assertThat(decode("[1,2,3]", VList.class))
+        @Test void testDecodeLists() {
+            assertThat(decode("[1,2,3]", List.class))
                     .isInstanceOf(List.class)
                     .containsExactly(integer(1), integer(2), integer(3));
         }

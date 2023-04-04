@@ -19,8 +19,6 @@ package com.metreeca.rest.json;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 import static com.metreeca.rest.json.JSONTest.decode;
 import static com.metreeca.rest.json.JSONTest.encode;
 
@@ -30,7 +28,7 @@ final class TypeVoidTest {
 
     @Nested final class Encode {
 
-        @Test void testEncodeNull() throws IOException {
+        @Test void testEncodeNull() {
             assertThat(encode(null)).isEqualTo("null");
         }
 
@@ -38,7 +36,7 @@ final class TypeVoidTest {
 
     @Nested final class Decode {
 
-        @Test void testDecodeNull() throws IOException {
+        @Test void testDecodeNull() {
             assertThat(decode("null", Void.class)).isEqualTo(null);
         }
 

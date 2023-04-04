@@ -104,6 +104,12 @@ final class TypeObjectTest {
 
         }
 
+
+        @Test void testReportUnexpectedQuery() {
+            assertThatExceptionOfType(JSON.Exception.class)
+                    .isThrownBy(() -> decode("{ \"related\": { \"#\":  0 } }", Item.class));
+        }
+
     }
 
     @Nested final class Queries {
@@ -282,6 +288,8 @@ final class TypeObjectTest {
 
         private String label;
 
+        private Item related;
+
 
         public String getLabel() {
             return label;
@@ -289,6 +297,15 @@ final class TypeObjectTest {
 
         public void setLabel(final String label) {
             this.label=label;
+        }
+
+
+        public Item getRelated() {
+            return related;
+        }
+
+        public void setRelated(final Item related) {
+            this.related=related;
         }
 
     }

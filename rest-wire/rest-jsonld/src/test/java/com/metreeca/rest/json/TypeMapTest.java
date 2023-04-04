@@ -73,16 +73,16 @@ final class TypeMapTest {
     @Nested final class Decode {
 
         @Test void testDecodeEmptyMap() {
-            assertThat(decode("{}", VMap.class)).isEqualTo(Map.of());
+            assertThat(decode("{}", Map.class)).isEqualTo(Map.of());
         }
 
         @Test void testDecodeSingletonMap() {
-            assertThat(decode("{\"one\":1}", VMap.class))
+            assertThat(decode("{\"one\":1}", Map.class))
                     .isEqualTo(Map.ofEntries(entry("one", integer(1))));
         }
 
         @Test void testDecodeExtendedMap() {
-            assertThat(decode("{\"one\":1,\"two\":2,\"three\":3}", VMap.class))
+            assertThat(decode("{\"one\":1,\"two\":2,\"three\":3}", Map.class))
                     .isEqualTo(Map.ofEntries(
                             entry("one", integer(1)),
                             entry("two", integer(2)),

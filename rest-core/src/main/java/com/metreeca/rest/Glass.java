@@ -446,10 +446,14 @@ final class Glass<T> {
                 throw new IllegalStateException("read-only property");
             }
 
-            try {
+            final Class<?> expected=setter.getParameterTypes()[0];
+            final Class<?> actual=value != null ? value.getClass() : Object.class;
 
-                final Class<?> expected=setter.getParameterTypes()[0];
-                final Class<?> actual=value != null ? value.getClass() : Object.class;
+            if ( Stash.class.isAssignableFrom(actual) && !Collection.class.isAssignableFrom(expected) ) {
+                throw new IllegalArgumentException("unexpected query outside collection");
+            }
+
+            try {
 
                 // !!! Sorted/NavigableSet
                 // !!! QueryCollection

@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
 
 import static com.metreeca.rest.json.JSON.json;
 
@@ -29,13 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 final class JSONTest {
 
-    static interface VSet extends Set<Object> { }
-
-    static interface VList extends List<Object> { }
-
-    static interface VCollection extends Collection<Object> { }
-
-    static interface VMap extends Map<String, Object> { }
+    public static class Bean { }
 
 
     static BigInteger integer(final long value) {
@@ -64,7 +57,7 @@ final class JSONTest {
 
     @Test void testReportLocation() {
 
-        assertThatExceptionOfType(com.metreeca.rest.json.JSON.Exception.class)
+        assertThatExceptionOfType(JSON.Exception.class)
                 .isThrownBy(() -> decode("nullnull", Object.class))
                 .withMessageStartingWith("(1,5)")
                 .satisfies(e -> assertThat(e.getLine()).isEqualTo(1))
@@ -73,7 +66,7 @@ final class JSONTest {
     }
 
     @Test void testReportUnexpectedEOF() {
-        assertThatExceptionOfType(com.metreeca.rest.json.JSON.Exception.class)
+        assertThatExceptionOfType(JSON.Exception.class)
                 .isThrownBy(() -> decode("{ ", Object.class))
                 .withMessageStartingWith("(1,3)")
                 .satisfies(e -> assertThat(e.getLine()).isEqualTo(1))
@@ -82,11 +75,17 @@ final class JSONTest {
     }
 
     @Test void testReportTrailingGarbage() {
-        assertThatExceptionOfType(com.metreeca.rest.json.JSON.Exception.class)
+        assertThatExceptionOfType(JSON.Exception.class)
                 .isThrownBy(() -> decode("{} {}", Object.class))
                 .withMessageStartingWith("(1,4)")
                 .satisfies(e -> assertThat(e.getLine()).isEqualTo(1))
                 .satisfies(e -> assertThat(e.getCol()).isEqualTo(4));
+    }
+
+
+    @Test void testReportUnexpectedQuery() {
+        assertThatExceptionOfType(JSON.Exception.class)
+                .isThrownBy(() -> { final Bean decode=decode("{ \"#\":  0 }", Bean.class); });
     }
 
 }

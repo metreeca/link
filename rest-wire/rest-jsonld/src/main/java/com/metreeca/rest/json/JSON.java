@@ -83,18 +83,18 @@ public final class JSON implements Codec {
 
     private List<Entry<Class<?>, Type<?>>> types=List.of(
 
-            entry(Void.class, new com.metreeca.rest.json.TypeVoid()),
-            entry(Boolean.class, new com.metreeca.rest.json.TypeBoolean()),
-            entry(Number.class, new com.metreeca.rest.json.TypeNumber()),
-            entry(String.class, new com.metreeca.rest.json.TypeString()),
-            entry(URI.class, new com.metreeca.rest.json.TypeURI()),
+            entry(Void.class, new TypeVoid()),
+            entry(Boolean.class, new TypeBoolean()),
+            entry(Number.class, new TypeNumber()),
+            entry(String.class, new TypeString()),
+            entry(URI.class, new TypeURI()),
 
-            entry(Table.class, new com.metreeca.rest.json.TypeTable()),
-            entry(Trace.class, new com.metreeca.rest.json.TypeTrace()),
+            entry(Table.class, new TypeTable()),
+            entry(Trace.class, new TypeTrace()),
 
-            entry(Collection.class, new com.metreeca.rest.json.TypeCollection()),
-            entry(Map.class, new com.metreeca.rest.json.TypeMap()),
-            entry(Object.class, new com.metreeca.rest.json.TypeObject())
+            entry(Collection.class, new TypeCollection()),
+            entry(Map.class, new TypeMap()),
+            entry(Object.class, new TypeObject())
 
     );
 
@@ -145,6 +145,7 @@ public final class JSON implements Codec {
                 .map(Entry::getValue)
 
                 .map(codec -> ((Type<T>)codec))
+
                 .orElseThrow(() -> new IllegalArgumentException(format(
                         "unsupported value type <%s>", value.getName()
                 )));
@@ -216,6 +217,12 @@ public final class JSON implements Codec {
 
         decoder.token(EOF);
 
+        // !!! Decoder.decode() may silently return a stashed value (Query/Table): see TypeObject
+
+        if ( value != null && !clazz.isInstance(value) ) {
+            throw new JSON.Exception("unexpected query outside collection");
+        }
+
         return value;
     }
 
@@ -237,14 +244,16 @@ public final class JSON implements Codec {
     public static final class Decoder {
 
         private final JSON json;
-        private final com.metreeca.rest.json.Lexer lexer;
+        private final Lexer lexer;
 
 
         private Decoder(final JSON json, final Readable source) {
             this.json=json;
-            this.lexer=new com.metreeca.rest.json.Lexer(source);
+            this.lexer=new Lexer(source);
         }
 
+
+        // !!! may silently return a stashed value (Query/Table): see TypeObject
 
         public <T> T decode(final Class<T> clazz) throws Exception, IOException {
 
@@ -256,7 +265,7 @@ public final class JSON implements Codec {
 
                 return json.type(clazz).decode(this, clazz);
 
-            } catch ( final Exception e ) {
+            } catch ( final JSON.Exception e ) {
 
                 throw e;
 
