@@ -155,6 +155,46 @@ final class TypeObjectTest {
         }
 
 
+        @Test void testLookupTableShapes() {
+            assertThat(query("{ \"alias=related\": { \"label\":  \"\"} }").template())
+                    .isInstanceOf(Table.class)
+                    .extracting(v -> (Table<?>)v)
+                    .satisfies(table -> assertThat(table.columns().get("alias").template())
+                            .isInstanceOf(Item.class)
+                            .extracting(Item.class::cast)
+                            .satisfies(item -> assertThat(item.getLabel())
+                                    .isEqualTo("")
+                            )
+                    );
+        }
+
+        @Test void testLookupTableNestedShapes() {
+            assertThat(query("{ \"alias=related.related\": { \"label\":  \"\"} }").template())
+                    .isInstanceOf(Table.class)
+                    .extracting(v -> (Table<?>)v)
+                    .satisfies(table -> assertThat(table.columns().get("alias").template())
+                            .isInstanceOf(Item.class)
+                            .extracting(Item.class::cast)
+                            .satisfies(item -> assertThat(item.getLabel())
+                                    .isEqualTo("")
+                            )
+                    );
+        }
+
+        @Test void testIgnoreTableComputedShapes() {
+            assertThat(query("{ \"alias=max:related\": { \"label\":  \"\"} }").template())
+                    .isInstanceOf(Table.class)
+                    .extracting(v -> (Table<?>)v)
+                    .satisfies(table -> assertThat(table.columns().get("alias").template())
+                            .isInstanceOf(Map.class)
+                            .extracting(v -> (Map<?, ?>)v)
+                            .satisfies(map -> assertThat(map)
+                                    .isEqualTo(Map.of("label", ""))
+                            )
+                    );
+        }
+
+
         @Test void testDecodeLtConstraint() {
             assertThat(query("{ \"<field\": \"value\" }").filters())
                     .containsExactly(entry(expression("field"), lt("value")));

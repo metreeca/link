@@ -33,6 +33,7 @@ import static com.metreeca.rest.Table.Column.column;
 import static com.metreeca.rest.json.JSON.Tokens.*;
 
 import static java.lang.String.format;
+import static java.util.function.Predicate.not;
 
 final class TypeObject implements Type<Object> {
 
@@ -334,10 +335,25 @@ final class TypeObject implements Type<Object> {
             final String name=alias.get().getKey();
             final Expression expression=expression(alias.get().getValue());
 
-            // !!! nested projected values (e.g. office.country)
+            final Shape _shape=Optional.of(shape)
 
-            final Shape _shape=shape.shape(name).orElse(null); // ;( handle IOException
-            final Object template=_shape != null ? value(decoder, _shape) : decoder.decode(Object.class);
+                    .filter(not(s -> expression.computed())) // !!! nothing to say about computed values?
+
+                    .flatMap(s -> {
+
+                        Optional<Shape> nested=Optional.of(s);
+
+                        for (final String step : expression.path()) {
+                            nested=nested.flatMap(current -> current.shape(step));
+                        }
+
+                        return nested;
+
+                    })
+
+                    .orElse(null);
+
+            final Object template=(_shape != null) ? value(decoder, _shape) : decoder.decode(Object.class);
 
             return Map.of(name, column(expression, template));
 
