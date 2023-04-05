@@ -175,10 +175,7 @@ final class Glass<T> {
                 final Property property=entry.getValue();
 
                 final Type type=property.type();
-
-                final Class<?> base=type instanceof Class ? (Class<?>)type :
-                        type instanceof ParameterizedType ? (Class<?>)((ParameterizedType)type).getRawType()
-                                : null;
+                final Class<?> base=clazz(type);
 
                 final Class<?> item=base != null && Collection.class.isAssignableFrom(base)
                         ? parameter(clazz, type)
@@ -273,6 +270,12 @@ final class Glass<T> {
 
     //// Collection Item Type //////////////////////////////////////////////////////////////////////////////////////////
 
+    private static Class<?> clazz(final Type type) {
+        return type instanceof Class ? (Class<?>)type :
+                type instanceof ParameterizedType ? (Class<?>)((ParameterizedType)type).getRawType()
+                        : null;
+    }
+
     private static Class<?> parameter(final Class<?> clazz, final Type type) {
         if ( type instanceof Class ) {
 
@@ -359,45 +362,76 @@ final class Glass<T> {
 
 
         Property merge(final Property property) {
+
             return new Property(
 
-                    merge(property, "types", e -> e.type),
+                    type(property),
 
-                    merge(property, "bases", e -> e.base),
-                    merge(property, "items", e -> e.item),
+                    field(property, "base", p -> p.base),
+                    field(property, "item", p -> p.item),
 
-                    merge(property, "getters", e -> e.getter),
-                    merge(property, "setters", e -> e.setter),
+                    getter(property),
+                    setter(property),
 
-                    merge(property, "fields", e -> e.field)
+                    field(property, "field", p -> p.field)
 
             );
         }
 
-        private <T> T merge(final Property property, final String kind, final Function<Property, T> extractor) {
+
+        private Type type(final Property property) {
+
+            final Type x=type;
+            final Type y=property.type;
+
+            return x == null ? y
+                    : y == null ? x
+                    : x instanceof Class && y instanceof Class && ((Class<?>)x).isAssignableFrom(((Class<?>)y)) ? y
+                    : x instanceof Class && y instanceof Class && ((Class<?>)y).isAssignableFrom(((Class<?>)x)) ? x
+                    : x.equals(y) ? x
+                    : error(property, "type");
+        }
+
+        private Method getter(final Property property) {
+
+            final Method x=getter;
+            final Method y=property.getter;
+
+            return x == null ? y
+                    : y == null ? x
+                    : x.getReturnType().isAssignableFrom(y.getReturnType()) ? y
+                    : y.getReturnType().isAssignableFrom(x.getReturnType()) ? x
+                    : error(property, "getter");
+        }
+
+        private Method setter(final Property property) {
+
+            final Method x=setter;
+            final Method y=property.setter;
+
+            return x == null ? y
+                    : y == null ? x
+                    : x.getParameterTypes()[0].isAssignableFrom(y.getParameterTypes()[0]) ? x
+                    : y.getParameterTypes()[0].isAssignableFrom(x.getParameterTypes()[0]) ? y
+                    : error(property, "setter");
+        }
+
+
+        private <T> T field(final Property property, final String kind, final Function<Property, T> extractor) {
 
             final T x=extractor.apply(this);
             final T y=extractor.apply(property);
 
-            if ( x == null ) {
-
-                return y;
-
-            } else if ( y == null || y.equals(x) ) {
-
-                return x;
-
-            } else {
-
-                throw new IllegalArgumentException(format(
-                        "conflicting bean property <%s> %s / %s", kind, this, property
-                ));
-
-            }
+            return x == null ? y
+                    : y == null || y.equals(x) ? x
+                    : error(property, kind);
         }
 
-
-        private Type type() { return type; }
+        private <T> T error(final Property property, final String field) {
+            throw new IllegalArgumentException(format(
+                    "conflicting bean property <%s> %s / %s", field, this, property
+            ));
+        }
 
 
         <T extends Annotation> Optional<T> annotation(final Class<T> clazz) {
@@ -415,6 +449,9 @@ final class Glass<T> {
 
                     });
         }
+
+
+        Type type() { return type; }
 
 
         Class<?> base() { return base; }

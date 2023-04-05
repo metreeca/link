@@ -21,7 +21,7 @@ import com.metreeca.rest.rdf4j.RDF4J.*;
 
 import org.eclipse.rdf4j.model.*;
 
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -29,7 +29,7 @@ import static com.metreeca.rest.Frame.frame;
 
 final class TypeObject implements Type<Object> {
 
-    @Override public Map.Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final Object value) {
+    @Override public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final Object value) {
         return encoder.encode(frame(value));
     }
 

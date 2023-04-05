@@ -42,6 +42,7 @@ final class GlassTest {
             this.string=string;
         }
 
+
         public Object getObject() {
             return object;
         }
@@ -59,8 +60,113 @@ final class GlassTest {
                 .isEqualTo(Set.of("string", "object"));
     }
 
+    // !!! set null >> primitive default value
 
-    @Test void testReportInconsistentAccessorTypes() {
+
+    @Test void testHandleCovariantGetters() {
+
+        class Base {
+
+            public Object getValue() { return "base"; }
+
+        }
+
+        class Bean extends Base {
+
+            @Override public String getValue() { return "bean"; }
+
+        }
+
+        assertThat(glass(Bean.class).properties())
+                .anySatisfy((field, property) -> {
+
+                    assertThat(field).isEqualTo("value");
+                    assertThat(property.<String>get(new Bean())).isEqualTo("bean");
+
+                });
+
+    }
+
+    @Test void testHandleOverriddenSetters() {
+
+        class Base {
+
+            private String value;
+
+
+            public String getValue() { return value; }
+
+            public void setValue(final String value) { this.value=value; }
+
+        }
+
+        class Bean extends Base {
+
+            @Override public void setValue(final String value) { super.setValue("bean/"+value); }
+
+        }
+
+        assertThat(glass(Bean.class).properties())
+                .anySatisfy((field, property) -> {
+
+                    final Bean bean=new Bean();
+
+                    property.set(bean, "test");
+
+                    assertThat(field).isEqualTo("value");
+                    assertThat(property.<String>get(bean)).isEqualTo("bean/test");
+
+                });
+    }
+
+    @Test void testHandleOverloadedSetters() {
+
+        class Bean {
+
+            private String value;
+
+
+            public String getValue() { return value; }
+
+
+            public void setValue(final String value) { this.value="string/"+value; }
+
+            public void setValue(final Object value) { this.value="object/"+value; }
+
+        }
+
+        assertThat(glass(Bean.class).properties())
+                .anySatisfy((field, property) -> {
+
+                    final Bean bean=new Bean();
+
+                    property.set(bean, "test");
+
+                    assertThat(field).isEqualTo("value");
+                    assertThat(property.<String>get(bean)).isEqualTo("object/test");
+
+                });
+    }
+
+    @Test void testReportUnrelatedSetters() {
+
+        class Base {
+
+            public void setValue(final Base value) { }
+
+        }
+
+        class Bean extends Base {
+
+            public void setValue(final String value) { }
+
+        }
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> glass(Bean.class));
+    }
+
+    @Test void testReportInconsistentAccessors() {
 
         class Broken {
 
@@ -73,11 +179,6 @@ final class GlassTest {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> glass(Broken.class));
     }
-
-    // !!! handle contra-variant setter
-    // !!! report multiple setters
-
-    // !!! set null >> primitive default value
 
 
     @Nested final class Collections {
