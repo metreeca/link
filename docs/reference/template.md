@@ -6,23 +6,23 @@ excerpt: Lorem ipsum sit amet.
 ```typescript
 type Model={
 
-    "{field}": Value | Model | [Query]
+    "{field}": Plain | Model | [Query]
 
 }
 
 type Query=Partial<Model & {
 
-    "{field}={expression}": Value | Model | [Query]
+    "{field}={expression}": Plain | Model | [Query]
 
-    "<{expression}": Value // less than
-    ">{expression}": Value // greater than
+    "<{expression}": Plain // less than
+    ">{expression}": Plain // greater than
 
-    "<={expression}": Value // less than or equal
-    ">={expression}": Value // greater than or equal
+    "<={expression}": Plain // less than or equal
+    ">={expression}": Plain // greater than or equal
 
     "~{expression}": string // like (stemmed word search)
 
-    "?{expression}": (null | Value | Model)[] // any
+    "?{expression}": (null | Plain | Model)[] // any
 
     "^": { "{expression}": "increasing" | "decreasing" } // sorting
 
@@ -31,7 +31,7 @@ type Query=Partial<Model & {
 
 }>
 
-type Value=boolean | number | string
+type Plain=boolean | number | string
 ```
 
 [ABNF](https://en.wikipedia.org/wiki/Augmented_Backus–Naur_form)

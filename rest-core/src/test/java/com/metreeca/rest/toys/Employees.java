@@ -17,10 +17,13 @@
 package com.metreeca.rest.toys;
 
 
+import com.metreeca.rest.jsonld.Virtual;
+
 import java.util.Set;
 
 import static com.metreeca.rest.Frame.with;
 
+@Virtual
 public final class Employees extends Resources<Employee> {
 
     public static final Set<Employee> Employees=Set.of(

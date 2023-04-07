@@ -39,17 +39,20 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 final class RDF4JTest extends EngineTest {
 
     @Override protected Engine engine() {
-        return rdf4j(new SailRepository(new MemoryStore()));
+
+        final RDF4J engine=rdf4j(new SailRepository(new MemoryStore()));
+
+        Employees.forEach(engine::create);
+
+        return engine;
     }
 
 
     @Nested final class Retrieve {
 
-        @Test void test() {
+        @Test void testX() {
 
             final Engine engine=engine();
-
-            Employees.forEach(engine::create);
 
             final String relative="/employees/1002";
             final String absolute=id(relative);
@@ -256,8 +259,8 @@ final class RDF4JTest extends EngineTest {
 
             final Office update=with(new Office(), office -> {
 
-                office.setId(id("/offices/1"));
-                office.setLabel("Berkeley (USA)");
+                office.setId(id("/employees/999"));
+                office.setLabel("Memmo Cancelli");
 
             });
 
@@ -291,7 +294,6 @@ final class RDF4JTest extends EngineTest {
                             .isEqualTo(delete.getId())
                     );
 
-
             assertThat(engine.retrieve(with(new Office(), o -> o.setId(delete.getId()))))
                     .isEmpty();
 
@@ -302,7 +304,7 @@ final class RDF4JTest extends EngineTest {
 
             final Engine engine=engine();
 
-            final Office delete=with(new Office(), office -> office.setId(id("/offices/1")));
+            final Office delete=with(new Office(), office -> office.setId(id("/employees/999")));
 
             assertThat(engine.delete(delete))
                     .isEmpty();

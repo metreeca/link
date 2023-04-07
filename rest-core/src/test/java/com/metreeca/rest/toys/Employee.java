@@ -17,11 +17,13 @@
 package com.metreeca.rest.toys;
 
 import com.metreeca.rest.jsonld.Property;
+import com.metreeca.rest.jsonld.Type;
 import com.metreeca.rest.shacl.*;
 
 import java.util.Set;
 
 
+@Type
 public final class Employee extends Resource {
 
     @Required
