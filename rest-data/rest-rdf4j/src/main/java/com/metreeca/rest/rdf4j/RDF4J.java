@@ -26,6 +26,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
@@ -79,6 +80,7 @@ public final class RDF4J implements Engine {
             entry(Integer.class, new TypeInteger()),
 
             entry(String.class, new TypeString()),
+            entry(URI.class, new TypeURI()),
 
             entry(Frame.class, new TypeFrame()),
             entry(List.class, new TypeList()),

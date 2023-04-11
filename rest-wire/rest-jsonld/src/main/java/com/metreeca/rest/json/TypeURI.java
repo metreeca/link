@@ -30,7 +30,7 @@ import static java.lang.String.format;
 final class TypeURI implements Type<URI> {
 
     @Override public void encode(final com.metreeca.rest.json.JSON.Encoder encoder, final URI value) throws IOException {
-        encoder.write(value.toString());
+        encoder.escape(value.toString());
     }
 
     @Override public URI decode(final Decoder decoder, final Class<URI> clazz) throws IOException {

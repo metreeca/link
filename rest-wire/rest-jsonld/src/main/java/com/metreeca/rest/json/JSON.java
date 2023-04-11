@@ -398,10 +398,116 @@ public final class JSON implements Codec {
         }
 
         public void write(final String string) throws IOException {
+
+            if ( string == null ) {
+                throw new NullPointerException("null string");
+            }
+
             target.append(string);
         }
 
-    }
 
+        public void escape(final String string) throws IOException {
+
+            if ( string == null ) {
+                throw new NullPointerException("null string");
+            }
+
+            write('"');
+
+            for (int i=0, n=string.length(); i < n; ++i) {
+
+                final char c=string.charAt(i);
+
+                switch ( c ) {
+
+                    case '\u0000':
+                    case '\u0001':
+                    case '\u0002':
+                    case '\u0003':
+                    case '\u0004':
+                    case '\u0005':
+                    case '\u0006':
+                    case '\u0007':
+
+                    case '\u000B':
+
+                    case '\u000E':
+                    case '\u000F':
+                    case '\u0010':
+                    case '\u0011':
+                    case '\u0012':
+                    case '\u0013':
+                    case '\u0014':
+                    case '\u0015':
+                    case '\u0016':
+                    case '\u0017':
+                    case '\u0018':
+                    case '\u0019':
+                    case '\u001A':
+                    case '\u001B':
+                    case '\u001C':
+                    case '\u001D':
+                    case '\u001E':
+                    case '\u001F':
+
+                        write(format("\\u%04X", (int)c));
+
+                        break;
+
+                    case '\b':
+
+                        write("\\b");
+
+                        break;
+
+                    case '\f':
+
+                        write("\\f");
+
+                        break;
+
+                    case '\n':
+
+                        write("\\n");
+
+                        break;
+
+                    case '\r':
+
+                        write("\\r");
+
+                        break;
+
+                    case '\t':
+
+                        write("\\t");
+
+                        break;
+
+                    case '"':
+
+                        write("\\\"");
+
+                        break;
+
+                    case '\\':
+
+                        write("\\\\");
+
+                        break;
+
+                    default:
+
+                        write(c);
+
+                        break;
+
+                }
+            }
+
+            write('"');
+        }
+    }
 
 }
