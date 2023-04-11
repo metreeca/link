@@ -33,7 +33,6 @@ import static com.metreeca.rest.Table.Column.column;
 import static com.metreeca.rest.json.JSON.Tokens.*;
 
 import static java.lang.String.format;
-import static java.util.function.Predicate.not;
 
 final class TypeObject implements Type<Object> {
 
@@ -232,61 +231,51 @@ final class TypeObject implements Type<Object> {
     }
 
 
-    private Query<?> query(final Decoder decoder, final String field, final Shape shape) throws IOException {
+    private Query<?> query(final Decoder decoder, final String constraint, final Shape shape) throws IOException {
 
-        if ( field.equals("@") ) {
+        if ( constraint.startsWith("<=") ) {
 
-            return offset(Integer.parseInt(decoder.token(NUMBER)));
+            final Expression expression=expression(constraint.substring(2));
+            final Object value=decoder.decode(shape.shape(expression).flatMap(Shape::clazz).orElse(Object.class));
 
-        } else if ( field.equals("#") ) {
+            return filter(expression, lte(value));
 
-            return limit(Integer.parseInt(decoder.token(NUMBER)));
+        } else if ( constraint.startsWith(">=") ) {
 
-        } else if ( field.startsWith("<=") ) {
+            final Expression expression=expression(constraint.substring(2));
+            final Object value=decoder.decode(shape.shape(expression).flatMap(Shape::clazz).orElse(Object.class));
 
-            return filter(
-                    expression(field.substring(2)),
-                    lte(decoder.decode(Object.class))
-            );
+            return filter(expression, gte(value));
 
-        } else if ( field.startsWith(">=") ) {
+        } else if ( constraint.startsWith("<") ) {
 
-            return filter(
-                    expression(field.substring(2)),
-                    gte(decoder.decode(Object.class))
-            );
+            final Expression expression=expression(constraint.substring(1));
+            final Object value=decoder.decode(shape.shape(expression).flatMap(Shape::clazz).orElse(Object.class));
 
-        } else if ( field.startsWith("<") ) {
+            return filter(expression, lt(value));
 
-            return filter(
-                    expression(field.substring(1)),
-                    lt(decoder.decode(Object.class))
-            );
+        } else if ( constraint.startsWith(">") ) {
 
-        } else if ( field.startsWith(">") ) {
+            final Expression expression=expression(constraint.substring(1));
+            final Object value=decoder.decode(shape.shape(expression).flatMap(Shape::clazz).orElse(Object.class));
 
-            return filter(
-                    expression(field.substring(1)),
-                    gt(decoder.decode(Object.class))
-            );
+            return filter(expression, gt(value));
 
-        } else if ( field.startsWith("~") ) {
+        } else if ( constraint.startsWith("~") ) {
 
-            final String keywords=decoder.token(STRING);
+            final Expression expression=expression(constraint.substring(1));
+            final String value=decoder.token(STRING);
 
-            return keywords.isBlank() ? null : filter(
-                    expression(field.substring(1)),
-                    like(keywords)
-            );
+            return value.isBlank() ? null : filter(expression, like(value));
 
-        } else if ( field.startsWith("?") ) {
+        } else if ( constraint.startsWith("?") ) {
 
-            return filter(
-                    expression(field.substring(1)),
-                    any(decoder.decode(Collection.class))
-            );
+            final Expression expression=expression(constraint.substring(1));
+            final Collection<?> value=array(decoder, shape.shape(expression).flatMap(Shape::clazz).orElse(Object.class));
 
-        } else if ( field.startsWith("^") ) {
+            return filter(expression, any(value));
+
+        } else if ( constraint.startsWith("^") ) {
 
             final Collection<Query<?>> queries=new ArrayList<>();
 
@@ -318,6 +307,14 @@ final class TypeObject implements Type<Object> {
 
             return Query.query(queries);
 
+        } else if ( constraint.equals("@") ) {
+
+            return offset(Integer.parseInt(decoder.token(NUMBER)));
+
+        } else if ( constraint.equals("#") ) {
+
+            return limit(Integer.parseInt(decoder.token(NUMBER)));
+
         } else {
 
             return null;
@@ -335,23 +332,7 @@ final class TypeObject implements Type<Object> {
             final String name=alias.get().getKey();
             final Expression expression=expression(alias.get().getValue());
 
-            final Shape _shape=Optional.of(shape)
-
-                    .filter(not(s -> expression.computed())) // !!! nothing to say about computed values?
-
-                    .flatMap(s -> {
-
-                        Optional<Shape> nested=Optional.of(s);
-
-                        for (final String step : expression.path()) {
-                            nested=nested.flatMap(current -> current.shape(step));
-                        }
-
-                        return nested;
-
-                    })
-
-                    .orElse(null);
+            final Shape _shape=shape.shape(expression).orElse(null); // ; null+if to handle IOException
 
             final Object template=(_shape != null) ? value(decoder, _shape) : decoder.decode(Object.class);
 

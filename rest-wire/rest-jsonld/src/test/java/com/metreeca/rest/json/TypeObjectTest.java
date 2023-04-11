@@ -156,7 +156,7 @@ final class TypeObjectTest {
 
 
         @Test void testLookupTableShapes() {
-            assertThat(query("{ \"alias=related\": { \"label\":  \"\"} }").template())
+            assertThat(query("{ \"alias=item\": { \"label\":  \"\"} }").template())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
                     .satisfies(table -> assertThat(table.columns().get("alias").template())
@@ -169,7 +169,7 @@ final class TypeObjectTest {
         }
 
         @Test void testLookupTableNestedShapes() {
-            assertThat(query("{ \"alias=related.related\": { \"label\":  \"\"} }").template())
+            assertThat(query("{ \"alias=item.item\": { \"label\":  \"\"} }").template())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
                     .satisfies(table -> assertThat(table.columns().get("alias").template())
@@ -182,7 +182,7 @@ final class TypeObjectTest {
         }
 
         @Test void testIgnoreTableComputedShapes() {
-            assertThat(query("{ \"alias=max:related\": { \"label\":  \"\"} }").template())
+            assertThat(query("{ \"alias=max:items\": { \"label\":  \"\"} }").template())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
                     .satisfies(table -> assertThat(table.columns().get("alias").template())
@@ -280,6 +280,19 @@ final class TypeObjectTest {
                     .isThrownBy(() -> query("{ \"#\": true  }"));
         }
 
+
+        @Test void testReportUnexpectedScalarValueType() {
+            assertThatExceptionOfType(JSON.Exception.class)
+                    .isThrownBy(() -> query("{ \">=integer\": \"100\"  }"));
+
+        }
+
+        @Test void testReportUnexpectedCollectionValueType() {
+            assertThatExceptionOfType(JSON.Exception.class)
+                    .isThrownBy(() -> query("{ \"?integer\": [\"100\"]  }"));
+
+        }
+
     }
 
 
@@ -328,7 +341,10 @@ final class TypeObjectTest {
 
         private String label;
 
-        private Item related;
+        private Item item;
+
+        private Integer integer;
+        private Set<Integer> integers;
 
 
         public String getLabel() {
@@ -340,12 +356,30 @@ final class TypeObjectTest {
         }
 
 
-        public Item getRelated() {
-            return related;
+        public Item getItem() {
+            return item;
         }
 
-        public void setRelated(final Item related) {
-            this.related=related;
+        public void setItem(final Item item) {
+            this.item=item;
+        }
+
+
+        public Integer getInteger() {
+            return integer;
+        }
+
+        public void setInteger(final Integer integer) {
+            this.integer=integer;
+        }
+
+
+        public Set<Integer> getIntegers() {
+            return integers;
+        }
+
+        public void setIntegers(final Set<Integer> integers) {
+            this.integers=integers;
         }
 
     }

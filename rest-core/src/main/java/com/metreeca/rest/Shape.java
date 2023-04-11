@@ -16,6 +16,7 @@
 
 package com.metreeca.rest;
 
+import com.metreeca.rest.Stash.Expression;
 import com.metreeca.rest.jsonld.*;
 
 import java.util.*;
@@ -512,6 +513,29 @@ public abstract class Shape {
         }
 
         return Optional.empty();
+    }
+
+    public Optional<Shape> shape(final Expression expression) {
+
+        if ( expression == null ) {
+            throw new NullPointerException("null expression");
+        }
+
+        return Optional.of(this)
+
+                .filter(not(s -> expression.computed())) // !!! nothing to say about computed values?
+
+                .flatMap(s -> {
+
+                    Optional<Shape> nested=Optional.of(s);
+
+                    for (final String step : expression.path()) {
+                        nested=nested.flatMap(current -> current.shape(step));
+                    }
+
+                    return nested;
+
+                });
     }
 
 
