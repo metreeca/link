@@ -19,7 +19,6 @@ package com.metreeca.rest.json;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.net.URI;
 
 import static com.metreeca.rest.json.JSONTest.decode;
@@ -31,19 +30,23 @@ final class TypeURITest {
 
     @Nested final class Encode {
 
-        @Test void testEncodeURIs() throws IOException {
-            assertThat(encode(URI.create("https://ex.com/absolute"))).isEqualTo("https://ex.com/absolute");
-            assertThat(encode(URI.create("/relative"))).isEqualTo("/relative");
+        @Test void testEncodeURIs() {
+            assertThat(encode(URI.create("https://ex.com/absolute"))).isEqualTo("\"https://ex.com/absolute\"");
+            assertThat(encode(URI.create("/relative"))).isEqualTo("\"/relative\"");
         }
 
     }
 
     @Nested final class Decode {
 
-        @Test void testDecodeURIs() throws IOException {
-            assertThat(decode("\"https://ex.com/absolute\"", URI.class)).isEqualTo(URI.create("https://ex"
-                    +".com/absolute"));
-            assertThat(decode("\"/relative\"", URI.class)).isEqualTo(URI.create("/relative"));
+        @Test void testDecodeURIs() {
+
+            assertThat(decode("\"https://ex.com/absolute\"", URI.class))
+                    .isEqualTo(URI.create("https://ex.com/absolute"));
+
+            assertThat(decode("\"/relative\"", URI.class))
+                    .isEqualTo(URI.create("/relative"));
+
         }
 
     }
