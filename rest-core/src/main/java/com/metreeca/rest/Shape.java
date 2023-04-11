@@ -17,6 +17,7 @@
 package com.metreeca.rest;
 
 import com.metreeca.rest.Stash.Expression;
+import com.metreeca.rest.Stash.Transform;
 import com.metreeca.rest.jsonld.*;
 
 import java.util.*;
@@ -523,17 +524,27 @@ public abstract class Shape {
 
         return Optional.of(this)
 
-                .filter(not(s -> expression.computed())) // !!! nothing to say about computed values?
+                .flatMap(shape -> {
 
-                .flatMap(s -> {
-
-                    Optional<Shape> nested=Optional.of(s);
+                    Optional<Shape> nested=Optional.of(shape);
 
                     for (final String step : expression.path()) {
                         nested=nested.flatMap(current -> current.shape(step));
                     }
 
                     return nested;
+
+                })
+
+                .flatMap(shape -> {
+
+                    Optional<Shape> transformed=Optional.of(shape);
+
+                    for (final Transform transform : expression.transforms()) {
+                        transformed=transformed.flatMap(transform::apply);
+                    }
+
+                    return transformed;
 
                 });
     }

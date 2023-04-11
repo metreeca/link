@@ -22,6 +22,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static com.metreeca.rest.Shape.*;
+
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Map.entry;
@@ -40,20 +42,48 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
      */
     public static enum Transform {
 
-        count(true),
+        count(true) {
+            @Override public Optional<Shape> apply(final Shape shape) {
+                return Optional.of(shape(minCount(1), maxCount(1), clazz(Integer.class)));
+            }
+        },
 
-        sum(true),
+        sum(true) {
+            @Override public Optional<Shape> apply(final Shape shape) {
+                return shape.clazz().map(clazz -> shape(maxCount(1), clazz(clazz)));
+            }
+        },
 
-        min(true),
+        min(true) {
+            @Override public Optional<Shape> apply(final Shape shape) {
+                return shape.clazz().map(clazz -> shape(maxCount(1), clazz(clazz)));
+            }
+        },
 
-        max(true),
+        max(true) {
+            @Override public Optional<Shape> apply(final Shape shape) {
+                return shape.clazz().map(clazz -> shape(maxCount(1), clazz(clazz)));
+            }
+        },
 
-        avg(true),
+        avg(true) {
+            @Override public Optional<Shape> apply(final Shape shape) {
+                return shape.clazz().map(clazz -> shape(maxCount(1), clazz(clazz)));
+            }
+        },
 
-        sample(true),
+        sample(true) {
+            @Override public Optional<Shape> apply(final Shape shape) {
+                return shape.clazz().map(clazz -> shape(maxCount(1), clazz(clazz)));
+            }
+        },
 
 
-        abs(false);
+        abs(false) {
+            @Override public Optional<Shape> apply(final Shape shape) {
+                return Optional.of(shape);
+            }
+        };
 
 
         private final boolean aggregate;
@@ -67,6 +97,8 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
         public boolean aggregate() {
             return aggregate;
         }
+
+        public abstract Optional<Shape> apply(final Shape shape);
 
     }
 
