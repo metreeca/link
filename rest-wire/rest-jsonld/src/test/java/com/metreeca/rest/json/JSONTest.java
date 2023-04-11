@@ -57,7 +57,7 @@ final class JSONTest {
 
     @Test void testReportLocation() {
 
-        assertThatExceptionOfType(JSON.Exception.class)
+        assertThatExceptionOfType(JSONException.class)
                 .isThrownBy(() -> decode("nullnull", Object.class))
                 .withMessageStartingWith("(1,5)")
                 .satisfies(e -> assertThat(e.getLine()).isEqualTo(1))
@@ -66,7 +66,7 @@ final class JSONTest {
     }
 
     @Test void testReportUnexpectedEOF() {
-        assertThatExceptionOfType(JSON.Exception.class)
+        assertThatExceptionOfType(JSONException.class)
                 .isThrownBy(() -> decode("{ ", Object.class))
                 .withMessageStartingWith("(1,3)")
                 .satisfies(e -> assertThat(e.getLine()).isEqualTo(1))
@@ -75,7 +75,7 @@ final class JSONTest {
     }
 
     @Test void testReportTrailingGarbage() {
-        assertThatExceptionOfType(JSON.Exception.class)
+        assertThatExceptionOfType(JSONException.class)
                 .isThrownBy(() -> decode("{} {}", Object.class))
                 .withMessageStartingWith("(1,4)")
                 .satisfies(e -> assertThat(e.getLine()).isEqualTo(1))
@@ -84,7 +84,7 @@ final class JSONTest {
 
 
     @Test void testReportUnexpectedQuery() {
-        assertThatExceptionOfType(JSON.Exception.class)
+        assertThatExceptionOfType(JSONException.class)
                 .isThrownBy(() -> { final Bean decode=decode("{ \"#\":  0 }", Bean.class); });
     }
 

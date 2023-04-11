@@ -19,6 +19,7 @@ package com.metreeca.rest.json;
 import java.io.IOException;
 import java.nio.CharBuffer;
 
+import static com.metreeca.rest.json.JSON.Tokens;
 import static com.metreeca.rest.json.JSON.Tokens.*;
 
 import static java.lang.String.format;
@@ -34,7 +35,7 @@ final class Lexer {
 
     private boolean cr;
 
-    private com.metreeca.rest.json.JSON.Tokens type;
+    private Tokens type;
 
     private final CharBuffer buffer=CharBuffer.allocate(1024).limit(0);
     private final StringBuilder token=new StringBuilder(100);
@@ -45,7 +46,7 @@ final class Lexer {
     }
 
 
-    com.metreeca.rest.json.JSON.Tokens type() throws com.metreeca.rest.json.JSON.Exception, IOException {
+    Tokens type() throws JSONException, IOException {
 
         if ( type != null ) {
 

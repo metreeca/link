@@ -220,7 +220,7 @@ public final class JSON implements Codec {
         // !!! Decoder.decode() may silently return a stashed value (Query/Table): see TypeObject
 
         if ( value != null && !clazz.isInstance(value) ) {
-            throw new JSON.Exception("unexpected query outside collection");
+            throw new JSONException("unexpected query outside collection");
         }
 
         return value;
@@ -236,7 +236,7 @@ public final class JSON implements Codec {
 
         public void encode(final Encoder encoder, final T value) throws IOException;
 
-        public T decode(final Decoder decoder, final Class<T> clazz) throws IOException, Exception;
+        public T decode(final Decoder decoder, final Class<T> clazz) throws IOException, JSONException;
 
     }
 
@@ -255,7 +255,7 @@ public final class JSON implements Codec {
 
         // !!! may silently return a stashed value (Query/Table): see TypeObject
 
-        public <T> T decode(final Class<T> clazz) throws Exception, IOException {
+        public <T> T decode(final Class<T> clazz) throws JSONException, IOException {
 
             if ( clazz == null ) {
                 throw new NullPointerException("null clazz");
@@ -265,7 +265,7 @@ public final class JSON implements Codec {
 
                 return json.type(clazz).decode(this, clazz);
 
-            } catch ( final JSON.Exception e ) {
+            } catch ( final JSONException e ) {
 
                 throw e;
 
@@ -275,7 +275,7 @@ public final class JSON implements Codec {
 
             } catch ( final RuntimeException e ) {
 
-                throw new Exception(e.getMessage(), lexer.line(), lexer.col(), e);
+                throw new JSONException(e.getMessage(), lexer.line(), lexer.col(), e);
 
             }
         }
@@ -294,7 +294,7 @@ public final class JSON implements Codec {
             final Tokens actual=type();
 
             if ( actual != expected ) {
-                throw new Exception(
+                throw new JSONException(
                         format("expected %s, found %s", expected.description(), actual.description()),
                         lexer.line(), lexer.col()
                 );
@@ -321,7 +321,7 @@ public final class JSON implements Codec {
 
 
         @SuppressWarnings("unchecked")
-        public void encode(final Object value) throws Exception, IOException {
+        public void encode(final Object value) throws JSONException, IOException {
             try {
 
                 ((Type<Object>)(value == null
@@ -329,7 +329,7 @@ public final class JSON implements Codec {
                         : json.type(value.getClass())
                 )).encode(this, value);
 
-            } catch ( final Exception e ) {
+            } catch ( final JSONException e ) {
 
                 throw e;
 
@@ -337,8 +337,8 @@ public final class JSON implements Codec {
 
 
                 throw e.getClass().equals(RuntimeException.class)
-                        ? new Exception(e.getMessage())
-                        : new Exception(e.getMessage(), e);
+                        ? new JSONException(e.getMessage())
+                        : new JSONException(e.getMessage(), e);
 
             }
         }
@@ -403,61 +403,5 @@ public final class JSON implements Codec {
 
     }
 
-
-    public static final class Exception extends RuntimeException {
-
-        private static final long serialVersionUID=-1267685327499864471L;
-
-
-        private final int line;
-        private final int col;
-
-
-        private Exception(final String message) {
-
-            super(message);
-
-            this.line=0;
-            this.col=0;
-
-        }
-
-        private Exception(final String message, final Throwable cause) {
-
-            super(message, cause);
-
-            this.line=0;
-            this.col=0;
-
-        }
-
-        private Exception(final String message, final int line, final int col) {
-
-            super(format("(%d,%d) %s", line, col, message));
-
-            this.line=line;
-            this.col=col;
-
-        }
-
-        private Exception(final String message, final int line, final int col, final Throwable cause) {
-
-            super(format("(%d,%d) %s", line, col, message), cause);
-
-            this.line=line;
-            this.col=col;
-
-        }
-
-
-        public int getLine() {
-            return line;
-        }
-
-        public int getCol() {
-            return col;
-        }
-
-    }
 
 }

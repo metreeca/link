@@ -106,7 +106,7 @@ final class TypeObjectTest {
 
 
         @Test void testReportUnexpectedQuery() {
-            assertThatExceptionOfType(JSON.Exception.class)
+            assertThatExceptionOfType(JSONException.class)
                     .isThrownBy(() -> decode("{ \"related\": { \"#\":  0 } }", Item.class));
         }
 
@@ -221,7 +221,7 @@ final class TypeObjectTest {
         }
 
         @Test void testReportMalformedLikeConstraint() {
-            assertThatExceptionOfType(com.metreeca.rest.json.JSON.Exception.class)
+            assertThatExceptionOfType(JSONException.class)
                     .isThrownBy(() -> query("{ \"~field\": 0 }"));
         }
 
@@ -235,7 +235,7 @@ final class TypeObjectTest {
         }
 
         @Test void testReportUnknownConstraints() {
-            assertThatExceptionOfType(com.metreeca.rest.json.JSON.Exception.class)
+            assertThatExceptionOfType(JSONException.class)
                     .isThrownBy(() -> query("{ \"±field\": 0 }"));
         }
 
@@ -250,10 +250,10 @@ final class TypeObjectTest {
 
         @Test void testReportMalformedOrder() {
 
-            assertThatExceptionOfType(com.metreeca.rest.json.JSON.Exception.class)
+            assertThatExceptionOfType(JSONException.class)
                     .isThrownBy(() -> query("{ \"^\": 0 }"));
 
-            assertThatExceptionOfType(com.metreeca.rest.json.JSON.Exception.class)
+            assertThatExceptionOfType(JSONException.class)
                     .isThrownBy(() -> query("{ \"^\": { \"y\": 0 } }"));
 
         }
@@ -265,7 +265,7 @@ final class TypeObjectTest {
         }
 
         @Test void testReportMalformedOffset() {
-            assertThatExceptionOfType(com.metreeca.rest.json.JSON.Exception.class)
+            assertThatExceptionOfType(JSONException.class)
                     .isThrownBy(() -> query("{ \"@\": true  }"));
         }
 
@@ -276,19 +276,19 @@ final class TypeObjectTest {
         }
 
         @Test void testReportMalformedLimit() {
-            assertThatExceptionOfType(com.metreeca.rest.json.JSON.Exception.class)
+            assertThatExceptionOfType(JSONException.class)
                     .isThrownBy(() -> query("{ \"#\": true  }"));
         }
 
 
         @Test void testReportUnexpectedScalarValueType() {
-            assertThatExceptionOfType(JSON.Exception.class)
+            assertThatExceptionOfType(JSONException.class)
                     .isThrownBy(() -> query("{ \">=integer\": \"100\"  }"));
 
         }
 
         @Test void testReportUnexpectedCollectionValueType() {
-            assertThatExceptionOfType(JSON.Exception.class)
+            assertThatExceptionOfType(JSONException.class)
                     .isThrownBy(() -> query("{ \"?integer\": [\"100\"]  }"));
 
         }
