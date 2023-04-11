@@ -19,6 +19,8 @@ package com.metreeca.rest.json;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+
 import static com.metreeca.rest.json.JSONTest.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,11 +35,13 @@ final class TypeNumberTest {
         }
 
         @Test void testEncodeDecimals() {
-            assertThat(encode(123.345)).isEqualTo("123.345");
-            assertThat(encode(-123.345)).isEqualTo("-123.345");
+            assertThat(encode(BigDecimal.valueOf(123.345))).isEqualTo("123.345");
+            assertThat(encode(BigDecimal.valueOf(-123.345))).isEqualTo("-123.345");
         }
 
         @Test void testEncodeReals() {
+            assertThat(encode(1.345)).isEqualTo("1.345E0");
+            assertThat(encode(-1.345)).isEqualTo("-1.345E0");
             assertThat(encode(1.345e56)).isEqualTo("1.345E56");
             assertThat(encode(-1.345e56)).isEqualTo("-1.345E56");
             assertThat(encode(1.345e-56)).isEqualTo("1.345E-56");
