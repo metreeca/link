@@ -266,7 +266,7 @@ final class TypeObject implements Type<Object> {
             final Expression expression=expression(constraint.substring(1));
             final String value=decoder.token(STRING);
 
-            return value.isBlank() ? null : filter(expression, like(value));
+            return value.isBlank() ? Query.query() : filter(expression, like(value));
 
         } else if ( constraint.startsWith("?") ) {
 
