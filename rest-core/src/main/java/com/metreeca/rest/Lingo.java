@@ -29,8 +29,6 @@ import static java.util.function.Predicate.not;
  */
 final class Lingo {
 
-    private static final String DefaultSpace="app:#";
-
     private static final Pattern SchemaPattern=Pattern.compile("(?<schema>[a-zA-Z0-9][-+.a-zA-Z0-9]*)");
     private static final Pattern BasePattern=Pattern.compile("(?<base>"+SchemaPattern+":(?://[^/\\s]*/)?)");
     private static final Pattern AbsolutePattern=Pattern.compile(BasePattern+"(?<path>\\S*[/#](?<label>\\w+)|\\S+)");
@@ -106,7 +104,7 @@ final class Lingo {
                     final Optional<String> value=Optional.ofNullable(namespaces.get(prefix));
 
                     final String base=prefix.isEmpty()
-                            ? value.orElse(DefaultSpace)
+                            ? value.orElse(Frame.DefaultSpace)
                             : value.orElseThrow(() -> new IllegalArgumentException(format(
                             "undefined namespace prefix <%s>", prefix
                     )));

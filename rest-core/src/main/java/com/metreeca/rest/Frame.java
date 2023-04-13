@@ -24,6 +24,10 @@ import java.util.stream.Stream;
 
 public abstract class Frame<T> {
 
+    public static final String DefaultBase="app:/";
+    public static final String DefaultSpace="app:/#";
+
+
     @SuppressWarnings("unchecked")
     public static <T> Frame<T> frame(final T object) {
 

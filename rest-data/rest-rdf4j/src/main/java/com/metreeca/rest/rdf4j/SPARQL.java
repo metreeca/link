@@ -17,14 +17,15 @@
 package com.metreeca.rest.rdf4j;
 
 import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.net.URI;
 import java.util.*;
 import java.util.logging.Logger;
 
+import static com.metreeca.rest.Frame.frame;
 import static com.metreeca.rest.Shape.forward;
 import static com.metreeca.rest.Shape.reverse;
 import static com.metreeca.rest.rdf4j.Coder.*;
@@ -57,7 +58,7 @@ abstract class SPARQL {
     }
 
 
-    String query(final com.metreeca.rest.rdf4j.Coder query) {
+    String query(final Coder query) {
 
         final String code=query.toString();
 
@@ -69,27 +70,27 @@ abstract class SPARQL {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    com.metreeca.rest.rdf4j.Coder comment(final String text) {
+    Coder comment(final String text) {
         return space(text("# ", text));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder base(final String base) {
+    Coder base(final String base) {
         return space(items(text("base <", base, ">")));
     }
 
-    com.metreeca.rest.rdf4j.Coder prefix(final String prefix, final String name) {
+    Coder prefix(final String prefix, final String name) {
         return line(text("prefix ", prefix, ": <", name, ">"));
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    com.metreeca.rest.rdf4j.Coder select(final com.metreeca.rest.rdf4j.Coder... expressions) {
+    Coder select(final Coder... expressions) {
         return select(false, expressions);
     }
 
-    com.metreeca.rest.rdf4j.Coder select(final boolean distinct, final com.metreeca.rest.rdf4j.Coder... expressions) {
+    Coder select(final boolean distinct, final Coder... expressions) {
         return items(text("\rselect"),
                 distinct ? text(" distinct") : nothing(),
                 expressions.length == 0 ? text(" *") : items(expressions)
@@ -97,54 +98,54 @@ abstract class SPARQL {
     }
 
 
-    com.metreeca.rest.rdf4j.Coder construct(final com.metreeca.rest.rdf4j.Coder... patterns) {
+    Coder construct(final Coder... patterns) {
         return items(text("\rconstruct"), items(patterns));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder where(final com.metreeca.rest.rdf4j.Coder... pattern) {
+    Coder where(final Coder... pattern) {
         return items(text("\rwhere"), block(pattern));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder group(final com.metreeca.rest.rdf4j.Coder... expressions) {
+    Coder group(final Coder... expressions) {
         return group(asList(expressions));
     }
 
-    com.metreeca.rest.rdf4j.Coder group(final Collection<com.metreeca.rest.rdf4j.Coder> expressions) {
+    Coder group(final Collection<Coder> expressions) {
         return expressions.isEmpty() ? nothing() : items(text("\rgroup by"), items(expressions));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder having(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder having(final Coder expression) {
         return items(text("\rhaving ( "), items(expression), text(" )"));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder order(final com.metreeca.rest.rdf4j.Coder... expressions) {
+    Coder order(final Coder... expressions) {
         return items(text(" order by"), items(expressions));
     }
 
-    com.metreeca.rest.rdf4j.Coder sort(final boolean inverse, final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder sort(final boolean inverse, final Coder expression) {
         return inverse ? desc(expression) : asc(expression);
     }
 
-    com.metreeca.rest.rdf4j.Coder asc(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder asc(final Coder expression) {
         return items(text(" asc("), expression, text(")"));
     }
 
-    com.metreeca.rest.rdf4j.Coder desc(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder desc(final Coder expression) {
         return items(text(" desc("), expression, text(")"));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder offset(final int offset) {
+    Coder offset(final int offset) {
         return offset > 0
                 ? items(text(" offset "), text(String.valueOf(offset)))
                 : nothing();
     }
 
-    com.metreeca.rest.rdf4j.Coder limit(final int limit) {
+    Coder limit(final int limit) {
         return limit > 0
                 ? items(text(" limit "), text(String.valueOf(limit)))
                 : nothing();
@@ -153,230 +154,210 @@ abstract class SPARQL {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    com.metreeca.rest.rdf4j.Coder optional(final com.metreeca.rest.rdf4j.Coder pattern) {
+    Coder optional(final Coder pattern) {
         return items(text(" optional"), block(pattern));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder union(final com.metreeca.rest.rdf4j.Coder... patterns) {
+    Coder union(final Coder... patterns) {
         return union(List.of(patterns));
     }
 
-    com.metreeca.rest.rdf4j.Coder union(final Collection<com.metreeca.rest.rdf4j.Coder> patterns) {
-        return list(" union ", patterns.stream().map(com.metreeca.rest.rdf4j.Coder::block).collect(toList()));
+    Coder union(final Collection<Coder> patterns) {
+        return list(" union ", patterns.stream().map(Coder::block).collect(toList()));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder edge(final com.metreeca.rest.rdf4j.Coder source, final String predicate,
-            final com.metreeca.rest.rdf4j.Coder target) {
+    Coder edge(final Coder source, final String predicate, final Coder target) {
         return forward(predicate)
                 ? edge(source, iri(predicate), target)
                 : edge(target, iri(reverse(predicate)), source);
     }
 
-    com.metreeca.rest.rdf4j.Coder edge(final com.metreeca.rest.rdf4j.Coder source,
-            final com.metreeca.rest.rdf4j.Coder path, final com.metreeca.rest.rdf4j.Coder target) {
+    Coder edge(final Coder source, final Coder path, final Coder target) {
         return items(text(' '), source, text(' '), path, text(' '), target, text(" ."));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder resource(final Resource resource) {
+    Coder resource(final Resource resource) {
         return resource.isIRI() ? iri((IRI)resource)
                 : resource.isBNode() ? bnode((BNode)resource)
                 : nothing();
     }
 
-    com.metreeca.rest.rdf4j.Coder bnode(final BNode bnode) {
+    Coder bnode(final BNode bnode) {
         return items(text("_:"), text(bnode.getID()));
     }
 
-    com.metreeca.rest.rdf4j.Coder iri(final IRI iri) {
+    Coder iri(final IRI iri) {
         return items(text('<'), text(iri.stringValue()), text('>'));
     }
 
-    com.metreeca.rest.rdf4j.Coder iri(final String iri) {
+    Coder iri(final String iri) {
         return forward(iri)
                 ? items(text('<'), text(iri), text('>'))
                 : items(text("^<"), text(reverse(iri)), text('>'));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder filter(final com.metreeca.rest.rdf4j.Coder... expressions) {
+    Coder filter(final Coder... expressions) {
         return items(text(" filter ( "), items(expressions), text(" )"));
     }
 
-    com.metreeca.rest.rdf4j.Coder in(final com.metreeca.rest.rdf4j.Coder expression,
-            final Collection<com.metreeca.rest.rdf4j.Coder> expressions) {
+    Coder in(final Coder expression, final Collection<Coder> expressions) {
         return items(expression, text(" in ("), list(", ", expressions), text(')'));
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    com.metreeca.rest.rdf4j.Coder eq(final com.metreeca.rest.rdf4j.Coder x, final com.metreeca.rest.rdf4j.Coder y) {
+    Coder eq(final Coder x, final Coder y) {
         return op(x, "=", y);
     }
 
-    com.metreeca.rest.rdf4j.Coder neq(final com.metreeca.rest.rdf4j.Coder x, final com.metreeca.rest.rdf4j.Coder y) {
+    Coder neq(final Coder x, final Coder y) {
         return op(x, "!=", y);
     }
 
-    com.metreeca.rest.rdf4j.Coder lt(final com.metreeca.rest.rdf4j.Coder x, final com.metreeca.rest.rdf4j.Coder y) {
+    Coder lt(final Coder x, final Coder y) {
         return op(x, "<", y);
     }
 
-    com.metreeca.rest.rdf4j.Coder gt(final com.metreeca.rest.rdf4j.Coder x, final com.metreeca.rest.rdf4j.Coder y) {
+    Coder gt(final Coder x, final Coder y) {
         return op(x, ">", y);
     }
 
-    com.metreeca.rest.rdf4j.Coder lte(final com.metreeca.rest.rdf4j.Coder x, final com.metreeca.rest.rdf4j.Coder y) {
+    Coder lte(final Coder x, final Coder y) {
         return op(x, "<=", y);
     }
 
-    com.metreeca.rest.rdf4j.Coder gte(final com.metreeca.rest.rdf4j.Coder x, final com.metreeca.rest.rdf4j.Coder y) {
+    Coder gte(final Coder x, final Coder y) {
         return op(x, ">=", y);
     }
 
 
-    com.metreeca.rest.rdf4j.Coder or(final com.metreeca.rest.rdf4j.Coder... expressions) {
+    Coder or(final Coder... expressions) {
         return and(asList(expressions));
     }
 
-    com.metreeca.rest.rdf4j.Coder or(final Collection<com.metreeca.rest.rdf4j.Coder> expressions) {
+    Coder or(final Collection<Coder> expressions) {
         return list(" || ", expressions);
     }
 
-    com.metreeca.rest.rdf4j.Coder and(final com.metreeca.rest.rdf4j.Coder... expressions) {
+    Coder and(final Coder... expressions) {
         return and(asList(expressions));
     }
 
-    com.metreeca.rest.rdf4j.Coder and(final Collection<com.metreeca.rest.rdf4j.Coder> expressions) {
+    Coder and(final Collection<Coder> expressions) {
         return list(" && ", expressions);
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    com.metreeca.rest.rdf4j.Coder is(final com.metreeca.rest.rdf4j.Coder test,
-            final com.metreeca.rest.rdf4j.Coder pass, final com.metreeca.rest.rdf4j.Coder fail) {
+    Coder is(final Coder test, final Coder pass, final Coder fail) {
         return items(text(" if("), test, text(", "), pass, text(", "), fail, text(")"));
     }
 
-    com.metreeca.rest.rdf4j.Coder isBlank(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder isBlank(final Coder expression) {
         return function("isBlank", expression);
     }
 
-    com.metreeca.rest.rdf4j.Coder isIRI(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder isIRI(final Coder expression) {
         return function("isIRI", expression);
     }
 
-    com.metreeca.rest.rdf4j.Coder isLiteral(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder isLiteral(final Coder expression) {
         return function("isLiteral", expression);
     }
 
-    com.metreeca.rest.rdf4j.Coder bound(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder bound(final Coder expression) {
         return function("bound", expression);
     }
 
-    com.metreeca.rest.rdf4j.Coder lang(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder lang(final Coder expression) {
         return function("lang", expression);
     }
 
-    com.metreeca.rest.rdf4j.Coder datatype(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder datatype(final Coder expression) {
         return function("datatype", expression);
     }
 
-    com.metreeca.rest.rdf4j.Coder str(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder str(final Coder expression) {
         return function("str", expression);
     }
 
-    com.metreeca.rest.rdf4j.Coder strlen(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder strlen(final Coder expression) {
         return function("strlen", expression);
     }
 
-    com.metreeca.rest.rdf4j.Coder strstarts(final com.metreeca.rest.rdf4j.Coder expression,
-            final com.metreeca.rest.rdf4j.Coder prefix) {
+    Coder strstarts(final Coder expression, final Coder prefix) {
         return function("strstarts", expression, prefix);
     }
 
-    com.metreeca.rest.rdf4j.Coder regex(final com.metreeca.rest.rdf4j.Coder expression,
-            final com.metreeca.rest.rdf4j.Coder pattern) {
+    Coder regex(final Coder expression, final Coder pattern) {
         return function("regex", expression, pattern);
     }
 
-    com.metreeca.rest.rdf4j.Coder regex(final com.metreeca.rest.rdf4j.Coder expression,
-            final com.metreeca.rest.rdf4j.Coder pattern, final com.metreeca.rest.rdf4j.Coder flags) {
+    Coder regex(final Coder expression, final Coder pattern, final Coder flags) {
         return function("regex", expression, pattern, flags);
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    com.metreeca.rest.rdf4j.Coder min(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder min(final Coder expression) {
         return items(text(" min("), expression, text(")"));
     }
 
-    com.metreeca.rest.rdf4j.Coder max(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder max(final Coder expression) {
         return items(text(" max("), expression, text(")"));
     }
 
-    com.metreeca.rest.rdf4j.Coder count(final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder count(final Coder expression) {
         return count(false, expression);
     }
 
-    com.metreeca.rest.rdf4j.Coder count(final boolean distinct, final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder count(final boolean distinct, final Coder expression) {
         return items(text(" count("), distinct ? text("distinct ") : nothing(), expression, text(")"));
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    com.metreeca.rest.rdf4j.Coder op(final com.metreeca.rest.rdf4j.Coder x, final String name,
-            final com.metreeca.rest.rdf4j.Coder y) {
+    Coder op(final Coder x, final String name, final Coder y) {
         return items(x, text(' '), text(name), text(' '), y);
     }
 
-    com.metreeca.rest.rdf4j.Coder function(final String name, final com.metreeca.rest.rdf4j.Coder... args) {
+    Coder function(final String name, final Coder... args) {
         return items(text(' '), text(name), text('('), list(", ", args), text(')'));
     }
 
 
-    com.metreeca.rest.rdf4j.Coder bind(final String id, final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder bind(final String id, final Coder expression) {
         return items(text(" bind"), as(id, expression));
     }
 
-    com.metreeca.rest.rdf4j.Coder as(final String id, final com.metreeca.rest.rdf4j.Coder expression) {
+    Coder as(final String id, final Coder expression) {
         return items(text(" ("), expression, text(" as "), var(id), text(')'));
     }
 
-    com.metreeca.rest.rdf4j.Coder var(final String id) {
+    Coder var(final String id) {
         return text(" ?", id);
     }
 
 
     //// !!! ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    com.metreeca.rest.rdf4j.Coder encode(final Object value) { // !!! integrate with RDF4JCodec
-        return value instanceof Boolean ? text(String.valueOf(value))
-
-                : value instanceof BigInteger ? text(String.valueOf(value))
-                : value instanceof BigDecimal ? text(String.valueOf(value))
-
-                : value instanceof Float ? text(format("%e", value))
-                : value instanceof Double ? text(format("%e", value))
-
-                : value instanceof Number ? text(String.valueOf(value)) // !!! review
-
-                : value(literal(value.toString()));
+    Coder value(final Object value, final URI base) { // !!! integrate with RDF4JCodec
+        return value(Optional.ofNullable(frame(value).id())
+                .map(id -> base.resolve(id).toString())
+                .<Value>map(Values::iri)
+                .orElseGet(() -> literal(value))
+        );
     }
 
-
-    com.metreeca.rest.rdf4j.Coder values(final Collection<Value> values) {
-        return list(", ", values.stream().map(this::value).collect(toList()));
-    }
-
-
-    com.metreeca.rest.rdf4j.Coder value(final Value value) {
+    Coder value(final Value value) {
 
         if ( value == null ) {
             throw new NullPointerException("null value");
@@ -387,7 +368,7 @@ abstract class SPARQL {
                 : value((Literal)value);
     }
 
-    com.metreeca.rest.rdf4j.Coder value(final BNode bnode) {
+    Coder value(final BNode bnode) {
 
         if ( bnode == null ) {
             throw new NullPointerException("null bnode");
@@ -396,7 +377,7 @@ abstract class SPARQL {
         return text("_:", bnode.getID());
     }
 
-    com.metreeca.rest.rdf4j.Coder value(final IRI iri) {
+    Coder value(final IRI iri) {
 
         if ( iri == null ) {
             throw new NullPointerException("null iri");
@@ -405,7 +386,7 @@ abstract class SPARQL {
         return iri.equals(RDF.TYPE) ? text("a") : text("<", iri.stringValue(), ">");
     }
 
-    com.metreeca.rest.rdf4j.Coder value(final Literal literal) {
+    Coder value(final Literal literal) {
 
         if ( literal == null ) {
             throw new NullPointerException("null literal");

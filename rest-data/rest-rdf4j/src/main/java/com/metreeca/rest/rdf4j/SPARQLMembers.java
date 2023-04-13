@@ -22,6 +22,7 @@ import com.metreeca.rest.Stash.Expression;
 
 import org.eclipse.rdf4j.model.Resource;
 
+import java.net.URI;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
@@ -38,7 +39,7 @@ import static java.util.function.Predicate.not;
 import static java.util.function.UnaryOperator.identity;
 import static java.util.stream.Collectors.*;
 
-final class SPARQLMembers extends com.metreeca.rest.rdf4j.SPARQL {
+final class SPARQLMembers extends SPARQL {
 
     private static final int DefaultLimit=100;
 
@@ -52,6 +53,7 @@ final class SPARQLMembers extends com.metreeca.rest.rdf4j.SPARQL {
             final Query<?> query
     ) {
 
+        final URI base=URI.create(container.isIRI() ? container.stringValue() : Frame.DefaultBase);
         final Object template=query.template();
 
         final boolean plain=!(template instanceof Table);
@@ -164,7 +166,7 @@ final class SPARQLMembers extends com.metreeca.rest.rdf4j.SPARQL {
 
                         space(filters(query.filters().entrySet().stream()
                                 .filter(not(entry -> projected2expression.getOrDefault(entry.getKey(), entry.getKey()).aggregate())) // !!! review
-                                .flatMap(entry -> constraint(result(entry.getKey()), entry.getValue()))
+                                .flatMap(entry -> constraint(result(entry.getKey()), entry.getValue(), base))
                                 .collect(toList()))
                         )
 
@@ -191,7 +193,8 @@ final class SPARQLMembers extends com.metreeca.rest.rdf4j.SPARQL {
 
                             final String alias=projected2alias.get(entry.getKey());
 
-                            return constraint(alias != null ? var(alias) : result(entry.getKey()), entry.getValue());
+                            return constraint(alias != null ? var(alias) : result(entry.getKey()), entry.getValue(),
+                                    base);
                         })
 
                         .collect(toList()))
@@ -327,20 +330,19 @@ final class SPARQLMembers extends com.metreeca.rest.rdf4j.SPARQL {
         );
     }
 
-    private Stream<Coder> constraint(final Coder value,
-            final Constraint constraint) {
+    private Stream<Coder> constraint(final Coder value, final Constraint constraint, final URI base) {
         return Stream.
 
                 of(
 
-                        constraint.lt().map(limit -> (_lt(value, limit))).stream(),
-                        constraint.gt().map(limit -> (_gt(value, limit))).stream(),
+                        constraint.lt().map(limit -> (_lt(value, limit, base))).stream(),
+                        constraint.gt().map(limit -> (_gt(value, limit, base))).stream(),
 
-                        constraint.lte().map(limit -> (_lte(value, limit))).stream(),
-                        constraint.gte().map(limit -> (_gte(value, limit))).stream(),
+                        constraint.lte().map(limit -> (_lte(value, limit, base))).stream(),
+                        constraint.gte().map(limit -> (_gte(value, limit, base))).stream(),
 
                         constraint.like().stream().map(keywords -> (like(value, keywords))),
-                        constraint.any().stream().map(values -> any(value, values))
+                        constraint.any().stream().map(values -> any(value, values, base))
 
                 )
 
@@ -348,21 +350,21 @@ final class SPARQLMembers extends com.metreeca.rest.rdf4j.SPARQL {
     }
 
 
-    private Coder _lt(final Coder value, final Object limit) {
-        return lt(value, encode(limit));
+    private Coder _lt(final Coder value, final Object limit, final URI base) {
+        return lt(value, value(limit, base));
     }
 
-    private Coder _gt(final Coder value, final Object limit) {
-        return gt(value, encode(limit));
+    private Coder _gt(final Coder value, final Object limit, final URI base) {
+        return gt(value, value(limit, base));
     }
 
 
-    private Coder _lte(final Coder value, final Object limit) {
-        return lte(value, encode(limit));
+    private Coder _lte(final Coder value, final Object limit, final URI base) {
+        return lte(value, value(limit, base));
     }
 
-    private Coder _gte(final Coder value, final Object limit) {
-        return gte(value, encode(limit));
+    private Coder _gte(final Coder value, final Object limit, final URI base) {
+        return gte(value, value(limit, base));
     }
 
 
@@ -370,9 +372,9 @@ final class SPARQLMembers extends com.metreeca.rest.rdf4j.SPARQL {
         return regex(str(value), quoted(pattern(keywords, true)));
     }
 
-    private Coder any(final Coder value, final Collection<Object> any) { // !!! empty list  / null values
+    private Coder any(final Coder value, final Collection<Object> any, final URI base) { // !!! empty list  / null values
         return in(value, any.stream()
-                .map(this::encode)
+                .map(v -> value(v, base))
                 .collect(toList())
         );
     }
