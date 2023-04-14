@@ -429,12 +429,9 @@ public abstract class Query<T> extends Stash<T> {
                 throw new NullPointerException("null keywords");
             }
 
-            if ( keywords.stream().anyMatch(String::isBlank) ) {
-                throw new IllegalArgumentException("blank keywords");
-            }
-
             final Set<String> like=keywords.stream()
                     .map(String::trim)
+                    .filter(not(String::isBlank))
                     .collect(toSet());
 
             return new Constraint() {
