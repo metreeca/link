@@ -155,6 +155,18 @@ final class TypeObjectTest {
         }
 
 
+        @Test void testHandleEqualInAliases() {
+            assertThat(query("{ \"['alias=value']=label\": \"\" }").template())
+                    .isInstanceOf(Table.class)
+                    .extracting(v -> (Table<?>)v)
+                    .satisfies(table -> assertThat(table.columns())
+                            .containsExactly(
+                                    entry("alias=value", column(expression("label"), ""))
+                            )
+                    );
+        }
+
+
         @Test void testLookupTableShapes() {
             assertThat(query("{ \"alias=item\": { \"label\":  \"\"} }").template())
                     .isInstanceOf(Table.class)
