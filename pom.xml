@@ -22,13 +22,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.metreeca</groupId>
-    <artifactId>rest</artifactId>
+    <artifactId>link</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
 
-    <name>Metreeca/REST</name>
+    <name>Metreeca/Link</name>
     <description>A model‑driven Java framework for rapid REST/JSON‑LD API development.</description>
-    <url>https://github.com/metreeca/rest</url>
+    <url>https://github.com/metreeca/link</url>
     <inceptionYear>2023</inceptionYear>
 
     <organization>
@@ -71,27 +71,27 @@
 
     <modules>
 
-        <module>rest-core</module>
-        <module>rest-data</module>
-        <module>rest-wire</module>
+        <module>link-core</module>
+        <module>link-data</module>
+        <module>link-wire</module>
 
     </modules>
 
     <scm>
-        <connection>scm:git:git@github.com:metreeca/rest.git</connection>
-        <developerConnection>scm:git:git@github.com:metreeca/rest.git</developerConnection>
-        <url>https://github.com/metreeca/rest</url>
+        <connection>scm:git:git@github.com:metreeca/link.git</connection>
+        <developerConnection>scm:git:git@github.com:metreeca/link.git</developerConnection>
+        <url>https://github.com/metreeca/link</url>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/metreeca/rest/issues</url>
+        <url>https://github.com/metreeca/link/issues</url>
     </issueManagement>
 
     <distributionManagement>
 
         <site>
-            <url>https://metreeca.github.io/rest/</url>
+            <url>https://metreeca.github.io/link/</url>
         </site>
 
         <repository>
@@ -113,13 +113,13 @@
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>rest-core</artifactId>
+                <artifactId>link-core</artifactId>
                 <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>rest-core</artifactId>
+                <artifactId>link-core</artifactId>
                 <version>${revision}</version>
                 <type>test-jar</type>
             </dependency>
@@ -129,7 +129,7 @@
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>rest-rdf4j</artifactId>
+                <artifactId>link-rdf4j</artifactId>
                 <version>${revision}</version>
             </dependency>
 
@@ -138,7 +138,7 @@
 
             <dependency>
                 <groupId>com.metreeca</groupId>
-                <artifactId>rest-jsonld</artifactId>
+                <artifactId>link-jsonld</artifactId>
                 <version>${revision}</version>
             </dependency>
 
@@ -365,9 +365,9 @@
 
                             <links>
 
-                                <link>https://javadoc.io/doc/com.metreeca/rest-core/latest/</link>
-                                <link>https://javadoc.io/doc/com.metreeca/rest-json/latest/</link>
-                                <link>https://javadoc.io/doc/com.metreeca/rest-rdf4j/latest/</link>
+                                <link>https://javadoc.io/doc/com.metreeca/link-core/latest/</link>
+                                <link>https://javadoc.io/doc/com.metreeca/link-json/latest/</link>
+                                <link>https://javadoc.io/doc/com.metreeca/link-rdf4j/latest/</link>
 
                                 <link>https://rdf4j.org/javadoc/latest/</link>
 

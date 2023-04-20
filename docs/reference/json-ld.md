@@ -94,12 +94,12 @@ If the value may be proved to be a back-reference to an enclosing resource, the 
 ## Decoding
 
 When decoding, relative `<iri>` references are resolved against the provided base URI, which for HTTP REST operations
-equals the IRI of the request [item](../javadocs/com/metreeca/rest/Message.html#item--).
+equals the IRI of the request [item](../javadocs/com/metreeca/link/Message.html#item--).
 
 ## Encoding
 
 When writing, local `<iri>` references are relativized as root-relative IRIs against the provide base URI, which for HTTP
-REST operations equals the root IRI of the response [item](../javadocs/com/metreeca/rest/Message.html#item--).
+REST operations equals the root IRI of the response [item](../javadocs/com/metreeca/link/Message.html#item--).
 
 # Properties
 

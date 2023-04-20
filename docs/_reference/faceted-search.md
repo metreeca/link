@@ -10,7 +10,7 @@ by structural and typing constraints specified in the underlying linked data mod
 # Queries
 
 [Queries](../javadocs/com/metreeca/json/Query.html) define what kind of results is expected from faceted searches
-on [readable](../../../Java/docs/tutorials/consuming-jsonld-apis.md#read-operations) linked data REST/JSON-LD APIs.
+on [readable](../tutorials/consuming-jsonld-apis.md#read-operations) linked data REST/JSON-LD APIs.
 
 JSON query serialization extends the idiomatic [JSON-LD](jsonld-format.md) format with query-specific objects for
 serializing facet [filters](#facet-filters) and property [paths](#property-paths). Standard JSON serialization applies to

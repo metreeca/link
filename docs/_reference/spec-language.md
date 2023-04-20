@@ -7,17 +7,17 @@ excerpt: "Shape-based data modelling language semantics and components"
 Most framework services are driven by declarative linked data models defined using a [shape](#shapes)-based specification
 language.
 
-Models are [programmaticaly](../../../Java/docs/tutorials/publishing-jsonld-apis.md) built using a Java‑based DSL and can
+Models are [programmaticaly](../tutorials/publishing-jsonld-apis.md) built using a Java‑based DSL and can
 eventually
 automate a range of different tasks in the lifecycle of linked data REST APIs.
 
-| task              | shape role                                                   |
-| ----------------- | ------------------------------------------------------------ |
-| data selection    | JSON-LD data retrieved from [readable](../../../Java/docs/tutorials/consuming-jsonld-apis.md#read-operations) linked data REST APIs is selected from the underlying graph storage layer by  queries derived from the associated linked data models |
-| data validation   | JSON-LD data submitted to [writable](../../../Java/docs/tutorials/consuming-jsonld-apis.md#write-operations) linked data REST APIs on resource creation and updating is automatically validated against the associated linked data models |
-| faceted search    | [faceted search](../../../Java/docs/tutorials/consuming-jsonld-apis.md#faceted-search) and ancillary facet-populating queries are managed by the system on the basis of structural and typing constraints specified in linked data models associated with target linked data REST APIs |
-| API documentation | Human and machine readable docs for linked data REST APIs may be dynamically derived from associated linked data models and published as hypertexts and [OpenAPI](https://www.openapis.org)/[Swagger](https://swagger.io/specification/) specs |
-| data ingestion    | Data ingested from external data sources may be dynamically mapped to and validated against the linked data models associated with target graphs |
+| task              | shape role                                                                                                                                                                                                                                                             |
+|-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| data selection    | JSON-LD data retrieved from [readable](../tutorials/consuming-jsonld-apis.md#read-operations) linked data REST APIs is selected from the underlying graph storage layer by  queries derived from the associated linked data models                                     |
+| data validation   | JSON-LD data submitted to [writable](../tutorials/consuming-jsonld-apis.md#write-operations) linked data REST APIs on resource creation and updating is automatically validated against the associated linked data models                                              |
+| faceted search    | [faceted search](../tutorials/consuming-jsonld-apis.md#faceted-search) and ancillary facet-populating queries are managed by the system on the basis of structural and typing constraints specified in linked data models associated with target linked data REST APIs |
+| API documentation | Human and machine readable docs for linked data REST APIs may be dynamically derived from associated linked data models and published as hypertexts and [OpenAPI](https://www.openapis.org)/[Swagger](https://swagger.io/specification/) specs                         |
+| data ingestion    | Data ingested from external data sources may be dynamically mapped to and validated against the linked data models associated with target graphs                                                                                                                       |
 
 !!! note Some of the described features aren't (yet ;-) supported by the framework.
 
@@ -130,9 +130,9 @@ Parametric guards for the [role](../javadocs/com/metreeca/json/shapes/Guard.html
 selectively enable target shapes according to the roles of the (possibly authenticated) user performing HTTP/S operations
 on target linked data resources.
 
-| shorthand | usage context |
-|-------|-------------|
-|[role](../javadocs/com/metreeca/json/shapes/Guard.html#role-java.lang.Object...-)(value, …)| target shapes are to be considered only if the sets of [roles](../javadocs/com/metreeca/rest/Request.html#roles--) enabled for the user performing a request contains at least one of the given role values |
+| shorthand                                                                                   | usage context                                                                                                                                                                                               |
+|---------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [role](../javadocs/com/metreeca/json/shapes/Guard.html#role-java.lang.Object...-)(value, …) | target shapes are to be considered only if the sets of [roles](../javadocs/com/metreeca/link/Request.html#roles--) enabled for the user performing a request contains at least one of the given role values |
 
 ## Task Axis
 

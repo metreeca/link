@@ -133,7 +133,7 @@ Content-Type: application/ld+json;charset=UTF-8
 ```
 
 Retrieved data is automatically trimmed to the allowed envelope specified in the linked data model driving the target
-REST API for the [roles](../javadocs/com/metreeca/rest/Request.html#roles--) enabled for the current request user.
+REST API for the [roles](../javadocs/com/metreeca/link/Request.html#roles--) enabled for the current request user.
 Reserved properties are included only if the request is properly authenticated.
 
 ```shell
@@ -274,7 +274,7 @@ Content-Type: application/json;charset=UTF-8
 ```
 
 Submitted data is automatically matched against the allowed envelope specified in the linked data model driving the
-target REST API for the [roles](../javadocs/com/metreeca/rest/Request.html#roles--) enabled for the current request user.
+target REST API for the [roles](../javadocs/com/metreeca/link/Request.html#roles--) enabled for the current request user.
 Submiting, for instance, buy price data without valid authorization headers would return an error.
 
 ```shell
