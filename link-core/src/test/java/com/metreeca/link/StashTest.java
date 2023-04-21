@@ -37,16 +37,16 @@ final class StashTest {
                     .isEmpty();
 
             assertThat(alias("alias="))
-                    .contains(entry("alias", ""));
+                    .contains(entry("alias", expression("")));
 
             assertThat(alias("alias=field"))
-                    .contains(entry("alias", "field"));
+                    .contains(entry("alias", expression("field")));
 
-            assertThat(alias("['alias']=field"))
-                    .contains(entry("alias", "field"));
+            assertThat(alias("'alias'=field"))
+                    .contains(entry("alias", expression("field")));
 
-            assertThat(alias("['x=y']=field"))
-                    .contains(entry("x=y", "field"));
+            assertThat(alias("'x=y'=field"))
+                    .contains(entry("x=y", expression("field")));
 
         }
 
@@ -56,9 +56,9 @@ final class StashTest {
                     .isEqualTo(expression(List.of("id"), List.of()));
         }
 
-        @Test void testDecodeBracketedFields() {
-            assertThat(expression("['!\\'\\]\\\\']"))
-                    .isEqualTo(expression(List.of("!']\\"), List.of()));
+        @Test void testDecodeQuotedFields() {
+            assertThat(expression("'!\\'\\\\'"))
+                    .isEqualTo(expression(List.of("!'\\"), List.of()));
         }
 
         @Test void testReportMalformedFieldNames() {
@@ -75,6 +75,11 @@ final class StashTest {
         @Test void testDecodePaths() {
             assertThat(expression("x.y.z"))
                     .isEqualTo(expression(List.of("x", "y", "z"), List.of()));
+        }
+
+        @Test void testDecodeQuotedPaths() {
+            assertThat(expression("x.'y+w'.z"))
+                    .isEqualTo(expression(List.of("x", "y+w", "z"), List.of()));
         }
 
 

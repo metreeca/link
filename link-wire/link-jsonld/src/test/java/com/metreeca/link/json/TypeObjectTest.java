@@ -156,7 +156,7 @@ final class TypeObjectTest {
 
 
         @Test void testHandleEqualInAliases() {
-            assertThat(query("{ \"['alias=value']=label\": \"\" }").template())
+            assertThat(query("{ \"'alias=value'=label\": \"\" }").template())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
                     .satisfies(table -> assertThat(table.columns())

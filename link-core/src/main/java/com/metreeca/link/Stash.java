@@ -127,11 +127,11 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
         private static final Pattern ReservedPattern=compile("['\\\\]");
         private static final Pattern LabelPattern=compile("(?:[^"+ReservedPattern+"]|"+EscapedPattern+")*");
 
-        private static final Pattern FieldPattern=compile("(?<id>"+IdPattern+")|\\['(?<label>"+LabelPattern+")']");
+        private static final Pattern FieldPattern=compile("(?<id>"+IdPattern+")|'(?<label>"+LabelPattern+")'");
         private static final Pattern AliasPattern=compile("(?:"+FieldPattern+")=");
 
 
-        public static Optional<Entry<String, String>> alias(final String alias) {
+        public static Optional<Entry<String, Expression>> alias(final String alias) {
 
             if ( alias == null ) {
                 throw new NullPointerException("null alias");
@@ -140,7 +140,7 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
             final Matcher matcher=AliasPattern.matcher(alias);
 
             return matcher.lookingAt() ?
-                    Optional.of(entry(field(matcher), alias.substring(matcher.end()))) :
+                    Optional.of(entry(field(matcher), expression(alias.substring(matcher.end())))) :
                     Optional.empty();
         }
 

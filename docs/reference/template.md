@@ -39,7 +39,7 @@ type Plain=boolean | number | string
 ```
 expression = *(transform ":") [field *(["."] field)]
 transform = 1*ALPHA
-field = 1*(DIGIT/ALPHA/"_") / "['" *(%[^'\\']) "']"; !!! review
+field = 1*(DIGIT/ALPHA/"_") / "'" *(%[^'\\] / "\\" %['\\']) "'"; !!! review
 ```
 
 # Items

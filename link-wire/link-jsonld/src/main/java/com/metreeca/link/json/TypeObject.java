@@ -325,12 +325,12 @@ final class TypeObject implements Type<Object> {
 
     private Map<String, Column> table(final Decoder decoder, final String field, final Shape shape) throws IOException {
 
-        final Optional<Entry<String, String>> alias=alias(field);
+        final Optional<Entry<String, Expression>> alias=alias(field);
 
         if ( alias.isPresent() ) {
 
             final String name=alias.get().getKey();
-            final Expression expression=expression(alias.get().getValue());
+            final Expression expression=alias.get().getValue();
 
             final Shape _shape=shape.shape(expression).orElse(null); // ; null+if to handle IOException
 
