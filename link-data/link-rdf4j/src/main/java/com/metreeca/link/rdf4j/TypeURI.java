@@ -16,9 +16,12 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.rdf4j.RDF4J.*;
-
-import org.eclipse.rdf4j.model.*;
+import com.metreeca.link.rdf4j.RDF4J.Decoder;
+import com.metreeca.link.rdf4j.RDF4J.Encoder;
+import com.metreeca.link.rdf4j.RDF4J.Type;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 
 import java.net.URI;
 import java.util.Map.Entry;
@@ -39,7 +42,7 @@ final class TypeURI implements Type<URI> {
                 .filter(Value::isIRI)
                 .map(IRI.class::cast)
 
-                .map(iri -> URI.create(iri.stringValue()));
+                .map(iri -> URI.create((decoder.relativize(iri.stringValue()))));
     }
 
 }
