@@ -43,7 +43,7 @@ public abstract class Shape {
 
     public static boolean forward(final String property) {
 
-        if ( property == null ) {
+        if (property == null) {
             throw new NullPointerException("null property");
         }
 
@@ -52,13 +52,13 @@ public abstract class Shape {
 
     public static String reverse(final String property) {
 
-        if ( property == null ) {
+        if (property == null) {
             throw new NullPointerException("null property");
         }
 
         return property.startsWith(ReverseScheme)
                 ? property.substring(ReverseScheme.length())
-                : ReverseScheme+property;
+                : ReverseScheme + property;
     }
 
 
@@ -75,7 +75,7 @@ public abstract class Shape {
 
         return new Shape() {
 
-            @Override public Optional<Class<?>> clazz() { return value; }
+            @Override public Optional<Class<?>> clazz() {return value;}
 
         };
     }
@@ -85,13 +85,13 @@ public abstract class Shape {
 
         final Optional<Integer> value=Optional.ofNullable(limit).filter(v -> v != 0);
 
-        if ( value.filter(v -> v < 0).isPresent() ) {
+        if (value.filter(v -> v < 0).isPresent()) {
             throw new IllegalArgumentException("negative limit");
         }
 
         return new Shape() {
 
-            @Override public Optional<Integer> minCount() { return value; }
+            @Override public Optional<Integer> minCount() {return value;}
 
         };
     }
@@ -100,13 +100,13 @@ public abstract class Shape {
 
         final Optional<Integer> value=Optional.ofNullable(limit).filter(v -> v != 0);
 
-        if ( value.filter(v -> v < 0).isPresent() ) {
+        if (value.filter(v -> v < 0).isPresent()) {
             throw new IllegalArgumentException("negative limit");
         }
 
         return new Shape() {
 
-            @Override public Optional<Integer> maxCount() { return value; }
+            @Override public Optional<Integer> maxCount() {return value;}
 
         };
     }
@@ -114,11 +114,11 @@ public abstract class Shape {
 
     public static Shape property(final String property, final Shape shape) {
 
-        if ( property == null ) {
+        if (property == null) {
             throw new NullPointerException("null property");
         }
 
-        if ( shape == null ) {
+        if (shape == null) {
             throw new NullPointerException("null shape");
         }
 
@@ -127,15 +127,15 @@ public abstract class Shape {
 
     public static Shape property(final String field, final String property, final Shape shape) {
 
-        if ( field == null ) {
+        if (field == null) {
             throw new NullPointerException("null field");
         }
 
-        if ( property == null ) {
+        if (property == null) {
             throw new NullPointerException("null property");
         }
 
-        if ( shape == null ) {
+        if (shape == null) {
             throw new NullPointerException("null shape");
         }
 
@@ -144,11 +144,11 @@ public abstract class Shape {
 
     public static Shape property(final String field, final String property, final Supplier<Shape> shape) {
 
-        if ( field == null ) {
+        if (field == null) {
             throw new NullPointerException("null field");
         }
 
-        if ( property == null ) {
+        if (property == null) {
             throw new NullPointerException("null property");
         }
 
@@ -167,7 +167,7 @@ public abstract class Shape {
 
             @Override public Optional<String> property(final String field) {
 
-                if ( field == null ) {
+                if (field == null) {
                     throw new NullPointerException("null field");
                 }
 
@@ -176,7 +176,7 @@ public abstract class Shape {
 
             @Override public Optional<Shape> shape(final String field) {
 
-                if ( field == null ) {
+                if (field == null) {
                     throw new NullPointerException("null field");
                 }
 
@@ -189,7 +189,7 @@ public abstract class Shape {
 
     public static Shape shape(final Shape... shapes) {
 
-        if ( shapes == null ) {
+        if (shapes == null) {
             throw new NullPointerException("null shapes");
         }
 
@@ -198,7 +198,7 @@ public abstract class Shape {
 
     public static Shape shape(final Collection<Shape> shapes) {
 
-        if ( shapes == null ) {
+        if (shapes == null) {
             throw new NullPointerException("null shapes");
         }
 
@@ -233,21 +233,21 @@ public abstract class Shape {
             }
 
 
-            @Override Optional<String> id() { return id; }
+            @Override Optional<String> id() {return id;}
 
-            @Override public Stream<String> types() { return types.stream(); }
+            @Override public Stream<String> types() {return types.stream();}
 
 
-            @Override public Optional<Class<?>> clazz() { return clazz; }
+            @Override public Optional<Class<?>> clazz() {return clazz;}
 
-            @Override public Optional<Integer> minCount() { return minCount; }
+            @Override public Optional<Integer> minCount() {return minCount;}
 
-            @Override public Optional<Integer> maxCount() { return maxCount; }
+            @Override public Optional<Integer> maxCount() {return maxCount;}
 
 
             @Override public Optional<String> property(final String field) { // !!! memoize (requires field list)
 
-                if ( field == null ) {
+                if (field == null) {
                     throw new NullPointerException("null field");
                 }
 
@@ -259,7 +259,7 @@ public abstract class Shape {
 
             @Override public Optional<Shape> shape(final String field) { // !!! memoize (requires field list)
 
-                if ( field == null ) {
+                if (field == null) {
                     throw new NullPointerException("null field");
                 }
 
@@ -277,13 +277,13 @@ public abstract class Shape {
 
     public static Shape shape(final Class<?> clazz) {
 
-        if ( clazz == null ) {
+        if (clazz == null) {
             throw new NullPointerException("null clazz");
         }
 
         return cache.computeIfAbsent(clazz, _clazz -> {
 
-            if ( _clazz.getName().startsWith("java.") || _clazz.getName().startsWith("javax.") ) {
+            if (_clazz.getName().startsWith("java.") || _clazz.getName().startsWith("javax.")) {
 
                 return clazz(_clazz);
 
@@ -304,20 +304,20 @@ public abstract class Shape {
 
                 return new Shape() {
 
-                    @Override public boolean virtual() { return virtual; }
+                    @Override public boolean virtual() {return virtual;}
 
 
-                    @Override Optional<String> id() { return id; }
+                    @Override Optional<String> id() {return id;}
 
-                    @Override public Stream<String> types() { return types.stream(); }
+                    @Override public Stream<String> types() {return types.stream();}
 
 
-                    @Override public Optional<Class<?>> clazz() { return klass; }
+                    @Override public Optional<Class<?>> clazz() {return klass;}
 
 
                     @Override public Optional<String> property(final String field) {
 
-                        if ( field == null ) {
+                        if (field == null) {
                             throw new NullPointerException("null field");
                         }
 
@@ -326,7 +326,7 @@ public abstract class Shape {
 
                     @Override public Optional<Shape> shape(final String field) {
 
-                        if ( field == null ) {
+                        if (field == null) {
                             throw new NullPointerException("null field");
                         }
 
@@ -387,7 +387,7 @@ public abstract class Shape {
 
                 .peek(entry -> {
 
-                    if ( !entry.getValue().base().equals(String.class) ) {
+                    if (!entry.getValue().base().equals(String.class)) {
                         throw new IllegalArgumentException(format("@Id <%s> is not a string", entry));
                     }
 
@@ -450,7 +450,7 @@ public abstract class Shape {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private Shape() { }
+    private Shape() {}
 
 
     public boolean virtual() {
@@ -500,16 +500,49 @@ public abstract class Shape {
 
     public Optional<String> property(final String field) {
 
-        if ( field == null ) {
+        if (field == null) {
             throw new NullPointerException("null field");
         }
 
         return Optional.empty();
     }
 
+    public Optional<List<String>> properties(final List<String> fields) {
+
+        if (fields == null || fields.stream().anyMatch(Objects::isNull)) {
+            throw new NullPointerException("null fields");
+        }
+
+
+        final List<String> path=new ArrayList<>();
+
+        Shape next=this;
+
+        for (final String field : fields) {
+
+            final Optional<String> property=next.property(field);
+            final Optional<Shape> shape=next.shape(field);
+
+            if (property.isEmpty() || shape.isEmpty()) {
+
+                return Optional.empty();
+
+            } else {
+
+                path.add(property.get());
+                next=shape.get();
+
+            }
+
+        }
+
+        return Optional.of(path);
+    }
+
+
     public Optional<Shape> shape(final String field) {
 
-        if ( field == null ) {
+        if (field == null) {
             throw new NullPointerException("null field");
         }
 
@@ -518,7 +551,7 @@ public abstract class Shape {
 
     public Optional<Shape> shape(final Expression expression) {
 
-        if ( expression == null ) {
+        if (expression == null) {
             throw new NullPointerException("null expression");
         }
 

@@ -65,7 +65,7 @@ final class SPARQLMembers extends SPARQL {
 
         // projected variable names to/from projected expressions
 
-        final Map<String, Expression> alias2projected=plain ? Map.of() : ((Table<?>)template)
+        final Map<String, Expression> alias2projected=plain ? Map.of() : ((Table<?>) template)
                 .columns().entrySet().stream()
                 .collect(toMap(Entry::getKey, entry -> entry.getValue().expression()));
 
@@ -318,13 +318,16 @@ final class SPARQLMembers extends SPARQL {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private Coder path(final Shape shape, final Collection<String> path) {
-        return list("/", path.stream()
-                .map(step -> shape.property(step).orElseThrow(() ->
+    private Coder path(final Shape shape, final List<String> path) {
+        return list("/", shape
+
+                .properties(path).orElseThrow(() ->
                         new IllegalArgumentException(format(
-                                "unknown shape property <%s>", step
+                                "unknown shape path <%s>", path
                         ))
-                ))
+                )
+
+                .stream()
                 .map(this::iri)
                 .collect(toList())
         );
