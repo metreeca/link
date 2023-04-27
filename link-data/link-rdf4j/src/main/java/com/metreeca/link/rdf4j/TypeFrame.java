@@ -16,7 +16,10 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.*;
+import com.metreeca.link.Frame;
+import com.metreeca.link.Query;
+import com.metreeca.link.Shape;
+import com.metreeca.link.Table;
 import com.metreeca.link.Table.Column;
 
 import org.eclipse.rdf4j.model.*;
@@ -35,11 +38,10 @@ import static com.metreeca.link.Shape.forward;
 import static com.metreeca.link.Shape.reverse;
 import static com.metreeca.link.rdf4j.RDF4J.*;
 
-import static org.eclipse.rdf4j.model.util.Values.iri;
-
 import static java.lang.String.format;
 import static java.util.Map.entry;
 import static java.util.stream.Collectors.toList;
+import static org.eclipse.rdf4j.model.util.Values.iri;
 
 final class TypeFrame implements Type<Frame<?>> {
 
@@ -50,7 +52,7 @@ final class TypeFrame implements Type<Frame<?>> {
 
         final Resource focus=Optional.ofNullable(value.id())
 
-                .map(id -> absolute(id)
+                .map(id -> absolute(encoder.resolve(id))
 
                         .map(factory::createIRI)
                         .map(Resource.class::cast)

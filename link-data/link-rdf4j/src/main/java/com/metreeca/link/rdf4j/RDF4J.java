@@ -16,7 +16,9 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.*;
+import com.metreeca.link.Engine;
+import com.metreeca.link.Frame;
+import com.metreeca.link.Shape;
 
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.base.AbstractValueFactory;
@@ -27,20 +29,22 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Frame.base;
 
-import static org.eclipse.rdf4j.model.util.Values.iri;
-import static org.eclipse.rdf4j.model.vocabulary.RDF4J.NIL;
-import static org.eclipse.rdf4j.model.vocabulary.RDF4J.SHACL_SHAPE_GRAPH;
-
 import static java.lang.String.format;
 import static java.util.Map.entry;
 import static java.util.stream.Collectors.toList;
+import static org.eclipse.rdf4j.model.util.Values.iri;
+import static org.eclipse.rdf4j.model.vocabulary.RDF4J.NIL;
+import static org.eclipse.rdf4j.model.vocabulary.RDF4J.SHACL_SHAPE_GRAPH;
 
 /**
  * RDF4J graph storage driver.
@@ -213,7 +217,7 @@ public final class RDF4J implements Engine {
 
             final IRI id=iri(frame.id());
 
-            final Stream<Statement> description=new Encoder(this)
+            final Stream<Statement> description=new Encoder(this, base)
 
                     .encode(frame)
                     .getValue()
@@ -264,7 +268,7 @@ public final class RDF4J implements Engine {
 
             final IRI id=iri(frame.id());
 
-            final Stream<Statement> description=new Encoder(this)
+            final Stream<Statement> description=new Encoder(this, base)
 
                     .encode(frame)
                     .getValue()
@@ -387,11 +391,13 @@ public final class RDF4J implements Engine {
 
     public static final class Encoder {
 
+        private final String base;
         private final RDF4J rdf4j;
 
 
-        private Encoder(final RDF4J rdf4j) {
+        private Encoder(final RDF4J rdf4j, final String base) {
 
+            this.base=base;
             this.rdf4j=rdf4j;
 
         }
@@ -399,6 +405,13 @@ public final class RDF4J implements Engine {
 
         public ValueFactory factory() {
             return factory;
+        }
+
+
+        public String resolve(final String iri) {
+            return iri == null ? null
+                    : iri.startsWith("/") ? base + iri.substring(1)
+                    : iri;
         }
 
 
