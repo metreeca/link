@@ -27,17 +27,16 @@ import java.math.BigInteger;
 import java.util.*;
 
 import static com.metreeca.link.Query.Constraint.*;
-import static com.metreeca.link.Query.Direction.decreasing;
-import static com.metreeca.link.Query.Direction.increasing;
+import static com.metreeca.link.Query.Criterion.decreasing;
+import static com.metreeca.link.Query.Criterion.increasing;
 import static com.metreeca.link.Stash.Expression.expression;
 import static com.metreeca.link.Table.Column.column;
 import static com.metreeca.link.json.JSONTest.decode;
 import static com.metreeca.link.json.JSONTest.encode;
 
+import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-
-import static java.util.Map.entry;
 
 final class TypeObjectTest {
 
@@ -255,8 +254,16 @@ final class TypeObjectTest {
         @Test void testDecodeOrder() {
             assertThat(query("{ \"^\": { \"y\": \"increasing\", \"x\": \"decreasing\" } }").order().entrySet())
                     .containsExactly(
-                            entry(expression("y"), increasing),
-                            entry(expression("x"), decreasing)
+                            entry(expression("y"), increasing()),
+                            entry(expression("x"), decreasing())
+                    );
+        }
+
+        @Test void testDecodeOrderWithTargetValues() {
+            assertThat(query("{ \"^\": { \"+y\": [\"value\"], \"-x\": [\"value\"] } }").order().entrySet())
+                    .containsExactly(
+                            entry(expression("y"), increasing("value")),
+                            entry(expression("x"), decreasing("value"))
                     );
         }
 

@@ -6,32 +6,36 @@ excerpt: Lorem ipsum sit amet.
 ```typescript
 type Model={
 
-    "{field}": Plain | Model | [Query]
+    "{field}": Value | Model | [Query]
 
 }
 
 type Query=Partial<Model & {
 
-    "{field}={expression}": Plain | Model | [Query]
+    "{field}={expression}": Value | Model | [Query]
 
-    "<{expression}": Plain // less than
-    ">{expression}": Plain // greater than
+    "<{expression}": Value // less than
+    ">{expression}": Value // greater than
 
-    "<={expression}": Plain // less than or equal
-    ">={expression}": Plain // greater than or equal
+    "<={expression}": Value // less than or equal
+    ">={expression}": Value // greater than or equal
 
     "~{expression}": string // like (stemmed word search)
 
-    "?{expression}": (null | Plain | Model)[] // any
+    "?{expression}": (null | Value | Model)[] // any
 
-    "^": { "{expression}": "increasing" | "decreasing" } // sorting
+    "^": { // order
+      	"{expression}": "increasing" | "decreasing",
+      	"+{expression}": (null | Value | Model)[],
+      	"-{expression}": (null | Value | Model)[]
+    }
 
     "@": number // offset
     "#": number // limit
 
 }>
 
-type Plain=boolean | number | string
+type Value=boolean | number | string
 ```
 
 [ABNF](https://en.wikipedia.org/wiki/Augmented_Backus–Naur_form)

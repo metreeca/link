@@ -42,17 +42,6 @@ public abstract class Query<T> extends Stash<T> {
     private static final Pattern MarkPattern=Pattern.compile("\\p{M}");
 
 
-    /**
-     * Sorting direction.
-     */
-    public static enum Direction {
-
-        increasing,
-        decreasing
-
-    }
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static <T> Query<T> query(final Query<?>... queries) {
@@ -84,7 +73,7 @@ public abstract class Query<T> extends Stash<T> {
                         LinkedHashMap::new
                 ));
 
-        final Map<Expression, Direction> order=queries.stream()
+        final Map<Expression, Criterion> order=queries.stream()
                 .flatMap(query -> query.order().entrySet().stream())
                 .collect(toMap(
                         Map.Entry::getKey, Map.Entry::getValue,
@@ -119,7 +108,7 @@ public abstract class Query<T> extends Stash<T> {
                 return limit;
             }
 
-            @Override public Map<Expression, Direction> order() { return order; }
+            @Override public Map<Expression, Criterion> order() {return order;}
 
         };
     }
@@ -172,21 +161,21 @@ public abstract class Query<T> extends Stash<T> {
     }
 
 
-    public static <T> Query<T> order(final Expression expression, final Direction direction) {
+    public static <T> Query<T> order(final Expression expression, final Criterion criterion) {
 
-        if ( expression == null ) {
+        if (expression == null) {
             throw new NullPointerException("null expression");
         }
 
-        if ( direction == null ) {
-            throw new NullPointerException("null direction");
+        if (criterion == null) {
+            throw new NullPointerException("null criterion");
         }
 
-        final Map<Expression, Direction> order=Map.of(expression, direction);
+        final Map<Expression, Criterion> order=Map.of(expression, criterion);
 
         return new Query<>() {
 
-            @Override public Map<Expression, Direction> order() { return order; }
+            @Override public Map<Expression, Criterion> order() {return order;}
 
         };
     }
@@ -252,7 +241,7 @@ public abstract class Query<T> extends Stash<T> {
     }
 
 
-    public Map<Expression, Direction> order() { return Map.of(); }
+    public Map<Expression, Criterion> order() {return Map.of();}
 
     public int offset() {
         return 0;
@@ -265,11 +254,14 @@ public abstract class Query<T> extends Stash<T> {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Filtering constraint.
+     */
     public abstract static class Constraint {
 
         public static Constraint and(final Constraint... constraints) {
 
-            if ( constraints == null || Arrays.stream(constraints).anyMatch(Objects::isNull) ) {
+            if (constraints == null || Arrays.stream(constraints).anyMatch(Objects::isNull)) {
                 throw new NullPointerException("null constraints");
             }
 
@@ -544,6 +536,89 @@ public abstract class Query<T> extends Stash<T> {
 
                     .flatMap(Optional::stream)
                     .collect(joining(" & ", "{ ", " }"));
+        }
+
+    }
+
+
+    /**
+     * Sorting criterion.
+     */
+    public static final class Criterion {
+
+        private final boolean inverse;
+
+        private final Set<Object> values;
+
+
+        public static Criterion increasing(final Object... values) {
+
+            if ( values == null ) {
+                throw new NullPointerException("null values");
+            }
+
+            return new Criterion(false, Set.of(values));
+        }
+
+
+        public static Criterion increasing(final Collection<?> values) {
+
+            if ( values == null ) {
+                throw new NullPointerException("null values");
+            }
+
+            return new Criterion(false, values);
+        }
+
+
+        public static Criterion decreasing(final Object... values) {
+
+            if ( values == null ) {
+                throw new NullPointerException("null values");
+            }
+
+            return new Criterion(true, Set.of(values));
+        }
+
+        public static Criterion decreasing(final Collection<?> values) {
+
+            if ( values == null ) {
+                throw new NullPointerException("null values");
+            }
+
+            return new Criterion(true, values);
+        }
+
+
+        private Criterion(final boolean inverse, final Collection<?> values) {
+            this.inverse=inverse;
+            this.values=Set.copyOf(values);
+        }
+
+        public boolean inverse() {
+            return inverse;
+        }
+
+        public Set<Object> values() {
+            return values;
+        }
+
+
+        @Override public boolean equals(final Object object) {
+            return this == object || object instanceof Criterion
+                    && inverse == ((Criterion) object).inverse
+                    && values.equals(((Criterion) object).values);
+        }
+
+        @Override public int hashCode() {
+            return Boolean.hashCode(inverse)
+                    ^ values.hashCode();
+        }
+
+        @Override public String toString() {
+            return values.stream()
+                    .map(v -> format("<%s>", v))
+                    .collect(joining(", ", inverse ? "decreasing(" : "increasing(", ")"));
         }
 
     }

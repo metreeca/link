@@ -17,7 +17,7 @@
 package com.metreeca.link.rdf4j;
 
 import com.metreeca.link.*;
-import com.metreeca.link.Query.Direction;
+import com.metreeca.link.Query.Criterion;
 import com.metreeca.link.Stash.Expression;
 
 import org.eclipse.rdf4j.model.Resource;
@@ -28,7 +28,6 @@ import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Query.Constraint;
-import static com.metreeca.link.Query.Direction.increasing;
 import static com.metreeca.link.Query.pattern;
 import static com.metreeca.link.Stash.Transform.count;
 import static com.metreeca.link.rdf4j.Coder.*;
@@ -212,12 +211,11 @@ final class SPARQLMembers extends SPARQL {
                                 items(query.order().entrySet().stream()
                                         .map(entry -> {
 
-                                            final Direction direction=entry.getValue();
                                             final Expression expression=entry.getKey();
+                                            final Criterion criterion=entry.getValue();
 
-                                            final Coder result=result(expression);
+                                            return order(null, expression, criterion, base);
 
-                                            return direction == increasing ? asc(result) : desc(result);
 
                                         })
                                         .collect(toList())
@@ -241,15 +239,12 @@ final class SPARQLMembers extends SPARQL {
                                 items(query.order().entrySet().stream()
                                         .map(entry -> {
 
-                                            final Direction direction=entry.getValue();
+                                            final Criterion criterion=entry.getValue();
                                             final Expression expression=entry.getKey();
 
                                             final String alias=projected2alias.get(expression);
 
-                                            final Coder result=alias != null ? var(alias) :
-                                                    result(expression);
-
-                                            return direction == increasing ? asc(result) : desc(result);
+                                            return order(alias, expression, criterion, base);
 
                                         })
                                         .collect(toList())
@@ -286,6 +281,20 @@ final class SPARQLMembers extends SPARQL {
 
     private Coder havings(final Collection<Coder> coders) {
         return coders.isEmpty() ? nothing() : having(indent(list("\n&& ", coders)));
+    }
+
+    private Coder order(final String alias, final Expression expression, final Criterion criterion, final URI base) {
+
+        final boolean inverse=criterion.inverse();
+        final Set<Object> values=criterion.values();
+
+        final Coder result=alias != null ? var(alias) : result(expression);
+        final Coder target=values.isEmpty() ? result : in(result, values.stream()
+                .map(v -> value(v, base))
+                .collect(toList())
+        );
+
+        return inverse ? desc(target) : asc(target);
     }
 
 

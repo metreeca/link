@@ -16,9 +16,14 @@
 
 package com.metreeca.link.json;
 
-import com.metreeca.link.*;
+import com.metreeca.link.Frame;
+import com.metreeca.link.Query;
+import com.metreeca.link.Shape;
+import com.metreeca.link.Table;
 import com.metreeca.link.Table.Column;
-import com.metreeca.link.json.JSON.*;
+import com.metreeca.link.json.JSON.Decoder;
+import com.metreeca.link.json.JSON.Encoder;
+import com.metreeca.link.json.JSON.Type;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,6 +31,8 @@ import java.util.Map.Entry;
 
 import static com.metreeca.link.Frame.frame;
 import static com.metreeca.link.Query.Constraint.*;
+import static com.metreeca.link.Query.Criterion.decreasing;
+import static com.metreeca.link.Query.Criterion.increasing;
 import static com.metreeca.link.Query.*;
 import static com.metreeca.link.Stash.Expression.alias;
 import static com.metreeca.link.Stash.Expression.expression;
@@ -220,7 +227,7 @@ final class TypeObject implements Type<Object> {
                 throw new IllegalArgumentException("multiple collection queries");
             }
 
-            return (Collection<?>)items.get(0);
+            return (Collection<?>) items.get(0);
 
         } else {
 
@@ -287,18 +294,42 @@ final class TypeObject implements Type<Object> {
                     decoder.token(COMMA);
                 }
 
-                final Expression expression=expression(decoder.decode(String.class));
+                final String target=decoder.decode(String.class);
 
                 decoder.token(COLON);
 
-                final String direction=decoder.token(STRING);
+                if ( target.startsWith("+") ) {
 
-                try {
+                    final Expression expression=expression(target.substring(1));
+                    final Collection<?> values=decoder.decode(Collection.class);
 
-                    queries.add(order(expression, Direction.valueOf(direction)));
+                    queries.add(order(expression, increasing(values)));
 
-                } catch ( final IllegalArgumentException ignored ) {
-                    throw new IllegalArgumentException(format("unknown direction <%s>", direction));
+                } else if ( target.startsWith("-") ) {
+
+                    final Expression expression=expression(target.substring(1));
+                    final Collection<?> values=decoder.decode(Collection.class);
+
+                    queries.add(order(expression, decreasing(values)));
+
+                } else {
+
+                    final String direction=decoder.token(STRING);
+
+                    if ( direction.equals("increasing") ) {
+
+                        queries.add(order(expression(target), increasing()));
+
+                    } else if ( direction.equals("decreasing") ) {
+
+                        queries.add(order(expression(target), decreasing()));
+
+                    } else {
+
+                        throw new IllegalArgumentException(format("unknown sorting direction <%s>", direction));
+
+                    }
+
                 }
 
             }
