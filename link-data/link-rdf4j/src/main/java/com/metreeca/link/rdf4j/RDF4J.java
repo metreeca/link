@@ -38,7 +38,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-import static com.metreeca.link.Frame.base;
+import static com.metreeca.link.Frame.root;
 
 import static java.lang.String.format;
 import static java.util.Map.entry;
@@ -369,7 +369,7 @@ public final class RDF4J implements Engine {
 
                 .map(Frame::frame)
 
-                .flatMap(frame -> processor.apply(frame, base(frame.id())
+                .flatMap(frame -> processor.apply(frame, root(frame.id())
 
                         .orElseThrow(() -> new IllegalArgumentException(format(
                                 "object id <%s> is not an absolute IRI", frame.id()

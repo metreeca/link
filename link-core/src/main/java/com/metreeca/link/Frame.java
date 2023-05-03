@@ -72,8 +72,8 @@ public abstract class Frame<T> {
         return Lingo.absolute(iri).map(Matcher::group);
     }
 
-    public static Optional<String> base(final String iri) {
-        return Lingo.base(iri);
+    public static Optional<String> root(final String iri) {
+        return Lingo.root(iri);
     }
 
     public static Optional<String> path(final String iri) {

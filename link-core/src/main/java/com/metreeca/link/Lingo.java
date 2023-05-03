@@ -17,7 +17,9 @@
 package com.metreeca.link;
 
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,10 +32,11 @@ import static java.util.function.Predicate.not;
 final class Lingo {
 
     private static final Pattern SchemaPattern=Pattern.compile("(?<schema>[a-zA-Z0-9][-+.a-zA-Z0-9]*)");
-    private static final Pattern BasePattern=Pattern.compile("(?<base>"+SchemaPattern+":(?://[^/\\s]*/)?)");
-    private static final Pattern AbsolutePattern=Pattern.compile(BasePattern+"(?<path>\\S*[/#](?<label>\\w+)|\\S+)");
-    private static final Pattern CompactPattern=Pattern.compile("(?:(?<prefix>"+SchemaPattern+"):)?(?<name>\\w+)?");
+    private static final Pattern RootPattern=Pattern.compile("(?<root>" + SchemaPattern + ":(?://[^/\\s]*/)?)");
+    private static final Pattern AbsolutePattern=Pattern.compile(RootPattern + "(?<path>\\S*?(?:[/#](?<label>\\w+))?)");
+    private static final Pattern CompactPattern=Pattern.compile("(?:(?<prefix>" + SchemaPattern + "):)?(?<name>\\w+)?");
 
+    private static final Pattern x=Pattern.compile("(?<root>(?<schema>[a-zA-Z0-9][-+.a-zA-Z0-9]*):(?://[^/\\s]*/)?)");
 
     static Optional<Matcher> compact(final String iri) {
         return Optional.ofNullable(iri)
@@ -49,17 +52,16 @@ final class Lingo {
     }
 
 
-    static Optional<String> base(final String iri) {
-        return absolute(iri).map(matcher -> Optional
-                .ofNullable(matcher.group("base"))
-                .orElseGet(() -> matcher.group("schema"))
+    static Optional<String> root(final String iri) {
+        return absolute(iri).flatMap(matcher -> Optional
+                .ofNullable(matcher.group("root"))
         );
     }
 
     static Optional<String> path(final String iri) {
         return absolute(iri).flatMap(matcher -> Optional
                 .ofNullable(matcher.group("path"))
-                .map(path -> "/"+path)
+                .map(path -> "/" + path)
         );
     }
 
