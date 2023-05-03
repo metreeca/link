@@ -17,9 +17,13 @@
 package com.metreeca.link.rdf4j;
 
 import com.metreeca.link.Frame;
-import com.metreeca.link.rdf4j.RDF4J.*;
+import com.metreeca.link.rdf4j.RDF4J.Decoder;
+import com.metreeca.link.rdf4j.RDF4J.Encoder;
+import com.metreeca.link.rdf4j.RDF4J.Type;
 
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -36,12 +40,12 @@ final class TypeObject implements Type<Object> {
     @Override public Optional<Object> decode(final Decoder decoder, final Value value, final Object template) {
         return Optional.of(value)
 
-                .filter(Value::isIRI)
-                .map(IRI.class::cast)
+                .filter(Value::isResource)
+                .map(Resource.class::cast)
 
-                .flatMap(iri -> Optional.of(frame(template))
-                        .map(frame -> frame.id() == null ? frame : frame.id(iri.stringValue()))
-                        .flatMap(frame -> decoder.decode(iri, frame))
+                .flatMap(resource -> Optional.of(frame(template))
+                        .map(frame -> frame.id() == null || resource.isBNode() ? frame : frame.id(resource.stringValue()))
+                        .flatMap(frame -> decoder.decode(resource, frame))
                         .map(Frame::value)
                 );
     }
