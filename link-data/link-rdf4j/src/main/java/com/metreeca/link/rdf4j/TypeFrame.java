@@ -34,6 +34,7 @@ import static com.metreeca.link.Local.local;
 import static com.metreeca.link.Query.query;
 import static com.metreeca.link.Shape.forward;
 import static com.metreeca.link.Shape.reverse;
+import static com.metreeca.link.rdf4j.Coder.*;
 import static com.metreeca.link.rdf4j.RDF4J.*;
 
 import static java.lang.String.format;
@@ -169,17 +170,15 @@ final class TypeFrame implements Type<Frame<?>> {
 
                         if ( object != null ) {
 
-                            frame.set(field, decode(decoder, virtual, resource, object,
+                            final String property=shape.property(field).orElseThrow(() ->
+                                    new NoSuchElementException(format("unknown field <%s>", field))
+                            );
 
-                                    shape.property(field).orElseThrow(() ->
-                                            new NoSuchElementException(format("unknown field <%s>", field))
-                                    ),
+                            final Shape subshape=shape.shape(field).orElseThrow(() ->
+                                    new NoSuchElementException(format("unknown field <%s>", field))
+                            );
 
-                                    shape.shape(field).orElseThrow(() ->
-                                            new NoSuchElementException(format("unknown field <%s>", field))
-                                    )
-
-                            ));
+                            frame.set(field, decode(decoder, shape, resource, property, object, subshape));
 
                         }
 
@@ -194,20 +193,20 @@ final class TypeFrame implements Type<Frame<?>> {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private static Object decode(
-            final Decoder decoder, final boolean virtual,
-            final Resource resource, final Object object, final String property, final Shape shape
+            final Decoder decoder, final Shape shape,
+            final Resource resource, final String property, final Object object, final Shape subshape
     ) {
 
-        return object instanceof Query ? decode(decoder, virtual, resource, property, (Query<?>)object, shape)
+        return object instanceof Query ? decode(decoder, shape, resource, property, (Query<?>)object, subshape)
                 : object instanceof List ? decode(decoder, resource, property, (List<?>)object)
-                : object instanceof Collection ? decode(decoder, virtual, resource, property, (Collection<?>)object, shape)
-                : object instanceof Local ? decode(decoder, resource, property, (Local<?>)object)
-                : decode(decoder, virtual, resource, property, object);
+                : object instanceof Collection ? decode(decoder, shape, resource, property, (Collection<?>)object, subshape)
+                : object instanceof Local ? decode(decoder, shape, resource, property, (Local<?>)object)
+                : decode(decoder, shape, resource, property, object);
     }
 
     private static Object decode(
-            final Decoder decoder, final boolean virtual,
-            final Resource resource, final String property, final Query<?> query, final Shape shape
+            final Decoder decoder, final Shape shape,
+            final Resource resource, final String property, final Query<?> query, final Shape subshape
     ) {
 
         final RepositoryConnection connection=decoder.connection();
@@ -218,8 +217,8 @@ final class TypeFrame implements Type<Frame<?>> {
 
         final String members=sparql.members(
                 resource,
-                virtual ? Optional.empty() : Optional.of(property),
-                shape,
+                shape.virtual() ? Optional.empty() : Optional.of(property),
+                subshape,
                 query
         );
 
@@ -272,8 +271,8 @@ final class TypeFrame implements Type<Frame<?>> {
     }
 
     private static List<?> decode(
-            final Decoder decoder, final boolean virtual,
-            final Resource resource, final String property, final Collection<?> collection, final Shape shape
+            final Decoder decoder, final Shape shape,
+            final Resource resource, final String property, final Collection<?> collection, final Shape subshape
     ) {
 
         // !!! migrate to TypeCollection?
@@ -284,8 +283,8 @@ final class TypeFrame implements Type<Frame<?>> {
 
         final String members=generator.members(
                 resource,
-                virtual ? Optional.empty() : Optional.of(property),
-                shape,
+                shape.virtual() ? Optional.empty() : Optional.of(property),
+                subshape,
                 query()
         );
 
@@ -308,7 +307,7 @@ final class TypeFrame implements Type<Frame<?>> {
     }
 
     private static Object decode(
-            final Decoder decoder,
+            final Decoder decoder, final Shape shape,
             final Resource resource, final String property, final Local<?> local
     ) {
 
@@ -324,7 +323,14 @@ final class TypeFrame implements Type<Frame<?>> {
                 .map(Locale::toLanguageTag)
                 .collect(toSet());
 
-        final Stream<Literal> literals=values(connection, resource, property).stream()
+        final Stream<Literal> literals=retrieve(
+                connection,
+                resource,
+                property,
+                shape.links().collect(toList()),
+                vs -> vs.collect(toList())
+
+        ).stream()
                 .filter(Value::isLiteral)
                 .map(Literal.class::cast)
                 .filter(v -> v.getLanguage().isPresent())
@@ -349,7 +355,7 @@ final class TypeFrame implements Type<Frame<?>> {
     }
 
     private static Object decode(
-            final Decoder decoder, final boolean virtual,
+            final Decoder decoder, final Shape shape,
             final Resource resource, final String property, final Object object
     ) {
 
@@ -357,9 +363,9 @@ final class TypeFrame implements Type<Frame<?>> {
 
         final RepositoryConnection connection=decoder.connection();
 
-        return value(connection, resource, property)
+        return retrieve(connection, resource, property, shape.links().collect(toList()), Stream::findFirst)
                 .flatMap(v -> decoder.decode(v, object))
-                .orElse(virtual ? object : null);
+                .orElse(shape.virtual() ? object : null);
 
     }
 
@@ -372,53 +378,77 @@ final class TypeFrame implements Type<Frame<?>> {
             final Function<BindingSet, V> mapper
     ) {
 
-        try ( final Stream<BindingSet> resources=connection.prepareTupleQuery(query).evaluate().stream() ) {
+        try ( final Stream<BindingSet> results=connection.prepareTupleQuery(query).evaluate().stream() ) {
 
-            return resources.map(mapper).collect(toList());
+            return results.map(mapper).collect(toList());
 
         }
 
     }
 
 
-    private static Collection<? extends Value> values(
+    private static <V> V retrieve(
             final RepositoryConnection connection,
             final Resource anchor,
-            final String predicate
+            final String predicate,
+            final Collection<String> links,
+            final Function<Stream<Value>, V> mapper
     ) {
 
         final boolean forward=forward(predicate);
 
-        try ( final Stream<Statement> statements=forward
-                ? connection.getStatements(anchor, iri(predicate), null).stream()
-                : connection.getStatements(null, iri(reverse(predicate)), anchor).stream()
-        ) {
+        if ( links.isEmpty() ) {
 
-            return forward
-                    ? statements.map(Statement::getObject).collect(toList())
-                    : statements.map(Statement::getSubject).collect(toList());
+            try ( final Stream<Statement> statements=forward
+                    ? connection.getStatements(anchor, iri(predicate), null).stream()
+                    : connection.getStatements(null, iri(reverse(predicate)), anchor).stream()
+            ) {
+
+                return mapper.apply(forward
+                        ? statements.map(Statement::getObject)
+                        : statements.map(Statement::getSubject)
+                );
+
+            }
+
+        } else {
+
+            final class Generator extends SPARQL {
+
+                private String generate() {
+                    return query(items(
+
+                            select(var(id())),
+
+                            where(space(edge(
+
+                                    value(anchor),
+
+                                    items(
+                                            text("("),
+                                            list("|", links.stream().map(this::iri).collect(toList())),
+                                            text(")?/"),
+                                            iri(predicate)
+                                    ),
+
+                                    var(id())
+
+                            )))
+
+                    ));
+                }
+
+            }
+
+            final Generator generator=new Generator();
+            final String sparql=generator.generate();
+
+            try ( final Stream<BindingSet> results=connection.prepareTupleQuery(sparql).evaluate().stream() ) {
+                return mapper.apply(results.map(bindings -> bindings.getValue(generator.id())));
+            }
 
         }
-    }
 
-    private static Optional<? extends Value> value(
-            final RepositoryConnection connection,
-            final Resource anchor,
-            final String predicate
-    ) {
-
-        final boolean forward=forward(predicate);
-
-        try ( final Stream<Statement> statements=forward
-                ? connection.getStatements(anchor, iri(predicate), null).stream()
-                : connection.getStatements(null, iri(reverse(predicate)), anchor).stream()
-        ) {
-
-            return forward
-                    ? statements.map(Statement::getObject).findFirst()
-                    : statements.map(Statement::getSubject).findFirst();
-
-        }
     }
 
 }

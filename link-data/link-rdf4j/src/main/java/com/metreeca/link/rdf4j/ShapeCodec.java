@@ -20,31 +20,30 @@ package com.metreeca.link.rdf4j;
 import com.metreeca.link.Shape;
 
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.vocabulary.*;
 
 import java.util.stream.Stream;
 
-import static com.metreeca.link.rdf4j.RDF4J.factory;
-
 final class ShapeCodec {
-
 
     Stream<Statement> encode(final Shape shape) {
 
-        return shape.type().stream()
+        throw new UnsupportedOperationException(";( be implemented"); // !!!
 
-                .map(factory::createIRI)
+        // return shape.type().stream()
+        //
+        //        .map(factory::createIRI)
+        //
+        //        .flatMap(type -> {
+        //
+        //            // !!! shape.fields()
+        //
+        //            return Stream.of(
+        //                    factory.createStatement(type, RDF.TYPE, RDFS.CLASS),
+        //                    factory.createStatement(type, RDF.TYPE, SHACL.NODE_SHAPE)
+        //            );
+        //
+        //        });
 
-                .flatMap(type -> {
-
-                    // !!! shape.fields()
-
-                    return Stream.of(
-                            factory.createStatement(type, RDF.TYPE, RDFS.CLASS),
-                            factory.createStatement(type, RDF.TYPE, SHACL.NODE_SHAPE)
-                    );
-
-                });
     }
 
 }

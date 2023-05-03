@@ -64,7 +64,7 @@ final class SPARQLMembers extends SPARQL {
 
         // projected variable names to/from projected expressions
 
-        final Map<String, Expression> alias2projected=plain ? Map.of() : ((Table<?>) template)
+        final Map<String, Expression> alias2projected=plain ? Map.of() : ((Table<?>)template)
                 .columns().entrySet().stream()
                 .collect(toMap(Entry::getKey, entry -> entry.getValue().expression()));
 
@@ -131,7 +131,7 @@ final class SPARQLMembers extends SPARQL {
 
                         // member type constraint
 
-                        shape.type()
+                        shape.types().findFirst()
                                 .map(type -> space(edge(member, text("a"), iri(type))))
                                 .orElseGet(Coder::nothing),
 
@@ -384,8 +384,9 @@ final class SPARQLMembers extends SPARQL {
         return regex(str(value), quoted(pattern(keywords, true)));
     }
 
-    private Coder any(final Coder value, final Collection<Object> any, final URI base) { // !!! empty list  / null values
-        return in(value, any.stream()
+    private Coder any(final Coder value, final Collection<Object> any, final URI base) {
+        return any.isEmpty() ? text("true") // !!! empty list  / null values
+                : in(value, any.stream()
                 .map(v -> value(v, base))
                 .collect(toList())
         );
