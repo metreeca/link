@@ -19,6 +19,7 @@ package com.metreeca.link.rdf4j;
 import com.metreeca.link.rdf4j.RDF4J.Decoder;
 import com.metreeca.link.rdf4j.RDF4J.Encoder;
 import com.metreeca.link.rdf4j.RDF4J.Type;
+
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
@@ -36,7 +37,7 @@ final class TypeURI implements Type<URI> {
         return entry(Stream.of(encoder.factory().createIRI(value.toString())), Stream.empty());
     }
 
-    @Override public Optional<URI> decode(final Decoder decoder, final Value value, final URI template) {
+    @Override public Optional<URI> decode(final Decoder decoder, final Value value, final URI model) {
         return Optional.of(value)
 
                 .filter(Value::isIRI)

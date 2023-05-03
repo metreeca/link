@@ -16,7 +16,9 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.rdf4j.RDF4J.*;
+import com.metreeca.link.rdf4j.RDF4J.Decoder;
+import com.metreeca.link.rdf4j.RDF4J.Encoder;
+import com.metreeca.link.rdf4j.RDF4J.Type;
 
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
@@ -32,7 +34,7 @@ final class TypeList implements Type<List<?>> {
         throw new UnsupportedOperationException(";( be implemented"); // !!!
     }
 
-    @Override public Optional<List<?>> decode(final Decoder decoder, final Value value, final List<?> template) {
+    @Override public Optional<List<?>> decode(final Decoder decoder, final Value value, final List<?> model) {
         throw new UnsupportedOperationException(";( be implemented"); // !!!
     }
 

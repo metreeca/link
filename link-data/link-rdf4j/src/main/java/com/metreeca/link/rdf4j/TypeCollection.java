@@ -16,7 +16,9 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.rdf4j.RDF4J.*;
+import com.metreeca.link.rdf4j.RDF4J.Decoder;
+import com.metreeca.link.rdf4j.RDF4J.Encoder;
+import com.metreeca.link.rdf4j.RDF4J.Type;
 
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
@@ -37,7 +39,7 @@ final class TypeCollection implements Type<Set<?>> {
         ));
     }
 
-    @Override public Optional<Set<?>> decode(final Decoder decoder, final Value value, final Set<?> template) {
+    @Override public Optional<Set<?>> decode(final Decoder decoder, final Value value, final Set<?> model) {
         throw new UnsupportedOperationException(";( be implemented"); // !!!
     }
 

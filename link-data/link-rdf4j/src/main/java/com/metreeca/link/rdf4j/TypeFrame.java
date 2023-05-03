@@ -141,9 +141,9 @@ final class TypeFrame implements Type<Frame<?>> {
 
     }
 
-    @Override public Optional<Frame<?>> decode(final Decoder decoder, final Value value, final Frame<?> template) {
+    @Override public Optional<Frame<?>> decode(final Decoder decoder, final Value value, final Frame<?> model) {
 
-        final Shape shape=template.shape();
+        final Shape shape=model.shape();
         final boolean virtual=shape.virtual();
 
         final RepositoryConnection connection=decoder.connection();
@@ -160,155 +160,26 @@ final class TypeFrame implements Type<Frame<?>> {
 
                 .map(resource -> {
 
-                    final Frame<?> frame=template.copy();
+                    final Frame<?> frame=model.copy();
 
-                    frame.entries(false).forEach(e -> { // !!! refactor
+                    frame.entries(false).forEach(e -> {
 
                         final String field=e.getKey();
                         final Object object=e.getValue();
 
                         if ( object != null ) {
 
-                            final String _property=shape.property(field).orElseThrow(() ->
-                                    new NoSuchElementException(format("unknown field <%s>", field))
-                            );
+                            frame.set(field, decode(decoder, virtual, resource, object,
 
-                            final Shape _shape=shape.shape(field).orElseThrow(() ->
-                                    new NoSuchElementException(format("unknown field <%s>", field))
-                            );
+                                    shape.property(field).orElseThrow(() ->
+                                            new NoSuchElementException(format("unknown field <%s>", field))
+                                    ),
 
-                            if ( object instanceof Query ) {
+                                    shape.shape(field).orElseThrow(() ->
+                                            new NoSuchElementException(format("unknown field <%s>", field))
+                                    )
 
-                                final Query<?> query=(Query<?>)object;
-                                final Object model=query.template();
-
-                                final SPARQLMembers sparql=new SPARQLMembers();
-
-                                final String members=sparql.members(
-                                        resource,
-                                        virtual ? Optional.empty() : Optional.of(_property),
-                                        _shape,
-                                        query
-                                );
-
-                                if ( model instanceof Table ) {
-
-                                    final Table<?> table=((Table<?>)model).copy();
-                                    final Map<String, Column> columns=table.columns();
-
-                                    final List<Map<String, Value>> solutions=select(connection, members, bindings ->
-                                            columns.keySet().stream().collect(
-                                                    HashMap::new, // ;( handle null values
-                                                    (map, alias) -> map.put(alias, bindings.getValue(alias)),
-                                                    Map::putAll
-
-                                            )
-                                    );
-
-                                    solutions.forEach(solution -> table.append(solution.entrySet().stream().collect(
-                                            LinkedHashMap::new,
-                                            (map, entry) -> {
-
-                                                final String alias=entry.getKey();
-                                                final Value _value=entry.getValue();
-                                                final Object _template=columns.get(alias).template();
-
-                                                map.put(alias, decoder
-                                                        .decode(_value, _template) // !!! batch retrieval
-                                                        .orElse(null)
-                                                );
-
-                                            },
-                                            Map::putAll
-                                    )));
-
-                                    frame.set(field, table);
-
-                                } else {
-
-                                    final List<Value> values=select(connection, members, bindings ->
-                                            bindings.getValue(sparql.id())
-                                    );
-
-                                    final List<Object> items=values.stream()
-                                            .flatMap(v -> decoder.decode(v, model).stream()) // !!! batch retrieval
-                                            .collect(toList());
-
-                                    frame.set(field, items);
-                                }
-
-                            } else if ( object instanceof List ) {
-
-                                throw new UnsupportedOperationException(";( be implemented"); // !!!
-
-                            } else if ( object instanceof Collection ) { // !!! migrate to TypeCollection
-
-                                final Collection<?> collection=(Collection<?>)object;
-
-                                final SPARQLMembers generator=new SPARQLMembers();
-
-                                final String members=generator.members(
-                                        resource,
-                                        virtual ? Optional.empty() : Optional.of(_property),
-                                        _shape,
-                                        query()
-                                );
-
-                                final List<Value> values=select(connection, members, bindings ->
-                                        bindings.getValue(generator.id())
-                                );
-
-                                frame.set(field, values.stream() // !!! batch retrieval
-                                        .flatMap(v -> collection.stream()
-                                                .flatMap(o -> decoder.decode(v, o).stream())
-                                        )
-                                        .collect(toList()));
-
-                            } else if ( object instanceof Local ) { // !!! migrate to TypeLocal
-
-                                final Local<?> local=(Local<?>)object;
-
-                                final boolean empty=local.values().keySet().isEmpty();
-                                final boolean wild=local.values().keySet().stream().anyMatch(Local.Wildcard::equals);
-                                final boolean unique=local.values().values().stream().anyMatch(String.class::isInstance);
-
-                                final Set<String> locales=local.values().keySet().stream()
-                                        .map(Locale::toLanguageTag)
-                                        .collect(toSet());
-
-                                final Stream<Literal> literals=values(connection, resource, _property).stream()
-                                        .filter(Value::isLiteral)
-                                        .map(Literal.class::cast)
-                                        .filter(v -> v.getLanguage().isPresent())
-                                        .filter(v -> empty || wild || v.getLanguage().filter(locales::contains).isPresent());
-
-                                frame.set(field, unique
-
-                                        ?
-                                        local(literals
-                                                .map(v -> local(v.getLanguage().get(), v.stringValue()))
-                                                .collect(toList())
-                                        )
-
-                                        :
-                                        local(literals
-                                                .collect(groupingBy(v -> v.getLanguage().get(), mapping(Value::stringValue, toSet())))
-                                                .entrySet()
-                                                .stream()
-                                                .map(entry -> local(entry.getKey(), entry.getValue()))
-                                                .collect(toList())
-                                        )
-
-                                );
-
-                            } else { // !!! batch retrieval
-
-                                frame.set(field, value(connection, resource, _property)
-                                        .flatMap(v -> decoder.decode(v, object))
-                                        .orElse(virtual ? object : null)
-                                );
-
-                            }
+                            ));
 
                         }
 
@@ -317,6 +188,179 @@ final class TypeFrame implements Type<Frame<?>> {
                     return frame.id(decoder.relativize(frame.id()));
 
                 });
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static Object decode(
+            final Decoder decoder, final boolean virtual,
+            final Resource resource, final Object object, final String property, final Shape shape
+    ) {
+
+        return object instanceof Query ? decode(decoder, virtual, resource, property, (Query<?>)object, shape)
+                : object instanceof List ? decode(decoder, resource, property, (List<?>)object)
+                : object instanceof Collection ? decode(decoder, virtual, resource, property, (Collection<?>)object, shape)
+                : object instanceof Local ? decode(decoder, resource, property, (Local<?>)object)
+                : decode(decoder, virtual, resource, property, object);
+    }
+
+    private static Object decode(
+            final Decoder decoder, final boolean virtual,
+            final Resource resource, final String property, final Query<?> query, final Shape shape
+    ) {
+
+        final RepositoryConnection connection=decoder.connection();
+
+        final Object model=query.model();
+
+        final SPARQLMembers sparql=new SPARQLMembers();
+
+        final String members=sparql.members(
+                resource,
+                virtual ? Optional.empty() : Optional.of(property),
+                shape,
+                query
+        );
+
+
+        if ( model instanceof Table ) {
+
+            final Table<?> table=(Table<?>)model;
+            final Table<?> copy=table.copy();
+            final Map<String, Column> columns=copy.columns();
+
+            final List<Map<String, Value>> solutions=select(connection, members, bindings ->
+                    columns.keySet().stream().collect(
+                            HashMap::new, // ;( handle null values
+                            (map, alias) -> map.put(alias, bindings.getValue(alias)),
+                            Map::putAll
+
+                    )
+            );
+
+            solutions.forEach(solution -> copy.append(solution.entrySet().stream().collect(
+                    LinkedHashMap::new,
+                    (map, entry) -> {
+
+                        final String alias=entry.getKey();
+                        final Value _value=entry.getValue();
+                        final Object _template=columns.get(alias).template();
+
+                        map.put(alias, decoder
+                                .decode(_value, _template) // !!! batch retrieval
+                                .orElse(null)
+                        );
+
+                    },
+                    Map::putAll
+            )));
+
+            return copy;
+
+        } else {
+
+            final List<Value> values=select(connection, members, bindings ->
+                    bindings.getValue(sparql.id())
+            );
+
+            return values.stream()
+                    .flatMap(v -> decoder.decode(v, model).stream()) // !!! batch retrieval
+                    .collect(toList());
+        }
+
+    }
+
+    private static List<?> decode(
+            final Decoder decoder, final boolean virtual,
+            final Resource resource, final String property, final Collection<?> collection, final Shape shape
+    ) {
+
+        // !!! migrate to TypeCollection?
+
+        final RepositoryConnection connection=decoder.connection();
+
+        final SPARQLMembers generator=new SPARQLMembers();
+
+        final String members=generator.members(
+                resource,
+                virtual ? Optional.empty() : Optional.of(property),
+                shape,
+                query()
+        );
+
+        final List<Value> values=select(connection, members, bindings ->
+                bindings.getValue(generator.id())
+        );
+
+        return values.stream() // !!! batch retrieval
+                .flatMap(v -> collection.stream()
+                        .flatMap(o -> decoder.decode(v, o).stream())
+                )
+                .collect(toList());
+    }
+
+    private static Object decode(
+            final Decoder decoder,
+            final Resource resource, final String property, final List<?> model
+    ) {
+        throw new UnsupportedOperationException(";( be implemented"); // !!!
+    }
+
+    private static Object decode(
+            final Decoder decoder,
+            final Resource resource, final String property, final Local<?> local
+    ) {
+
+        // !!! migrate to TypeLocal?
+
+        final RepositoryConnection connection=decoder.connection();
+
+        final boolean empty=local.values().keySet().isEmpty();
+        final boolean wild=local.values().keySet().stream().anyMatch(Local.Wildcard::equals);
+        final boolean unique=local.values().values().stream().anyMatch(String.class::isInstance);
+
+        final Set<String> locales=local.values().keySet().stream()
+                .map(Locale::toLanguageTag)
+                .collect(toSet());
+
+        final Stream<Literal> literals=values(connection, resource, property).stream()
+                .filter(Value::isLiteral)
+                .map(Literal.class::cast)
+                .filter(v -> v.getLanguage().isPresent())
+                .filter(v -> empty || wild || v.getLanguage().filter(locales::contains).isPresent());
+
+        return unique
+
+                ?
+                local(literals
+                        .map(v -> local(v.getLanguage().get(), v.stringValue()))
+                        .collect(toList())
+                )
+
+                :
+                local(literals
+                        .collect(groupingBy(v -> v.getLanguage().get(), mapping(Value::stringValue, toSet())))
+                        .entrySet()
+                        .stream()
+                        .map(entry -> local(entry.getKey(), entry.getValue()))
+                        .collect(toList())
+                );
+    }
+
+    private static Object decode(
+            final Decoder decoder, final boolean virtual,
+            final Resource resource, final String property, final Object object
+    ) {
+
+        // !!! batch retrieval
+
+        final RepositoryConnection connection=decoder.connection();
+
+        return value(connection, resource, property)
+                .flatMap(v -> decoder.decode(v, object))
+                .orElse(virtual ? object : null);
+
     }
 
 

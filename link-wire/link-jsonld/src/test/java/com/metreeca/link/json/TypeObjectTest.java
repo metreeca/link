@@ -122,7 +122,7 @@ final class TypeObjectTest {
 
 
         @Test void testDecodeFrameTemplate() {
-            assertThat(query("{ \"label\": \"value\", \"~label\": \"keywords\" }").template())
+            assertThat(query("{ \"label\": \"value\", \"~label\": \"keywords\" }").model())
                     .isInstanceOf(Item.class)
                     .extracting(Item.class::cast)
                     .satisfies(item -> assertThat(item.getLabel())
@@ -131,7 +131,7 @@ final class TypeObjectTest {
         }
 
         @Test void testDecodeTableTemplate() {
-            assertThat(query("{ \"alias=label\": \"\" }").template())
+            assertThat(query("{ \"alias=label\": \"\" }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
                     .satisfies(table -> assertThat(table.columns())
@@ -142,7 +142,7 @@ final class TypeObjectTest {
         }
 
         @Test void testDecodeMixedTemplate() {
-            assertThat(query("{ \"label\": \"\", \"alias=label\": \"\" }").template())
+            assertThat(query("{ \"label\": \"\", \"alias=label\": \"\" }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
                     .satisfies(table -> assertThat(table.columns())
@@ -155,7 +155,7 @@ final class TypeObjectTest {
 
 
         @Test void testHandleEqualInAliases() {
-            assertThat(query("{ \"'alias=value'=label\": \"\" }").template())
+            assertThat(query("{ \"'alias=value'=label\": \"\" }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
                     .satisfies(table -> assertThat(table.columns())
@@ -167,7 +167,7 @@ final class TypeObjectTest {
 
 
         @Test void testLookupTableShapes() {
-            assertThat(query("{ \"alias=item\": { \"label\":  \"\"} }").template())
+            assertThat(query("{ \"alias=item\": { \"label\":  \"\"} }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
                     .satisfies(table -> assertThat(table.columns().get("alias").template())
@@ -180,7 +180,7 @@ final class TypeObjectTest {
         }
 
         @Test void testLookupTableNestedShapes() {
-            assertThat(query("{ \"alias=item.item\": { \"label\":  \"\"} }").template())
+            assertThat(query("{ \"alias=item.item\": { \"label\":  \"\"} }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
                     .satisfies(table -> assertThat(table.columns().get("alias").template())
@@ -193,7 +193,7 @@ final class TypeObjectTest {
         }
 
         @Test void testIgnoreTableComputedShapes() {
-            assertThat(query("{ \"alias=max:items\": { \"label\":  \"\"} }").template())
+            assertThat(query("{ \"alias=max:items\": { \"label\":  \"\"} }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
                     .satisfies(table -> assertThat(table.columns().get("alias").template())

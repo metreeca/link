@@ -53,7 +53,7 @@ final class SPARQLMembers extends SPARQL {
     ) {
 
         final URI base=URI.create(container.isIRI() ? container.stringValue() : Frame.DefaultBase);
-        final Object template=query.template();
+        final Object template=query.model();
 
         final boolean plain=!(template instanceof Table);
 

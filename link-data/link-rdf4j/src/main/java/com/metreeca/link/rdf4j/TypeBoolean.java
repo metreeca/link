@@ -16,9 +16,13 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.rdf4j.RDF4J.*;
+import com.metreeca.link.rdf4j.RDF4J.Decoder;
+import com.metreeca.link.rdf4j.RDF4J.Encoder;
+import com.metreeca.link.rdf4j.RDF4J.Type;
 
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 
 import java.util.Map;
@@ -33,7 +37,7 @@ final class TypeBoolean implements Type<Boolean> {
         return entry(Stream.of(encoder.factory().createLiteral(value)), Stream.empty());
     }
 
-    @Override public Optional<Boolean> decode(final Decoder decoder, final Value value, final Boolean template) {
+    @Override public Optional<Boolean> decode(final Decoder decoder, final Value value, final Boolean model) {
         return Optional.of(value)
 
                 .filter(Value::isLiteral)

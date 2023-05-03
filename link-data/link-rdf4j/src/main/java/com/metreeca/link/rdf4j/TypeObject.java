@@ -37,13 +37,13 @@ final class TypeObject implements Type<Object> {
         return encoder.encode(frame(value));
     }
 
-    @Override public Optional<Object> decode(final Decoder decoder, final Value value, final Object template) {
+    @Override public Optional<Object> decode(final Decoder decoder, final Value value, final Object model) {
         return Optional.of(value)
 
                 .filter(Value::isResource)
                 .map(Resource.class::cast)
 
-                .flatMap(resource -> Optional.of(frame(template))
+                .flatMap(resource -> Optional.of(frame(model))
                         .map(frame -> frame.id() == null || resource.isBNode() ? frame : frame.id(resource.stringValue()))
                         .flatMap(frame -> decoder.decode(resource, frame))
                         .map(Frame::value)

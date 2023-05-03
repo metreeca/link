@@ -186,13 +186,13 @@ final class TypeObject implements Type<Object> {
 
             });
 
-            queries.add(template(Table.table(columns)));
+            queries.add(model(Table.table(columns)));
 
             return Query.query(queries);
 
         } else if ( !queries.isEmpty() ) {
 
-            queries.add(template(frame.value()));
+            queries.add(model(frame.value()));
 
             return Query.query(queries);
 

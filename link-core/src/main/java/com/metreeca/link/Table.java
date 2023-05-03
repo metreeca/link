@@ -16,7 +16,10 @@
 
 package com.metreeca.link;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
@@ -59,7 +62,7 @@ public final class Table<T> extends Stash<T> {
     }
 
 
-    public Table<T> copy() {
+    public Table<T> copy() { // !!! remove mutator
         return new Table<>(columns, records);
     }
 
@@ -77,7 +80,7 @@ public final class Table<T> extends Stash<T> {
     }
 
 
-    public Table<T> append(final Map<String, Object> record) {
+    public Table<T> append(final Map<String, Object> record) { // !!! remove mutator
 
         if ( record == null ) {
             throw new NullPointerException("null record");

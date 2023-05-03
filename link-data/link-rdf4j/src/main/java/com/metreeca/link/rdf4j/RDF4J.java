@@ -387,7 +387,7 @@ public final class RDF4J implements Engine {
 
         public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final T value);
 
-        public Optional<T> decode(final Decoder decoder, final Value value, final T template);
+        public Optional<T> decode(final Decoder decoder, final Value value, final T model);
 
     }
 

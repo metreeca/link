@@ -62,7 +62,7 @@ final class TypeLocal implements Type<Local<?>> {
         );
     }
 
-    @Override public Optional<Local<?>> decode(final Decoder decoder, final Value value, final Local<?> template) {
+    @Override public Optional<Local<?>> decode(final Decoder decoder, final Value value, final Local<?> model) {
         throw new UnsupportedOperationException(";( be implemented"); // !!!
     }
 

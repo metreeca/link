@@ -37,7 +37,7 @@ final class TypeString implements Type<String> {
         return entry(Stream.of(encoder.factory().createLiteral(value)), Stream.empty());
     }
 
-    @Override public Optional<String> decode(final Decoder decoder, final Value value, final String template) {
+    @Override public Optional<String> decode(final Decoder decoder, final Value value, final String model) {
         return Optional.of(value)
 
                 .filter(Value::isLiteral)

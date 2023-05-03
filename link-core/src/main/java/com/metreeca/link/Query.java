@@ -60,7 +60,7 @@ public abstract class Query<T> extends Stash<T> {
         }
 
         final Object template=queries.stream()
-                .map(query -> query.template())
+                .map(query -> query.model())
                 .filter(not(Empty::equals))
                 .reduce((x, y) -> x.equals(y) ? x : error("conflicting <template> <%s> / <%s>", x, y))
                 .orElse(Empty);
@@ -94,7 +94,7 @@ public abstract class Query<T> extends Stash<T> {
 
         return new Query<>() {
 
-            @Override public Object template() { return template; }
+            @Override public Object model() { return template; }
 
             @Override public Map<Expression, Constraint> filters() {
                 return facets;
@@ -114,7 +114,7 @@ public abstract class Query<T> extends Stash<T> {
     }
 
 
-    public static <T> Query<T> template(final Object template) {
+    public static <T> Query<T> model(final Object template) {
 
         if ( template == null ) {
             throw new NullPointerException("null template");
@@ -122,7 +122,7 @@ public abstract class Query<T> extends Stash<T> {
 
         return new Query<>() {
 
-            @Override public Object template() { return template; }
+            @Override public Object model() { return template; }
 
         };
     }
@@ -233,7 +233,7 @@ public abstract class Query<T> extends Stash<T> {
     private Query() { }
 
 
-    public Object template() { return Empty; }
+    public Object model() { return Empty; }
 
 
     public Map<Expression, Constraint> filters() {
