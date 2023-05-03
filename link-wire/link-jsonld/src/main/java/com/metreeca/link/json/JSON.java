@@ -48,7 +48,7 @@ public final class JSON implements Codec {
      */
     public enum Tokens {
 
-        LBRACE("object opening braces"),
+        LBRACE("object opening brace"),
         RBRACE("object closing brace"),
 
         LBRACKET("array opening bracket"),
