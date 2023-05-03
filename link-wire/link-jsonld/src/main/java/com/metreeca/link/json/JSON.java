@@ -16,11 +16,19 @@
 
 package com.metreeca.link.json;
 
-import com.metreeca.link.*;
+import com.metreeca.link.Codec;
+import com.metreeca.link.Local;
+import com.metreeca.link.Table;
+import com.metreeca.link.Trace;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
@@ -86,14 +94,18 @@ public final class JSON implements Codec {
             entry(Void.class, new TypeVoid()),
             entry(Boolean.class, new TypeBoolean()),
             entry(Number.class, new TypeNumber()),
-            entry(String.class, new TypeString()),
+
             entry(URI.class, new TypeURI()),
+
+            entry(String.class, new TypeString()),
+            entry(Local.class, new TypeLocal()),
 
             entry(Table.class, new TypeTable()),
             entry(Trace.class, new TypeTrace()),
 
             entry(Collection.class, new TypeCollection()),
             entry(Map.class, new TypeMap()),
+
             entry(Object.class, new TypeObject())
 
     );

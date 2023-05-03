@@ -18,6 +18,7 @@ package com.metreeca.link.rdf4j;
 
 import com.metreeca.link.Engine;
 import com.metreeca.link.Frame;
+import com.metreeca.link.Local;
 import com.metreeca.link.Shape;
 
 import org.eclipse.rdf4j.model.*;
@@ -83,8 +84,10 @@ public final class RDF4J implements Engine {
             entry(Integer.TYPE, new TypeInteger()),
             entry(Integer.class, new TypeInteger()),
 
-            entry(String.class, new TypeString()),
             entry(URI.class, new TypeURI()),
+
+            entry(String.class, new TypeString()),
+            entry(Local.class, new TypeLocal()),
 
             entry(Frame.class, new TypeFrame()),
             entry(List.class, new TypeList()),

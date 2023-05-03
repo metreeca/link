@@ -16,12 +16,16 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.rdf4j.RDF4J.*;
+import com.metreeca.link.rdf4j.RDF4J.Decoder;
+import com.metreeca.link.rdf4j.RDF4J.Encoder;
+import com.metreeca.link.rdf4j.RDF4J.Type;
 
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -29,7 +33,7 @@ import static java.util.Map.entry;
 
 final class TypeString implements Type<String> {
 
-    @Override public Map.Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final String value) {
+    @Override public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final String value) {
         return entry(Stream.of(encoder.factory().createLiteral(value)), Stream.empty());
     }
 

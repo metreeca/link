@@ -16,10 +16,7 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.Frame;
-import com.metreeca.link.Query;
-import com.metreeca.link.Shape;
-import com.metreeca.link.Table;
+import com.metreeca.link.*;
 import com.metreeca.link.Table.Column;
 
 import org.eclipse.rdf4j.model.*;
@@ -33,6 +30,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Frame.absolute;
+import static com.metreeca.link.Local.local;
 import static com.metreeca.link.Query.query;
 import static com.metreeca.link.Shape.forward;
 import static com.metreeca.link.Shape.reverse;
@@ -40,7 +38,7 @@ import static com.metreeca.link.rdf4j.RDF4J.*;
 
 import static java.lang.String.format;
 import static java.util.Map.entry;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.*;
 import static org.eclipse.rdf4j.model.util.Values.iri;
 
 final class TypeFrame implements Type<Frame<?>> {
@@ -243,7 +241,7 @@ final class TypeFrame implements Type<Frame<?>> {
 
                                 throw new UnsupportedOperationException(";( be implemented"); // !!!
 
-                            } else if ( object instanceof Collection ) {
+                            } else if ( object instanceof Collection ) { // !!! migrate to TypeCollection
 
                                 final Collection<?> collection=(Collection<?>)object;
 
@@ -266,9 +264,46 @@ final class TypeFrame implements Type<Frame<?>> {
                                         )
                                         .collect(toList()));
 
+                            } else if ( object instanceof Local ) { // !!! migrate to TypeLocal
+
+                                final Local<?> local=(Local<?>)object;
+
+                                final boolean empty=local.values().keySet().isEmpty();
+                                final boolean wild=local.values().keySet().stream().anyMatch(Local.Wildcard::equals);
+                                final boolean unique=local.values().values().stream().anyMatch(String.class::isInstance);
+
+                                final Set<String> locales=local.values().keySet().stream()
+                                        .map(Locale::toLanguageTag)
+                                        .collect(toSet());
+
+                                final Stream<Literal> literals=values(connection, resource, _property).stream()
+                                        .filter(Value::isLiteral)
+                                        .map(Literal.class::cast)
+                                        .filter(v -> v.getLanguage().isPresent())
+                                        .filter(v -> empty || wild || v.getLanguage().filter(locales::contains).isPresent());
+
+                                frame.set(field, unique
+
+                                        ?
+                                        local(literals
+                                                .map(v -> local(v.getLanguage().get(), v.stringValue()))
+                                                .collect(toList())
+                                        )
+
+                                        :
+                                        local(literals
+                                                .collect(groupingBy(v -> v.getLanguage().get(), mapping(Value::stringValue, toSet())))
+                                                .entrySet()
+                                                .stream()
+                                                .map(entry -> local(entry.getKey(), entry.getValue()))
+                                                .collect(toList())
+                                        )
+
+                                );
+
                             } else { // !!! batch retrieval
 
-                                frame.set(field, traverse(connection, resource, _property)
+                                frame.set(field, value(connection, resource, _property)
                                         .flatMap(v -> decoder.decode(v, object))
                                         .orElse(virtual ? object : null)
                                 );
@@ -301,7 +336,28 @@ final class TypeFrame implements Type<Frame<?>> {
 
     }
 
-    private static Optional<? extends Value> traverse(
+
+    private static Collection<? extends Value> values(
+            final RepositoryConnection connection,
+            final Resource anchor,
+            final String predicate
+    ) {
+
+        final boolean forward=forward(predicate);
+
+        try ( final Stream<Statement> statements=forward
+                ? connection.getStatements(anchor, iri(predicate), null).stream()
+                : connection.getStatements(null, iri(reverse(predicate)), anchor).stream()
+        ) {
+
+            return forward
+                    ? statements.map(Statement::getObject).collect(toList())
+                    : statements.map(Statement::getSubject).collect(toList());
+
+        }
+    }
+
+    private static Optional<? extends Value> value(
             final RepositoryConnection connection,
             final Resource anchor,
             final String predicate

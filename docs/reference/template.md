@@ -36,6 +36,8 @@ type Query=Partial<Model & {
 }>
 
 type Value=boolean | number | string
+
+type Local= { [locale: string]: string } | { [locale: string]: string[] }
 ```
 
 [ABNF](https://en.wikipedia.org/wiki/Augmented_Backus–Naur_form)
