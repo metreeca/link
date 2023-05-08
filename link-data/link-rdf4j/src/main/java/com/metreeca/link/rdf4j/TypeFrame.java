@@ -39,6 +39,7 @@ import static com.metreeca.link.rdf4j.RDF4J.*;
 
 import static java.lang.String.format;
 import static java.util.Map.entry;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.*;
 import static org.eclipse.rdf4j.model.util.Values.iri;
 
@@ -187,6 +188,30 @@ final class TypeFrame implements Type<Frame<?>> {
                     return frame.id(decoder.relativize(frame.id()));
 
                 });
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private Collection<Frame<?>> decode(final Decoder decoder, final Frame<?> model, final Collection<Resource> resources) {
+
+        final List<Entry<String, Object>> scalars=model.entries(false)
+
+                .filter(not(e -> e.getValue() == null))
+                .filter(not(e -> e.getValue() instanceof Collection))
+
+                .collect(toList());
+
+        final List<Entry<String, Object>> collections=model.entries(false)
+
+                .filter(not(e -> e.getValue() == null))
+                .filter(e -> e.getValue() instanceof Collection)
+
+                .collect(toList());
+
+        // frame.id(decoder.relativize(frame.id()));
+
+        throw new UnsupportedOperationException(";( be implemented"); // !!!
     }
 
 
