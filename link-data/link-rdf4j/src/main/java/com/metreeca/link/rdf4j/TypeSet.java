@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 
 import static java.util.Map.entry;
 
-final class TypeCollection implements Type<Set<?>> {
+final class TypeSet implements Type<Set<?>> {
 
     @Override public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final Set<?> value) {
         return value.stream().map(encoder::encode).reduce(entry(Stream.empty(), Stream.empty()), (x, y) -> entry(

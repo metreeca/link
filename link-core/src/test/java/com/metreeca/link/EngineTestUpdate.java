@@ -37,7 +37,7 @@ public abstract class EngineTestUpdate {
 
         final Employee update=with(new Employee(), o -> {
 
-            o.setId(id("/employee/1702"));
+            o.setId(id("/employees/1702"));
             o.setSeniority(5);
 
         });

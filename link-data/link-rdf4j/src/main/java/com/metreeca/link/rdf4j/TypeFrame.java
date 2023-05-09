@@ -65,7 +65,7 @@ final class TypeFrame implements Type<Frame<?>> {
 
                 .orElseGet(factory::createBNode);
 
-        final Stream<IRI> types=shape.types()
+        final Stream<Statement> types=shape.types()
 
                 .map(id -> absolute(id)
 
@@ -75,8 +75,9 @@ final class TypeFrame implements Type<Frame<?>> {
                                 "frame id <%s> is not an absolute IRI", id
                         )))
 
-                );
+                )
 
+                .map(type -> factory.createStatement(focus, RDF.TYPE, type));
 
         final Stream<Statement> model=value.entries(false).flatMap(entry -> {
 
@@ -136,10 +137,7 @@ final class TypeFrame implements Type<Frame<?>> {
 
         });
 
-        return entry(Stream.of(focus), Stream.concat(
-                types.map(type -> factory.createStatement(focus, RDF.TYPE, type)),
-                model
-        ));
+        return entry(Stream.of(focus), Stream.concat(types, model));
 
     }
 
@@ -162,7 +160,7 @@ final class TypeFrame implements Type<Frame<?>> {
 
                 .map(resource -> {
 
-                    final Frame<?> frame=model.copy();
+                    final Frame<?> frame=decoder.cache(value, model.copy());
 
                     frame.entries(false).forEach(e -> {
 

@@ -143,6 +143,29 @@ public abstract class EngineTestCreate {
 
     }
 
+    @Test void testHandleLoops() {
+
+        final Engine engine=engine();
+
+        final Employee employee=new Employee();
+
+        employee.setId(id("/employees/1"));
+        employee.setSupervisor(employee);
+
+        assertThat(engine.create(employee))
+                .isNotEmpty();
+
+        assertThat(engine.retrieve(with(new Employee(), e -> {
+
+            e.setId(employee.getId());
+            e.setSupervisor(with(new Employee(), s -> s.setId("")));
+
+        })))
+                .hasValueSatisfying(actual -> assertThat(actual.getSupervisor())
+                        .isSameAs(actual)
+                );
+    }
+
 
     @Test void testReportConflictingResources() {
 

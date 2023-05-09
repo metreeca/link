@@ -30,11 +30,8 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
@@ -91,7 +88,7 @@ public final class RDF4J implements Engine {
 
             entry(Frame.class, new TypeFrame()),
             entry(List.class, new TypeList()),
-            entry(Set.class, new TypeCollection()),
+            entry(Set.class, new TypeSet()),
 
             entry(Object.class, new TypeObject())
 
@@ -397,6 +394,8 @@ public final class RDF4J implements Engine {
         private final String base;
         private final RDF4J rdf4j;
 
+        private final Map<Object, Collection<Value>> cache=new HashMap<>();
+
 
         private Encoder(final RDF4J rdf4j, final String base) {
 
@@ -419,7 +418,24 @@ public final class RDF4J implements Engine {
 
 
         public Entry<Stream<Value>, Stream<Statement>> encode(final Object value) {
-            return rdf4j.type(value).encode(this, value);
+
+            final Collection<Value> cached=cache.get(value);
+
+            if ( cached != null ) {
+
+                return entry(cached.stream(), Stream.empty());
+
+            } else {
+
+                final Entry<Stream<Value>, Stream<Statement>> entry=rdf4j.type(value).encode(this, value);
+
+                final List<Value> values=entry.getKey().collect(toList());
+
+                cache.put(value, values);
+
+                return entry(values.stream(), entry.getValue());
+
+            }
         }
 
     }
@@ -430,6 +446,9 @@ public final class RDF4J implements Engine {
         private final RDF4J rdf4j;
 
         private final RepositoryConnection connection;
+
+
+        private final Map<Value, Object> cache=new HashMap<>();
 
 
         private Decoder(final RDF4J rdf4j, final RepositoryConnection connection, final String base) {
@@ -452,9 +471,25 @@ public final class RDF4J implements Engine {
                     : iri;
         }
 
+        public <T> T cache(final Value value, final T object) {
 
+            final Object update=object instanceof Frame ? ((Frame<?>)object).value() : object;
+            final Object current=cache.put(value, update);
+
+            if ( current != null && !current.equals(update) ) {
+                throw new IllegalStateException(format("conflicting cached objects for value <%s>", value));
+            }
+
+            return object;
+        }
+
+
+        @SuppressWarnings("unchecked")
         public <T> Optional<T> decode(final Value value, final T template) {
-            return value == null ? Optional.empty() : rdf4j.type(template).decode(this, value, template);
+
+            return Optional.ofNullable((T)cache.get(value))
+                    .or(() -> rdf4j.type(template).decode(this, value, template));
+
         }
 
     }

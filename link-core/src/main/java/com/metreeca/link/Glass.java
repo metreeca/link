@@ -471,7 +471,7 @@ final class Glass<T> {
 
             } catch ( final IllegalAccessException|InvocationTargetException e ) {
 
-                throw new IllegalArgumentException(format("unable to invoke <%s>", getter), e);
+                throw new IllegalArgumentException(format("unable to invoke <%s>: %s", getter, e.getMessage()), e);
 
             }
 
@@ -517,7 +517,7 @@ final class Glass<T> {
 
             } catch ( final IllegalAccessException|InvocationTargetException|IllegalArgumentException e ) {
 
-                throw new IllegalArgumentException(format("unable to invoke <%s>", setter), e);
+                throw new IllegalArgumentException(format("unable to invoke <%s>: %s", setter, e.getMessage()), e);
 
             }
         }

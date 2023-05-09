@@ -141,9 +141,7 @@ public abstract class EngineTest {
 
     private Engine populate(final Engine engine) {
 
-        Employees.forEach(employee -> System.out.println(employee));
-
-        Employees.stream().limit(1).forEach(value -> { engine.create(value); });
+        Employees.forEach(engine::create);
 
         return engine;
     }
@@ -404,8 +402,6 @@ public abstract class EngineTest {
     }
 
     @Virtual
-    public static final class Employees extends Resources<Employee> {
-
-    }
+    public static final class Employees extends Resources<Employee> { }
 
 }
