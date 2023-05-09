@@ -237,7 +237,7 @@ public abstract class Shape {
             }
 
 
-            @Override Optional<String> id() { return id; }
+            @Override public Optional<String> id() { return id; }
 
 
             @Override public Stream<String> types() { return types.stream(); }
@@ -316,7 +316,7 @@ public abstract class Shape {
                     @Override public boolean virtual() { return virtual; }
 
 
-                    @Override Optional<String> id() { return id; }
+                    @Override public Optional<String> id() { return id; }
 
 
                     @Override public Stream<String> types() { return types.stream(); }
@@ -497,7 +497,7 @@ public abstract class Shape {
     }
 
 
-    Optional<String> id() { // @id field mapping // !!! review
+    public Optional<String> id() { // @id field mapping // !!! review
         return Optional.empty();
     }
 

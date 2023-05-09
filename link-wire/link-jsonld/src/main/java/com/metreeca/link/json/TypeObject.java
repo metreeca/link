@@ -47,35 +47,55 @@ final class TypeObject implements Type<Object> {
 
         final Frame<Object> frame=frame(value);
 
-        encoder.open("{");
+        if ( encoder.cache(frame) ) {
 
-        boolean tail=false;
+            encoder.open("{");
 
-        final Iterable<Entry<String, Object>> entries=() -> frame.entries(true).iterator(); // ;( handle checked IOE
+            boolean tail=false;
 
-        for (final Entry<?, ?> entry : entries) {
+            final Iterable<Entry<String, Object>> entries=() -> frame.entries(true).iterator(); // ;( handle checked IOE
 
-            final String label=entry.getKey().toString();
-            final Object object=entry.getValue();
+            for (final Entry<?, ?> entry : entries) {
 
-            if ( object != null ) {
+                final String label=entry.getKey().toString();
+                final Object object=entry.getValue();
 
-                if ( tail ) {
-                    encoder.comma();
+                if ( object != null ) {
+
+                    if ( tail ) {
+                        encoder.comma();
+                    }
+
+                    encoder.indent();
+                    encoder.encode(label);
+                    encoder.colon();
+                    encoder.encode(object);
+
+                    tail=true;
+
                 }
-
-                encoder.indent();
-                encoder.encode(label);
-                encoder.colon();
-                encoder.encode(object);
-
-                tail=true;
 
             }
 
+            encoder.close("}", tail);
+
+        } else {
+
+            final String idField=frame.shape().id().orElse(null);
+            final String idValue=frame.id();
+
+            encoder.open("{");
+
+            if ( idField != null && idValue != null ) {
+                encoder.encode(idField);
+                encoder.colon();
+                encoder.encode(idValue);
+            }
+
+            encoder.close("}", false);
+
         }
 
-        encoder.close("}", tail);
     }
 
     @Override public Object decode(final Decoder decoder, final Class<Object> clazz) throws IOException {
@@ -165,6 +185,10 @@ final class TypeObject implements Type<Object> {
                             new RuntimeException(format("unknown object field <%s>", field))
                     )));
 
+                    if ( shape.id().filter(field::equals).isPresent() ) {
+                        decoder.cache(frame);
+                    }
+
                 }
 
             }
@@ -198,7 +222,7 @@ final class TypeObject implements Type<Object> {
 
         } else {
 
-            return frame.value();
+            return decoder.cache(frame).value();
 
         }
 
@@ -227,7 +251,7 @@ final class TypeObject implements Type<Object> {
                 throw new IllegalArgumentException("multiple collection queries");
             }
 
-            return (Collection<?>) items.get(0);
+            return (Collection<?>)items.get(0);
 
         } else {
 

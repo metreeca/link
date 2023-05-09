@@ -69,15 +69,38 @@ final class TypeObjectTest {
     }
 
 
-    @Nested final class Encode {
+    @Nested
+    final class Encode {
 
         @Test void testEncodeBean() {
             assertThat(encode(items())).isEqualTo(json());
         }
 
+        @Test void testHandleNamedLoops() {
+
+            final Item item=new Item();
+
+            item.setId("/item");
+            item.setItem(item);
+
+            assertThat(encode(item))
+                    .isEqualTo("{\"id\":\"/item\",\"item\":{\"id\":\"/item\"}}");
+        }
+
+        @Test void testHandleBlankLoops() {
+
+            final Item item=new Item();
+
+            item.setItem(item);
+
+            assertThat(encode(item))
+                    .isEqualTo("{\"item\":{}}");
+        }
+
     }
 
-    @Nested final class Decode {
+    @Nested
+    final class Decode {
 
         @Test void testDecodeBean() {
 
@@ -103,6 +126,14 @@ final class TypeObjectTest {
 
         }
 
+        @Test void testHandleNamedLoops() {
+
+            final Item item=decode("{\"id\":\"/item\",\"item\":{\"id\":\"/item\"}}", Item.class);
+
+            assertThat(item.getItem())
+                    .isSameAs(item);
+        }
+
 
         @Test void testReportUnexpectedQuery() {
             assertThatExceptionOfType(JSONException.class)
@@ -111,7 +142,8 @@ final class TypeObjectTest {
 
     }
 
-    @Nested final class Queries {
+    @Nested
+    final class Queries {
 
         private Query<?> query(final String query) {
             return Optional.of(decode("{ \"members\" :  ["+query+"] }", Items.class).getMembers())

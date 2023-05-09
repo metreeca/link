@@ -16,19 +16,14 @@
 
 package com.metreeca.link.json;
 
-import com.metreeca.link.Codec;
-import com.metreeca.link.Local;
-import com.metreeca.link.Table;
-import com.metreeca.link.Trace;
+import com.metreeca.link.*;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
@@ -258,6 +253,8 @@ public final class JSON implements Codec {
         private final JSON json;
         private final Lexer lexer;
 
+        private final Map<String, Frame<?>> cache=new HashMap<>();
+
 
         private Decoder(final JSON json, final Readable source) {
             this.json=json;
@@ -293,6 +290,15 @@ public final class JSON implements Codec {
         }
 
 
+        @SuppressWarnings("unchecked")
+        public <T> Frame<T> cache(final Frame<T> frame) {
+
+            final String id=frame == null ? null : frame.id();
+
+            return id == null ? frame : (Frame<T>)cache.computeIfAbsent(id, key -> frame);
+        }
+
+
         public Tokens type() throws IOException {
             return lexer.type();
         }
@@ -314,7 +320,6 @@ public final class JSON implements Codec {
 
             return token();
         }
-
     }
 
     public static final class Encoder {
@@ -322,8 +327,9 @@ public final class JSON implements Codec {
         private final JSON json;
         private final Appendable target;
 
-
         private int level;
+
+        private final Set<Object> cache=new HashSet<>();
 
 
         private Encoder(final JSON json, final Appendable target) {
@@ -353,6 +359,11 @@ public final class JSON implements Codec {
                         : new JSONException(e.getMessage(), e);
 
             }
+        }
+
+
+        public boolean cache(final Object value) {
+            return cache.add(value instanceof Frame ? ((Frame<?>)value).value() : value);
         }
 
 
@@ -520,6 +531,7 @@ public final class JSON implements Codec {
 
             write('"');
         }
+
     }
 
 }
