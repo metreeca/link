@@ -189,13 +189,13 @@ public final class RDF4J implements Engine {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override public <V> Optional<V> retrieve(final V template) {
+    @Override public <V> Optional<V> retrieve(final V model) {
 
-        if ( template == null ) {
+        if ( model == null ) {
             throw new NullPointerException("null template");
         }
 
-        return process(template, (frame, base) -> {
+        return process(model, (frame, base) -> {
 
             final IRI id=iri(frame.id());
 
@@ -226,8 +226,7 @@ public final class RDF4J implements Engine {
 
             try ( final RepositoryConnection connection=repository.getConnection() ) {
 
-                final boolean present=connection.hasStatement(id, null, null, true, context)
-                        || connection.hasStatement(null, null, id, true, context);
+                final boolean present=connection.hasStatement(id, null, null, true, context);
 
                 if ( present ) {
 

@@ -76,6 +76,8 @@ public abstract class EngineTest {
                     .map(record -> with(new Employee(), employee -> {
 
                         employee.setId(format("%s/employees/%s", Base, record.get(code)));
+                        employee.setLabel(format("%s %s", record.get(forename), record.get(surname)));
+
                         employee.setCode(record.get(code));
                         employee.setSeniority(Integer.parseInt(record.get(seniority)));
                         employee.setTitle(record.get(title));
@@ -141,7 +143,13 @@ public abstract class EngineTest {
 
     private Engine populate(final Engine engine) {
 
-        Employees.forEach(engine::create);
+        Employees.forEach(employee -> {
+
+            engine.create(employee).orElseThrow(() -> new RuntimeException(format(
+                    "unable to create employee <%s>", employee.getId()
+            )));
+
+        });
 
         return engine;
     }
@@ -149,6 +157,24 @@ public abstract class EngineTest {
 
     @Nested
     final class Retrieve extends EngineTestRetrieve {
+
+        @Override public Engine engine() {
+            return populate(EngineTest.this.engine());
+        }
+
+    }
+
+    @Nested
+    final class RetrieveQuery extends EngineTestRetrieveQuery {
+
+        @Override public Engine engine() {
+            return populate(EngineTest.this.engine());
+        }
+
+    }
+
+    @Nested
+    final class RetrieveTable extends EngineTestRetrieveTable {
 
         @Override public Engine engine() {
             return populate(EngineTest.this.engine());

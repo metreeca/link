@@ -28,17 +28,15 @@ public interface Engine {
     /**
      * Handles retrieval requests.
      *
-     * @param template the template for resource to be retrieved, possibly containing collection filters
-     * @param <V>      the type of the resource to be retrieved
-     *
-     * @return an optional containing a description of the retrieved resource modelled after {@code template}, if its
+     * @param model the model for resource to be retrieved, possibly containing collection filters
+     * @param <V>   the type of the resource to be retrieved
+     * @return an optional containing a description of the retrieved resource modelled after {@code model}, if its
      * {@linkplain Frame#id() id} was present in the storage backend; an empty optional, otherwise
-     *
-     * @throws NullPointerException     if {@code template} is null
-     * @throws IllegalArgumentException if {@code template} doesn't define a well-formed id, according to driver-specific
+     * @throws NullPointerException     if {@code model} is null
+     * @throws IllegalArgumentException if {@code model} doesn't define a well-formed id, according to driver-specific
      *                                  rules
      */
-    public <V> Optional<V> retrieve(final V template);
+    public <V> Optional<V> retrieve(final V model);
 
 
     /**
