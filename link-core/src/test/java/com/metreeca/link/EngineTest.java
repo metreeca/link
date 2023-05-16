@@ -37,8 +37,7 @@ import static com.metreeca.link.Frame.with;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.function.Predicate.not;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.*;
 
 public abstract class EngineTest {
 
@@ -55,7 +54,7 @@ public abstract class EngineTest {
     private static List<Employee> Employees() {
         try {
 
-            final URL resource=EngineTest.Employees.class.getResource("EngineTest.tsv");
+            final URL resource=EngineTest.class.getResource("EngineTest.tsv");
 
             final List<List<String>> records=Files.readAllLines(Path.of(resource.toURI()), UTF_8).stream()
                     .map(line -> List.of(line.split("\t")))
@@ -93,7 +92,7 @@ public abstract class EngineTest {
 
                     }))
 
-                    .collect(toList());
+                    .collect(toUnmodifiableList());
 
             employees.forEach(employee -> {
 
@@ -140,8 +139,9 @@ public abstract class EngineTest {
 
     protected abstract Engine engine();
 
+    protected Engine testbed() {
 
-    private Engine populate(final Engine engine) {
+        final Engine engine=engine();
 
         Employees.forEach(employee -> {
 
@@ -158,8 +158,8 @@ public abstract class EngineTest {
     @Nested
     final class Retrieve extends EngineTestRetrieve {
 
-        @Override public Engine engine() {
-            return populate(EngineTest.this.engine());
+        @Override public Engine testbed() {
+            return EngineTest.this.testbed();
         }
 
     }
@@ -167,8 +167,8 @@ public abstract class EngineTest {
     @Nested
     final class RetrieveQuery extends EngineTestRetrieveQuery {
 
-        @Override public Engine engine() {
-            return populate(EngineTest.this.engine());
+        @Override public Engine testbed() {
+            return EngineTest.this.testbed();
         }
 
     }
@@ -176,8 +176,8 @@ public abstract class EngineTest {
     @Nested
     final class RetrieveTable extends EngineTestRetrieveTable {
 
-        @Override public Engine engine() {
-            return populate(EngineTest.this.engine());
+        @Override public Engine testbed() {
+            return EngineTest.this.testbed();
         }
 
     }
@@ -185,8 +185,8 @@ public abstract class EngineTest {
     @Nested
     final class Create extends EngineTestCreate {
 
-        @Override public Engine engine() {
-            return populate(EngineTest.this.engine());
+        @Override public Engine testbed() {
+            return EngineTest.this.testbed();
         }
 
     }
@@ -194,8 +194,8 @@ public abstract class EngineTest {
     @Nested
     final class Update extends EngineTestUpdate {
 
-        @Override public Engine engine() {
-            return populate(EngineTest.this.engine());
+        @Override public Engine testbed() {
+            return EngineTest.this.testbed();
         }
 
     }
@@ -203,8 +203,8 @@ public abstract class EngineTest {
     @Nested
     final class Delete extends EngineTestDelete {
 
-        @Override public Engine engine() {
-            return populate(EngineTest.this.engine());
+        @Override public Engine testbed() {
+            return EngineTest.this.testbed();
         }
 
     }
@@ -275,36 +275,7 @@ public abstract class EngineTest {
     }
 
 
-    public static final class Offices extends Resources<Office> { }
-
-    public static final class Office extends Resource {
-
-        @Required
-        @Pattern("\\d{4}")
-        private String code;
-
-        @Required
-        private String area;
-
-
-        public String getCode() {
-            return code;
-        }
-
-        public void setCode(final String code) {
-            this.code=code;
-        }
-
-
-        public String getArea() {
-            return area;
-        }
-
-        public void setArea(final String area) {
-            this.area=area;
-        }
-
-    }
+    public static final class Reference extends Resource { }
 
 
     @Type
@@ -331,11 +302,8 @@ public abstract class EngineTest {
         @Required
         //@MinExclusive(integer=1)
         //@MaxInclusive(integer=5)
-        private int seniority;
+        private Integer seniority;
 
-
-        @Required
-        private Office office;
 
         @Optional
         private Employee supervisor;
@@ -390,21 +358,12 @@ public abstract class EngineTest {
         }
 
 
-        public int getSeniority() {
+        public Integer getSeniority() {
             return seniority;
         }
 
-        public void setSeniority(final int seniority) {
+        public void setSeniority(final Integer seniority) {
             this.seniority=seniority;
-        }
-
-
-        public Office getOffice() {
-            return office;
-        }
-
-        public void setOffice(final Office office) {
-            this.office=office;
         }
 
 

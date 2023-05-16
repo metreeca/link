@@ -185,10 +185,6 @@ final class TypeObject implements Type<Object> {
                             new RuntimeException(format("unknown object field <%s>", field))
                     )));
 
-                    if ( shape.id().filter(field::equals).isPresent() ) {
-                        decoder.cache(frame);
-                    }
-
                 }
 
             }
@@ -222,7 +218,7 @@ final class TypeObject implements Type<Object> {
 
         } else {
 
-            return decoder.cache(frame).value();
+            return frame.value();
 
         }
 

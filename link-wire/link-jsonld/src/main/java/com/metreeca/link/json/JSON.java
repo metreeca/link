@@ -23,7 +23,10 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
@@ -253,8 +256,6 @@ public final class JSON implements Codec {
         private final JSON json;
         private final Lexer lexer;
 
-        private final Map<String, Frame<?>> cache=new HashMap<>();
-
 
         private Decoder(final JSON json, final Readable source) {
             this.json=json;
@@ -290,15 +291,6 @@ public final class JSON implements Codec {
         }
 
 
-        @SuppressWarnings("unchecked")
-        public <T> Frame<T> cache(final Frame<T> frame) {
-
-            final String id=frame == null ? null : frame.id();
-
-            return id == null ? frame : (Frame<T>)cache.computeIfAbsent(id, key -> frame);
-        }
-
-
         public Tokens type() throws IOException {
             return lexer.type();
         }
@@ -329,7 +321,7 @@ public final class JSON implements Codec {
 
         private int level;
 
-        private final Set<Object> cache=new HashSet<>();
+        private final Collection<Object> cache=new HashSet<>();
 
 
         private Encoder(final JSON json, final Appendable target) {

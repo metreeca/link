@@ -126,14 +126,6 @@ final class TypeObjectTest {
 
         }
 
-        @Test void testHandleNamedLoops() {
-
-            final Item item=decode("{\"id\":\"/item\",\"item\":{\"id\":\"/item\"}}", Item.class);
-
-            assertThat(item.getItem())
-                    .isSameAs(item);
-        }
-
 
         @Test void testReportUnexpectedQuery() {
             assertThatExceptionOfType(JSONException.class)

@@ -16,6 +16,8 @@
 
 package com.metreeca.link;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.Normalizer.Form;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -59,10 +61,10 @@ public abstract class Query<T> extends Stash<T> {
             throw new NullPointerException("null queries");
         }
 
-        final Object template=queries.stream()
+        final Object model=queries.stream()
                 .map(query -> query.model())
                 .filter(not(Empty::equals))
-                .reduce((x, y) -> x.equals(y) ? x : error("conflicting <template> <%s> / <%s>", x, y))
+                .reduce((x, y) -> x.equals(y) ? x : error("conflicting <model> <%s> / <%s>", x, y))
                 .orElse(Empty);
 
         final Map<Expression, Constraint> facets=queries.stream()
@@ -94,7 +96,7 @@ public abstract class Query<T> extends Stash<T> {
 
         return new Query<>() {
 
-            @Override public Object model() { return template; }
+            @Override public Object model() { return model; }
 
             @Override public Map<Expression, Constraint> filters() {
                 return facets;
@@ -108,21 +110,21 @@ public abstract class Query<T> extends Stash<T> {
                 return limit;
             }
 
-            @Override public Map<Expression, Criterion> order() {return order;}
+            @Override public Map<Expression, Criterion> order() { return order; }
 
         };
     }
 
 
-    public static <T> Query<T> model(final Object template) {
+    public static <T> Query<T> model(final T model) {
 
-        if ( template == null ) {
-            throw new NullPointerException("null template");
+        if ( model == null ) {
+            throw new NullPointerException("null model");
         }
 
         return new Query<>() {
 
-            @Override public Object model() { return template; }
+            @Override public Object model() { return model; }
 
         };
     }
@@ -161,13 +163,26 @@ public abstract class Query<T> extends Stash<T> {
     }
 
 
-    public static <T> Query<T> order(final Expression expression, final Criterion criterion) {
+    public static <T> Query<T> order(final String expression, final Criterion criterion) {
 
-        if (expression == null) {
+        if ( expression == null ) {
             throw new NullPointerException("null expression");
         }
 
-        if (criterion == null) {
+        if ( criterion == null ) {
+            throw new NullPointerException("null criterion");
+        }
+
+        return order(expression(expression), criterion);
+    }
+
+    public static <T> Query<T> order(final Expression expression, final Criterion criterion) {
+
+        if ( expression == null ) {
+            throw new NullPointerException("null expression");
+        }
+
+        if ( criterion == null ) {
             throw new NullPointerException("null criterion");
         }
 
@@ -175,7 +190,7 @@ public abstract class Query<T> extends Stash<T> {
 
         return new Query<>() {
 
-            @Override public Map<Expression, Criterion> order() {return order;}
+            @Override public Map<Expression, Criterion> order() { return order; }
 
         };
     }
@@ -228,6 +243,15 @@ public abstract class Query<T> extends Stash<T> {
     }
 
 
+    public static BigInteger integer(final long value) {
+        return BigInteger.valueOf(value);
+    }
+
+    public static BigDecimal decimal(final double value) {
+        return BigDecimal.valueOf(value);
+    }
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private Query() { }
@@ -241,7 +265,7 @@ public abstract class Query<T> extends Stash<T> {
     }
 
 
-    public Map<Expression, Criterion> order() {return Map.of();}
+    public Map<Expression, Criterion> order() { return Map.of(); }
 
     public int offset() {
         return 0;
@@ -261,7 +285,7 @@ public abstract class Query<T> extends Stash<T> {
 
         public static Constraint and(final Constraint... constraints) {
 
-            if (constraints == null || Arrays.stream(constraints).anyMatch(Objects::isNull)) {
+            if ( constraints == null || Arrays.stream(constraints).anyMatch(Objects::isNull) ) {
                 throw new NullPointerException("null constraints");
             }
 
@@ -606,13 +630,13 @@ public abstract class Query<T> extends Stash<T> {
 
         @Override public boolean equals(final Object object) {
             return this == object || object instanceof Criterion
-                    && inverse == ((Criterion) object).inverse
-                    && values.equals(((Criterion) object).values);
+                    && inverse == ((Criterion)object).inverse
+                    && values.equals(((Criterion)object).values);
         }
 
         @Override public int hashCode() {
             return Boolean.hashCode(inverse)
-                    ^ values.hashCode();
+                    ^values.hashCode();
         }
 
         @Override public String toString() {

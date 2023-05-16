@@ -28,12 +28,12 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 public abstract class EngineTestUpdate {
 
-    protected abstract Engine engine();
+    protected abstract Engine testbed();
 
 
     @Test void testUpdate() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         final Employee update=with(new Employee(), o -> {
 
@@ -67,12 +67,12 @@ public abstract class EngineTestUpdate {
 
     @Test void testReportUnknownResources() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
-        final EngineTest.Office update=with(new EngineTest.Office(), office -> {
+        final Employee update=with(new Employee(), employee -> {
 
-            office.setId(id("/employees/999"));
-            office.setLabel("Memmo Cancelli");
+            employee.setId(id("/employees/999"));
+            employee.setLabel("Memmo Cancelli");
 
         });
 
@@ -83,7 +83,7 @@ public abstract class EngineTestUpdate {
 
     @Test void testReportMissingId() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> engine.update(new Employee()));

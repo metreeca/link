@@ -30,12 +30,12 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 public abstract class EngineTestCreate {
 
-    protected abstract Engine engine();
+    protected abstract Engine testbed();
 
 
     @Test void testCreateResource() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         final Employee expected=with(new Employee(), e -> {
 
@@ -67,7 +67,7 @@ public abstract class EngineTestCreate {
 
     @Test void testIgnorePropertiesOfNestedObjects() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         final Employee expected=with(new Employee(), e -> {
 
@@ -104,7 +104,7 @@ public abstract class EngineTestCreate {
 
     @Test void testHandleCollections() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         final Employee expected=with(new Employee(), e -> {
 
@@ -145,7 +145,7 @@ public abstract class EngineTestCreate {
 
     @Test void testHandleLoops() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         final Employee employee=new Employee();
 
@@ -161,15 +161,15 @@ public abstract class EngineTestCreate {
             e.setSupervisor(with(new Employee(), s -> s.setId("")));
 
         })))
-                .hasValueSatisfying(actual -> assertThat(actual.getSupervisor())
-                        .isSameAs(actual)
+                .hasValueSatisfying(actual -> assertThat(actual.getSupervisor().getId())
+                        .isEqualTo(actual.getId())
                 );
     }
 
 
     @Test void testReportConflictingResources() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         final Employee expected=with(new Employee(), e -> {
 
@@ -190,7 +190,7 @@ public abstract class EngineTestCreate {
 
     @Test void testReportMissingId() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> engine.create(new Employee()));

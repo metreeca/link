@@ -447,9 +447,6 @@ public final class RDF4J implements Engine {
         private final RepositoryConnection connection;
 
 
-        private final Map<Value, Object> cache=new HashMap<>();
-
-
         private Decoder(final RDF4J rdf4j, final RepositoryConnection connection, final String base) {
 
             this.base=base;
@@ -470,24 +467,11 @@ public final class RDF4J implements Engine {
                     : iri;
         }
 
-        public <T> T cache(final Value value, final T object) {
-
-            final Object update=object instanceof Frame ? ((Frame<?>)object).value() : object;
-            final Object current=cache.put(value, update);
-
-            if ( current != null && !current.equals(update) ) {
-                throw new IllegalStateException(format("conflicting cached objects for value <%s>", value));
-            }
-
-            return object;
-        }
-
 
         @SuppressWarnings("unchecked")
-        public <T> Optional<T> decode(final Value value, final T template) {
+        public <T> Optional<T> decode(final Value value, final T model) {
 
-            return Optional.ofNullable((T)cache.get(value))
-                    .or(() -> rdf4j.type(template).decode(this, value, template));
+            return rdf4j.type(model).decode(this, value, model);
 
         }
 

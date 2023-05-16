@@ -28,22 +28,18 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 public abstract class EngineTestRetrieve {
 
-    protected abstract Engine engine();
+    protected abstract Engine testbed();
 
 
     @Test void testRetrieveResource() {
 
-        final Engine engine=engine();
-
-        final Employee model=with(new Employee(), employee -> {
+        assertThat(testbed().retrieve(with(new Employee(), employee -> {
 
             employee.setId(id("/employees/1702"));
             employee.setLabel("");
             employee.setSeniority(0);
 
-        });
-
-        assertThat(engine.retrieve(model)).hasValueSatisfying(employee -> {
+        }))).hasValueSatisfying(employee -> {
 
             // specified by model
 
@@ -60,29 +56,43 @@ public abstract class EngineTestRetrieve {
 
     }
 
+    @Test void testRetrieveNestedResource() {
+
+        assertThat(testbed().retrieve(with(new Employee(), employee -> {
+
+            employee.setId(id("/employees/1702"));
+            employee.setSupervisor(with(new Employee(), supervisor -> {
+
+                supervisor.setLabel("");
+                supervisor.setSeniority(0);
+
+            }));
+
+        })).map(Employee::getSupervisor)).hasValueSatisfying(supervisor -> {
+
+            assertThat(supervisor.getLabel()).isEqualTo("Gerard Bondur");
+            assertThat(supervisor.getSeniority()).isEqualTo(4);
+
+        });
+
+    }
+
 
     @Test void testReportUnknownResources() {
 
-        final Engine engine=engine();
-
-        final Employee model=with(new Employee(), employee -> {
+        assertThat(testbed().retrieve(with(new Employee(), employee -> {
 
             employee.setId(id("/employees/999"));
             employee.setLabel("Memmo Cancelli");
 
-        });
-
-        assertThat(engine.retrieve(model))
-                .isEmpty();
+        }))).isEmpty();
 
     }
 
     @Test void testReportMissingId() {
 
-        final Engine engine=engine();
-
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> engine.retrieve(new Employee()));
+                .isThrownBy(() -> testbed().retrieve(new Employee()));
 
     }
 

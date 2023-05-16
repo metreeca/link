@@ -159,7 +159,7 @@ final class TypeFrame implements Type<Frame<?>> {
 
                 .map(resource -> {
 
-                    final Frame<?> frame=decoder.cache(value, model.copy());
+                    final Frame<?> frame=model.copy();
 
                     frame.entries(false).forEach(e -> {
 

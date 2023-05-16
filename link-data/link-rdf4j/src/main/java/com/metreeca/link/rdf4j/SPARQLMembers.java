@@ -131,7 +131,7 @@ final class SPARQLMembers extends SPARQL {
 
                         // member type constraint
 
-                        shape.types().findFirst()
+                        shape.types().findFirst() // !!! only first
                                 .map(type -> space(edge(member, text("a"), iri(type))))
                                 .orElseGet(Coder::nothing),
 
@@ -192,8 +192,8 @@ final class SPARQLMembers extends SPARQL {
 
                             final String alias=projected2alias.get(entry.getKey());
 
-                            return constraint(alias != null ? var(alias) : result(entry.getKey()), entry.getValue(),
-                                    base);
+                            return constraint(alias != null ? var(alias) : result(entry.getKey()), entry.getValue(), base);
+
                         })
 
                         .collect(toList()))

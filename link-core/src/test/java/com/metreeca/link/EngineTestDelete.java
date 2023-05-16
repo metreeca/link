@@ -28,12 +28,12 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 public abstract class EngineTestDelete {
 
-    protected abstract Engine engine();
+    protected abstract Engine testbed();
     
 
     @Test void testDelete() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         final Employee delete=with(new Employee(), o -> o.setId(id("/employees/1702")));
 
@@ -51,7 +51,7 @@ public abstract class EngineTestDelete {
 
     @Test void testReportUnknownResources() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         final Employee delete=with(new Employee(), office -> office.setId(id("/employees/999")));
 
@@ -62,7 +62,7 @@ public abstract class EngineTestDelete {
 
     @Test void testReportMissingId() {
 
-        final Engine engine=engine();
+        final Engine engine=testbed();
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> engine.delete(new Employee()));
