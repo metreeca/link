@@ -34,7 +34,6 @@ import static com.metreeca.link.Local.local;
 import static com.metreeca.link.Query.query;
 import static com.metreeca.link.Shape.forward;
 import static com.metreeca.link.Shape.reverse;
-import static com.metreeca.link.rdf4j.Coder.*;
 import static com.metreeca.link.rdf4j.RDF4J.*;
 
 import static java.lang.String.format;
@@ -350,7 +349,6 @@ final class TypeFrame implements Type<Frame<?>> {
                 connection,
                 resource,
                 property,
-                shape.links().collect(toList()),
                 vs -> vs.collect(toList())
 
         ).stream()
@@ -386,7 +384,7 @@ final class TypeFrame implements Type<Frame<?>> {
 
         final RepositoryConnection connection=decoder.connection();
 
-        return retrieve(connection, resource, property, shape.links().collect(toList()), Stream::findFirst)
+        return retrieve(connection, resource, property, Stream::findFirst)
                 .flatMap(v -> decoder.decode(v, object))
                 .orElse(shape.virtual() ? object : null);
 
@@ -414,61 +412,20 @@ final class TypeFrame implements Type<Frame<?>> {
             final RepositoryConnection connection,
             final Resource anchor,
             final String predicate,
-            final Collection<String> links,
             final Function<Stream<Value>, V> mapper
     ) {
 
         final boolean forward=forward(predicate);
 
-        if ( links.isEmpty() ) {
+        try ( final Stream<Statement> statements=forward
+                ? connection.getStatements(anchor, iri(predicate), null).stream()
+                : connection.getStatements(null, iri(reverse(predicate)), anchor).stream()
+        ) {
 
-            try ( final Stream<Statement> statements=forward
-                    ? connection.getStatements(anchor, iri(predicate), null).stream()
-                    : connection.getStatements(null, iri(reverse(predicate)), anchor).stream()
-            ) {
-
-                return mapper.apply(forward
-                        ? statements.map(Statement::getObject)
-                        : statements.map(Statement::getSubject)
-                );
-
-            }
-
-        } else {
-
-            final class Generator extends SPARQL {
-
-                private String generate() {
-                    return query(items(
-
-                            select(var(id())),
-
-                            where(space(edge(
-
-                                    value(anchor),
-
-                                    items(
-                                            text("("),
-                                            list("|", links.stream().map(this::iri).collect(toList())),
-                                            text(")?/"),
-                                            iri(predicate)
-                                    ),
-
-                                    var(id())
-
-                            )))
-
-                    ));
-                }
-
-            }
-
-            final Generator generator=new Generator();
-            final String sparql=generator.generate();
-
-            try ( final Stream<BindingSet> results=connection.prepareTupleQuery(sparql).evaluate().stream() ) {
-                return mapper.apply(results.map(bindings -> bindings.getValue(generator.id())));
-            }
+            return mapper.apply(forward
+                    ? statements.map(Statement::getObject)
+                    : statements.map(Statement::getSubject)
+            );
 
         }
 

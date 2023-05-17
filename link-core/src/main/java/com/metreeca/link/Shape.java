@@ -212,10 +212,6 @@ public abstract class Shape {
                 toCollection(LinkedHashSet::new)
         );
 
-        final Set<String> links=shapes.stream().flatMap(Shape::links).collect(
-                toCollection(LinkedHashSet::new)
-        );
-
         final Optional<Class<?>> clazz=shapes.stream().flatMap(s -> s.clazz().stream()).reduce((x, y) ->
                 y.isAssignableFrom(x) ? x : x.isAssignableFrom(y) ? y : error(
                         "conflicting clazz definitions <%s> / <%s>", x, y
@@ -239,10 +235,7 @@ public abstract class Shape {
 
             @Override public Optional<String> id() { return id; }
 
-
             @Override public Stream<String> types() { return types.stream(); }
-
-            @Override public Stream<String> links() { return links.stream(); }
 
 
             @Override public Optional<Class<?>> clazz() { return clazz; }
@@ -318,10 +311,7 @@ public abstract class Shape {
 
                     @Override public Optional<String> id() { return id; }
 
-
                     @Override public Stream<String> types() { return types.stream(); }
-
-                    @Override public Stream<String> links() { return links.stream(); }
 
 
                     @Override public Optional<Class<?>> clazz() { return klass; }
@@ -501,12 +491,7 @@ public abstract class Shape {
         return Optional.empty();
     }
 
-
     public Stream<String> types() { // from most to least specific
-        return Stream.empty();
-    }
-
-    public Stream<String> links() {
         return Stream.empty();
     }
 

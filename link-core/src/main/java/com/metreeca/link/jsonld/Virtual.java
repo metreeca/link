@@ -20,10 +20,10 @@ package com.metreeca.link.jsonld;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Target({ TYPE, FIELD, METHOD })
+@Target({ TYPE })
 @Retention(RUNTIME)
 public @interface Virtual {
 
