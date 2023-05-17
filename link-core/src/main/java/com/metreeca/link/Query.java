@@ -38,8 +38,6 @@ import static java.util.stream.Collectors.*;
  */
 public abstract class Query<T> extends Stash<T> {
 
-    private static final Object Empty=new Object();
-
     private static final Pattern WordPattern=Pattern.compile("\\w+");
     private static final Pattern MarkPattern=Pattern.compile("\\p{M}");
 
@@ -63,9 +61,9 @@ public abstract class Query<T> extends Stash<T> {
 
         final Object model=queries.stream()
                 .map(query -> query.model())
-                .filter(not(Empty::equals))
+                .filter(Objects::nonNull)
                 .reduce((x, y) -> x.equals(y) ? x : error("conflicting <model> <%s> / <%s>", x, y))
-                .orElse(Empty);
+                .orElse(null);
 
         final Map<Expression, Constraint> facets=queries.stream()
                 .flatMap(query -> query.filters().entrySet().stream())
@@ -257,7 +255,12 @@ public abstract class Query<T> extends Stash<T> {
     private Query() { }
 
 
-    public Object model() { return Empty; }
+    /**
+     * Retrieves the query model.
+     *
+     * @return the possibly null query model
+     */
+    public Object model() { return null; }
 
 
     public Map<Expression, Constraint> filters() {

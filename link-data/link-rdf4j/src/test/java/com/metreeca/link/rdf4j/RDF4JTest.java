@@ -21,8 +21,6 @@ import com.metreeca.link.EngineTest;
 
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 
 import static com.metreeca.link.rdf4j.RDF4J.rdf4j;
 
@@ -30,21 +28,6 @@ final class RDF4JTest extends EngineTest {
 
     @Override protected Engine engine() {
         return rdf4j(new SailRepository(new MemoryStore()));
-    }
-
-    @Disabled
-    @Test void testHandleReferencesToTarget() {
-        // exec(dataset(), () -> assertThat(relate(frame(container), items(and(
-        //
-        //         filter(field(inverse(LDP.CONTAINS), all(focus()))),
-        //         convey(field(RDFS.LABEL))
-        //
-        // )))).hasValue(frame(container).frames(Contains, resources.stream()
-        //         .filter(frame -> frame.values(RDF.TYPE).anyMatch(Employee::equals))
-        //         .map(frame -> frame(frame.focus())
-        //                 .values(RDFS.LABEL, frame.values(RDFS.LABEL))
-        //         )
-        // )));
     }
 
 }
