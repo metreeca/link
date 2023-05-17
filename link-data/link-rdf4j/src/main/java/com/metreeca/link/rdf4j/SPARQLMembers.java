@@ -106,7 +106,7 @@ final class SPARQLMembers extends SPARQL {
 
         return query(items(
 
-                select(plain ? member : items(alias2projected.entrySet().stream() // !!! refactor
+                select(plain, plain ? member : items(alias2projected.entrySet().stream() // !!! refactor
                         .map(projection -> {
 
                             final String alias=projection.getKey();
