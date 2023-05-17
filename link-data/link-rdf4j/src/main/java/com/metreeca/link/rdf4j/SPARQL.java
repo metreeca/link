@@ -30,11 +30,10 @@ import static com.metreeca.link.Shape.forward;
 import static com.metreeca.link.Shape.reverse;
 import static com.metreeca.link.rdf4j.Coder.*;
 
-import static org.eclipse.rdf4j.model.util.Values.literal;
-
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
+import static org.eclipse.rdf4j.model.util.Values.literal;
 
 /**
  * SPARQL query generator.
@@ -236,8 +235,12 @@ abstract class SPARQL {
     }
 
 
+    Coder not(final Coder expression) {
+        return items(text('!'), expression);
+    }
+
     Coder or(final Coder... expressions) {
-        return and(asList(expressions));
+        return or(asList(expressions));
     }
 
     Coder or(final Collection<Coder> expressions) {
@@ -330,7 +333,7 @@ abstract class SPARQL {
     }
 
     Coder function(final String name, final Coder... args) {
-        return items(text(' '), text(name), text('('), list(", ", args), text(')'));
+        return items(text(name), text('('), list(", ", args), text(')'));
     }
 
 

@@ -25,6 +25,7 @@ import org.eclipse.rdf4j.model.Resource;
 import java.net.URI;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Query.Constraint;
@@ -34,7 +35,6 @@ import static com.metreeca.link.rdf4j.Coder.*;
 
 import static java.lang.String.format;
 import static java.util.Map.entry;
-import static java.util.function.Predicate.not;
 import static java.util.function.UnaryOperator.identity;
 import static java.util.stream.Collectors.*;
 
@@ -75,17 +75,17 @@ final class SPARQLMembers extends SPARQL {
 
         final Map<Expression, Expression> expression2projected=alias2projected.entrySet().stream()
                 .map(entry -> entry(entry.getValue(), Expression.expression(List.of(entry.getKey()), List.of())))
-                .filter(not(entry -> entry.getKey().equals(entry.getValue()))) // ignore non-aliased expressions
+                .filter(Predicate.not(entry -> entry.getKey().equals(entry.getValue()))) // ignore non-aliased expressions
                 .collect(toMap(Entry::getKey, Entry::getValue));
 
         final Map<Expression, Expression> projected2expression=alias2projected.entrySet().stream()
                 .map(entry -> entry(Expression.expression(List.of(entry.getKey()), List.of()), entry.getValue()))
-                .filter(not(entry -> entry.getKey().equals(entry.getValue()))) // ignore non-aliased expressions
+                .filter(Predicate.not(entry -> entry.getKey().equals(entry.getValue()))) // ignore non-aliased expressions
                 .collect(toMap(Entry::getKey, Entry::getValue));
 
-        // expression paths to required status
+        // expression paths
 
-        final Map<List<String>, Boolean> paths=Stream
+        final Set<List<String>> paths=Stream
 
                 .of(
                         alias2projected.values(),
@@ -95,14 +95,11 @@ final class SPARQLMembers extends SPARQL {
 
                 .flatMap(Collection::stream)
 
-                .filter(not(expression2projected::containsValue)) // not referring to a projected variable names
-                .filter(not(expression -> expression.path().isEmpty())) // not referring to the root value
+                .filter(Predicate.not(expression2projected::containsValue)) // not referring to a projected variable name
+                .filter(Predicate.not(expression -> expression.path().isEmpty())) // not referring to the root value
 
-                .collect(groupingBy(Expression::path, reducing( // required
-                        false,
-                        e -> !e.aggregate() && (filters.contains(e) || filters.contains(expression2projected.get(e))),
-                        (x, y) -> x || y
-                )));
+                .map(Expression::path)
+                .collect(toSet());
 
 
         final Coder member=var(id());
@@ -131,24 +128,13 @@ final class SPARQLMembers extends SPARQL {
 
                         // member type constraint
 
-                        shape.types().findFirst() // !!! only first
+                        shape.types().findFirst() // !!! only first?
                                 .map(type -> space(edge(member, text("a"), iri(type))))
                                 .orElseGet(Coder::nothing),
 
-                        // raw required expression values
+                        // raw expression values
 
-                        space(items(paths.entrySet().stream()
-                                .filter(Entry::getValue)
-                                .map(Entry::getKey)
-                                .map(path -> line(edge(member, path(shape, path), var(id(path)))))
-                                .collect(toList())
-                        )),
-
-                        // raw optional expression values
-
-                        space(items(paths.entrySet().stream()
-                                .filter(not(Entry::getValue))
-                                .map(Entry::getKey)
+                        space(items(paths.stream()
                                 .map(path -> line(optional(edge(member, path(shape, path), var(id(path))))))
                                 .collect(toList())
                         )),
@@ -156,7 +142,7 @@ final class SPARQLMembers extends SPARQL {
                         // non-aggregate computed values
 
                         space(items(alias2projected.entrySet().stream()
-                                .filter(not(entry -> entry.getValue().aggregate()))
+                                .filter(Predicate.not(entry -> entry.getValue().aggregate()))
                                 .map(entry -> line(bind(entry.getKey(), expression(entry.getValue()))))
                                 .collect(toList())
                         )),
@@ -164,7 +150,7 @@ final class SPARQLMembers extends SPARQL {
                         // non-aggregate filters
 
                         space(filters(query.filters().entrySet().stream()
-                                .filter(not(entry -> projected2expression.getOrDefault(entry.getKey(), entry.getKey()).aggregate())) // !!! review
+                                .filter(Predicate.not(entry -> projected2expression.getOrDefault(entry.getKey(), entry.getKey()).aggregate())) // !!! review
                                 .flatMap(entry -> constraint(result(entry.getKey()), entry.getValue(), base))
                                 .collect(toList()))
                         )
@@ -174,10 +160,10 @@ final class SPARQLMembers extends SPARQL {
                 // aggregate grouping // !!! refactor
 
                 space(plain && filters.stream().anyMatch(Expression::aggregate) ? group(member)
-                        : !plain && alias2projected.values().stream().anyMatch(not(Expression::aggregate)) ?
+                        : !plain && alias2projected.values().stream().anyMatch(Predicate.not(Expression::aggregate)) ?
                         group(items(
                                 alias2projected.entrySet().stream()
-                                        .filter(not(entry -> entry.getValue().aggregate()))
+                                        .filter(Predicate.not(entry -> entry.getValue().aggregate()))
                                         .map(entry -> var(entry.getKey()))
                                         .collect(toList())
                         ))
@@ -229,7 +215,7 @@ final class SPARQLMembers extends SPARQL {
 
                         // all aggregates >> single record >> no order
 
-                        : alias2projected.values().stream().anyMatch(not(Expression::aggregate))
+                        : alias2projected.values().stream().anyMatch(Predicate.not(Expression::aggregate))
 
                         ?
                         order(items(
@@ -385,11 +371,21 @@ final class SPARQLMembers extends SPARQL {
     }
 
     private Coder any(final Coder value, final Collection<Object> any, final URI base) {
-        return any.isEmpty() ? text("true") // !!! empty list  / null values
-                : in(value, any.stream()
-                .map(v -> value(v, base))
-                .collect(toList())
-        );
+
+        final boolean existential=any.isEmpty();
+        final boolean positive=any.stream().noneMatch(Objects::isNull);
+
+        final Set<Object> options=any.stream().filter(Objects::nonNull).collect(toSet());
+
+        final Coder blank=not(bound(value));
+        final Coder values=options.size() == 1
+                ? eq(value, value(options.iterator().next(), base))
+                : in(value, options.stream().map(v -> value(v, base)).collect(toList()));
+
+        return existential ? bound(value)
+                : positive ? values
+                : options.isEmpty() ? blank
+                : parens(or(blank, values));
     }
 
 }

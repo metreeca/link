@@ -365,6 +365,76 @@ public abstract class EngineTestRetrieveQuery {
 
         }
 
+        @Test void testHandleExistentialAnyConstraints() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(with(new Employee(), employee -> employee.setId(""))),
+                        filter("supervisor", any())
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
+                    .map(employee -> id(employee.getId()))
+                    .containsExactlyElementsOf(Employees.stream()
+                            .filter(employee -> Optional.ofNullable(employee.getSupervisor())
+                                    .isPresent()
+                            )
+                            .map(Resource::getId)
+                            .collect(toList())
+                    )
+            );
+
+        }
+
+        @Test void testHandleNonExistentialAnyConstraints() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(with(new Employee(), employee -> employee.setId(""))),
+                        filter("supervisor", any((Object)null))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
+                    .map(employee -> id(employee.getId()))
+                    .containsExactlyElementsOf(Employees.stream()
+                            .filter(employee -> Optional.ofNullable(employee.getSupervisor())
+                                    .isEmpty()
+                            )
+                            .map(Resource::getId)
+                            .collect(toList())
+                    )
+            );
+
+        }
+
+        @Test void testHandleMixedAnyConstraints() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(with(new Employee(), employee -> employee.setId(""))),
+                        filter("supervisor", any(null, with(new Reference(), s -> s.setId(id("/employees/1002")))))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
+                    .map(employee -> id(employee.getId()))
+                    .containsExactlyElementsOf(Employees.stream()
+                            .filter(employee
+                                    -> employee.getSupervisor() == null
+                                    || id(employee.getSupervisor().getId()).equals(id("/employees/1002"))
+                            )
+                            .map(Resource::getId)
+                            .collect(toList())
+                    )
+            );
+
+        }
+
 
         @Test void testFilterOnExpression() {
 
