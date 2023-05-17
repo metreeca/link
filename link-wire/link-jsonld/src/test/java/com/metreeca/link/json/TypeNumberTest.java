@@ -21,7 +21,10 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
-import static com.metreeca.link.json.JSONTest.*;
+import static com.metreeca.link.Query.decimal;
+import static com.metreeca.link.Query.integer;
+import static com.metreeca.link.json.JSONTest.decode;
+import static com.metreeca.link.json.JSONTest.encode;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

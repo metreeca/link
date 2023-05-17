@@ -23,16 +23,15 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.net.URLDecoder;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.json.JSON.Tokens.EOF;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Map.entry;
 import static java.util.stream.Collectors.toList;
 
@@ -186,15 +185,29 @@ public final class JSON implements Codec {
             throw new NullPointerException("null clazz");
         }
 
-        try ( final StringReader reader=new StringReader(json) ) {
+        if ( json.startsWith("%7B") ) { // URLEncoded JSON
 
-            return decode(reader, clazz);
+            return decode(URLDecoder.decode(json, UTF_8), clazz);
 
-        } catch ( final IOException e ) {
+        } else if ( json.startsWith("e3") ) { // Base64 JSON
 
-            throw new UncheckedIOException(e);
+            return decode(new String(Base64.getDecoder().decode(json), UTF_8), clazz);
 
+            // !!! } else if ( ??? ) { // search parameters
+
+        } else {
+
+            try ( final StringReader reader=new StringReader(json) ) {
+
+                return decode(reader, clazz);
+
+            } catch ( final IOException e ) {
+
+                throw new UncheckedIOException(e);
+
+            }
         }
+
     }
 
 

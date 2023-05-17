@@ -18,9 +18,6 @@ package com.metreeca.link.json;
 
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 import static com.metreeca.link.json.JSON.json;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,15 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 final class JSONTest {
 
     public static class Bean { }
-
-
-    static BigInteger integer(final long value) {
-        return BigInteger.valueOf(value);
-    }
-
-    static BigDecimal decimal(final double value) {
-        return BigDecimal.valueOf(value);
-    }
 
 
     static String pretty(final Object value) {
@@ -55,6 +43,19 @@ final class JSONTest {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    @Test void testDecodeJSON() {
+        assertThat(decode("{}", Bean.class)).isInstanceOf(Bean.class);
+    }
+
+    @Test void testDecodeURLEncodedJSON() {
+        assertThat(decode("%7B%7D", Bean.class)).isInstanceOf(Bean.class);
+    }
+
+    @Test void testDecodeBase64JSON() {
+        assertThat(decode("e30=", Bean.class)).isInstanceOf(Bean.class);
+    }
+
+
     @Test void testReportLocation() {
 
         assertThatExceptionOfType(JSONException.class)
@@ -64,6 +65,7 @@ final class JSONTest {
                 .satisfies(e -> assertThat(e.getCol()).isEqualTo(5));
 
     }
+
 
     @Test void testReportUnexpectedEOF() {
         assertThatExceptionOfType(JSONException.class)

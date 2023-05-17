@@ -22,11 +22,11 @@ import org.junit.jupiter.api.Test;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.metreeca.link.Query.integer;
 import static com.metreeca.link.json.JSONTest.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import static java.util.Map.entry;
+import static org.assertj.core.api.Assertions.assertThat;
 
 final class TypeMapTest {
 

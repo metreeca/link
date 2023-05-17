@@ -19,8 +19,11 @@ package com.metreeca.link.json;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
+import static com.metreeca.link.Query.integer;
 import static com.metreeca.link.json.JSONTest.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
