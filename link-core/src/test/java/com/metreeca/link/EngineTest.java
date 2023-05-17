@@ -23,11 +23,10 @@ import com.metreeca.link.shacl.Required;
 
 import org.junit.jupiter.api.Nested;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +35,7 @@ import static com.metreeca.link.Frame.with;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.requireNonNull;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.*;
 
@@ -52,11 +52,11 @@ public abstract class EngineTest {
 
 
     private static List<Employee> Employees() {
-        try {
+        try ( final BufferedReader reader=new BufferedReader(new InputStreamReader(
+                requireNonNull(EngineTest.class.getResourceAsStream("EngineTest.tsv")), UTF_8
+        )) ) {
 
-            final URL resource=EngineTest.class.getResource("EngineTest.tsv");
-
-            final List<List<String>> records=Files.readAllLines(Path.of(resource.toURI()), UTF_8).stream()
+            final List<List<String>> records=reader.lines()
                     .map(line -> List.of(line.split("\t")))
                     .collect(toList());
 
@@ -127,9 +127,9 @@ public abstract class EngineTest {
 
             return employees;
 
-        } catch ( final URISyntaxException|IOException unexpected ) {
+        } catch ( final IOException e ) {
 
-            throw new RuntimeException(unexpected);
+            throw new UncheckedIOException(e);
 
         }
     }

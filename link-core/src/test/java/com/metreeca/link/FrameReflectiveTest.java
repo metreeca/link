@@ -16,12 +16,12 @@
 
 package com.metreeca.link;
 
-import com.metreeca.link.jsonld.*;
+import com.metreeca.link.jsonld.Id;
+import com.metreeca.link.jsonld.Property;
+import com.metreeca.link.jsonld.Reverse;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import static com.metreeca.link._FrameDeclarative.frame;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -33,7 +33,7 @@ final class FrameReflectiveTest {
         @Test void testGetId() {
 
             final Bean bean=new Bean();
-            final Frame<Bean> frame=frame(bean);
+            final Frame<Bean> frame=new FrameReflective<>(bean);
 
             assertThat(frame.id()).isNull();
 
@@ -47,26 +47,26 @@ final class FrameReflectiveTest {
 
             final Bean test=new Bean();
 
-            frame(test).id("test");
+            new FrameReflective<>(test).id("test");
 
             assertThat(test.getId()).isEqualTo("test");
 
         }
 
         @Test void testReportIllegalMultipleIds() {
-            assertThatIllegalArgumentException().isThrownBy(() -> frame(BeanMultipleIds.class));
+            assertThatIllegalArgumentException().isThrownBy(() -> new FrameReflective<>(BeanMultipleIds.class));
         }
 
         @Test void testReportIllegalIdType() {
-            assertThatIllegalArgumentException().isThrownBy(() -> frame(BeanIllegalId.class));
+            assertThatIllegalArgumentException().isThrownBy(() -> new FrameReflective<>(BeanIllegalId.class));
         }
 
         @Test void testReportIdOnProperty() {
-            assertThatIllegalArgumentException().isThrownBy(() -> frame(BeanIdOnProperty.class));
+            assertThatIllegalArgumentException().isThrownBy(() -> new FrameReflective<>(BeanIdOnProperty.class));
         }
 
         @Test void testReportIdOnReverse() {
-            assertThatIllegalArgumentException().isThrownBy(() -> frame(BeanIdOnReverse.class));
+            assertThatIllegalArgumentException().isThrownBy(() -> new FrameReflective<>(BeanIdOnReverse.class));
         }
 
     }
