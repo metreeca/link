@@ -21,6 +21,7 @@ import com.metreeca.link.EngineTest;
 
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.jupiter.api.Nested;
 
 import static com.metreeca.link.rdf4j.RDF4J.rdf4j;
 
@@ -28,6 +29,41 @@ final class RDF4JTest extends EngineTest {
 
     @Override protected Engine engine() {
         return rdf4j(new SailRepository(new MemoryStore()));
+    }
+
+
+    @Nested
+    final class Projecting {
+
+    }
+
+    @Nested
+    final class Transforming {
+
+        // abs
+
+    }
+
+    @Nested
+    final class Aggregating {
+
+        // count
+        // sum
+        // min
+        // max
+        // avg
+        // sample
+
+    }
+
+    @Nested
+    final class Filtering {
+
+    }
+
+    @Nested
+    final class Sorting {
+
     }
 
 }

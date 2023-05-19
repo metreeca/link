@@ -27,6 +27,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -62,33 +64,32 @@ public abstract class EngineTest {
 
             final List<String> header=records.get(0);
 
-            final int code=header.indexOf("code");
-            final int seniority=header.indexOf("seniority");
-            final int title=header.indexOf("title");
-            final int forename=header.indexOf("forename");
-            final int surname=header.indexOf("surname");
-            final int email=header.indexOf("email");
-            final int supervisor=header.indexOf("supervisor");
-
             final List<Employee> employees=records.stream().skip(1)
 
                     .map(record -> with(new Employee(), employee -> {
 
-                        employee.setId(format("%s/employees/%s", Base, record.get(code)));
-                        employee.setLabel(format("%s %s", record.get(forename), record.get(surname)));
+                        final String code=record.get(header.indexOf("code"));
+                        final String forename=record.get(header.indexOf("forename"));
+                        final String surname=record.get(header.indexOf("surname"));
 
-                        employee.setCode(record.get(code));
-                        employee.setSeniority(Integer.parseInt(record.get(seniority)));
-                        employee.setTitle(record.get(title));
-                        employee.setForename(record.get(forename));
-                        employee.setSurname(record.get(surname));
-                        employee.setEmail(record.get(email));
+                        employee.setId(format("%s/employees/%s", Base, code));
+                        employee.setLabel(format("%s %s", forename, surname));
 
-                        employee.setSupervisor(java.util.Optional.of(record.get(supervisor))
+                        employee.setCode(code);
+                        employee.setForename(forename);
+                        employee.setSurname(surname);
+                        // employee.setBirthdate(LocalDate.parse(record.get(header.indexOf("birthdate"))));
+                        employee.setSeniority(Integer.parseInt(record.get(header.indexOf("seniority"))));
+                        employee.setTitle(record.get(header.indexOf("title")));
+                        employee.setEmail(record.get(header.indexOf("email")));
+
+                        employee.setSupervisor(java.util.Optional.of(record.get(header.indexOf("supervisor")))
                                 .filter(not(String::isEmpty))
                                 .map(c -> with(new Employee(), s -> s.setCode(c)))
                                 .orElse(null)
                         );
+
+                        // employee.setActive(Instant.parse(record.get(header.indexOf("active"))));
 
                     }))
 
@@ -183,6 +184,15 @@ public abstract class EngineTest {
     }
 
     @Nested
+    final class RetrieveXform extends EngineTestRetrieveXform {
+
+        @Override public Engine testbed() {
+            return EngineTest.this.testbed();
+        }
+
+    }
+
+    @Nested
     final class Create extends EngineTestCreate {
 
         @Override public Engine testbed() {
@@ -205,6 +215,15 @@ public abstract class EngineTest {
 
         @Override public Engine testbed() {
             return EngineTest.this.testbed();
+        }
+
+    }
+
+    @Nested
+    final class RetrieveXcode extends EngineTestXcode {
+
+        @Override protected Engine engine() {
+            return EngineTest.this.engine();
         }
 
     }
@@ -292,6 +311,9 @@ public abstract class EngineTest {
         @Required
         private String surname;
 
+        @Required
+        private LocalDate birthdate;
+
 
         @Required
         private String email;
@@ -311,6 +333,10 @@ public abstract class EngineTest {
         @Optional
         @Property("report")
         private Set<Employee> reports;
+
+
+        @Required
+        private Instant active;
 
 
         public String getCode() {
@@ -338,6 +364,15 @@ public abstract class EngineTest {
         public void setSurname(final String surname) {
             this.surname=surname;
         }
+
+
+        // public LocalDate getBirthdate() {
+        //     return birthdate;
+        // }
+        //
+        // public void setBirthdate(final LocalDate birthdate) {
+        //     this.birthdate=birthdate;
+        // }
 
 
         public String getEmail() {
@@ -383,6 +418,15 @@ public abstract class EngineTest {
         public void setReports(final Set<Employee> reports) {
             this.reports=reports;
         }
+
+
+        // public Instant getActive() {
+        //     return active;
+        // }
+        //
+        // public void setActive(final Instant active) {
+        //     this.active=active;
+        // }
 
     }
 

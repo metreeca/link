@@ -48,7 +48,7 @@ final class TypeLocal implements Type<Local<?>> {
                     } else if ( values instanceof Collection ) {
 
                         return ((Collection<?>)values).stream()
-                                .filter(v -> v instanceof String) // expected
+                                .filter(String.class::isInstance) // expected
                                 .map(v -> encoder.factory().createLiteral(((String)v), locale));
 
                     } else {

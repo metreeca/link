@@ -39,7 +39,9 @@ import static java.util.stream.Collectors.joining;
  */
 final class Glass<T> {
 
-    private static final Pattern FieldPattern=Pattern.compile("[A-Z][a-zA-Z0-9]*"); // !!! isJavaIdentifierPart()
+    // ;( no capitalization requirements in JavaBeans Specs 1.01, nor in Introspector code
+
+    private static final Pattern FieldPattern=Pattern.compile(".*");
     private static final Pattern GetterPattern=Pattern.compile("(is|get)("+FieldPattern+")");
     private static final Pattern SetterPattern=Pattern.compile("(set)("+FieldPattern+")");
 

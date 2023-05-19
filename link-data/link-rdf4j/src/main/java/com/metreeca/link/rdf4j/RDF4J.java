@@ -30,6 +30,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
+import java.time.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
@@ -80,6 +81,16 @@ public final class RDF4J implements Engine {
 
             entry(Integer.TYPE, new TypeInteger()),
             entry(Integer.class, new TypeInteger()),
+
+            entry(Year.class, new TypeYear()),
+            entry(LocalDate.class, new TypeLocalDate()),
+            entry(LocalTime.class, new TypeLocalTime()),
+            entry(OffsetTime.class, new TypeOffsetTime()),
+            entry(LocalDateTime.class, new TypeLocalDateTime()),
+            entry(OffsetDateTime.class, new TypeOffsetDateTime()),
+            entry(Instant.class, new TypeInstant()),
+            entry(Period.class, new TypePeriod()),
+            entry(Duration.class, new TypeDuration()),
 
             entry(URI.class, new TypeURI()),
 

@@ -460,6 +460,30 @@ public abstract class EngineTestRetrieveQuery {
 
         }
 
+        @Test void testFilterOnComputedExpression() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(with(new Employee(), employee -> employee.setId(""))),
+                        filter("abs:seniority", gte(integer(3)))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
+                    .map(employee -> id(employee.getId()))
+                    .containsExactlyElementsOf(Employees.stream()
+                            .filter(employee -> Optional.ofNullable(employee.getSupervisor())
+                                    .filter(supervisor -> supervisor.getSeniority() >= 3)
+                                    .isPresent()
+                            )
+                            .map(Resource::getId)
+                            .collect(toList())
+                    )
+            );
+
+        }
+
     }
 
     @Nested
