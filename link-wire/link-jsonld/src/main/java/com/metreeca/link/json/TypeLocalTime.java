@@ -16,31 +16,23 @@
 
 package com.metreeca.link.json;
 
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import com.metreeca.link.json.JSON.Decoder;
+import com.metreeca.link.json.JSON.Encoder;
+import com.metreeca.link.json.JSON.Type;
 
-import static com.metreeca.link.json.JSONTest.decode;
-import static com.metreeca.link.json.JSONTest.encode;
+import java.io.IOException;
+import java.time.LocalTime;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.metreeca.link.json.JSON.Tokens.STRING;
 
-final class TypeVoidTest {
+final class TypeLocalTime implements Type<LocalTime> {
 
-    @Nested final class Encode {
-
-        @Test void testEncodeNull() {
-            assertThat(encode(null)).isEqualTo("null");
-        }
-
+    @Override public void encode(final Encoder encoder, final LocalTime value) throws IOException {
+        encoder.escape(value.toString());
     }
 
-    @Nested final class Decode {
-
-        @Test void testDecodeNull() {
-            assertThat(decode("null", void.class)).isEqualTo(null);
-            assertThat(decode("null", Void.class)).isEqualTo(null);
-        }
-
+    @Override public LocalTime decode(final Decoder decoder, final Class<LocalTime> clazz) throws IOException {
+        return LocalTime.parse(decoder.token(STRING));
     }
 
 }

@@ -24,6 +24,7 @@ import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.time.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
@@ -77,6 +78,19 @@ public final class JSON implements Codec {
     }
 
 
+    private static final Map<Class<?>, Class<?>> wrappers=Map.ofEntries(
+            entry(void.class, Void.class),
+            entry(boolean.class, Boolean.class),
+            entry(char.class, Character.class),
+            entry(byte.class, Byte.class),
+            entry(short.class, Short.class),
+            entry(int.class, Integer.class),
+            entry(long.class, Long.class),
+            entry(float.class, Float.class),
+            entry(double.class, Double.class)
+    );
+
+
     public static JSON json() {
         return new JSON();
     }
@@ -89,8 +103,24 @@ public final class JSON implements Codec {
     private List<Entry<Class<?>, Type<?>>> types=List.of(
 
             entry(Void.class, new TypeVoid()),
+            entry(void.class, new TypeVoid()),
+
             entry(Boolean.class, new TypeBoolean()),
+            entry(boolean.class, new TypeBoolean()),
+
             entry(Number.class, new TypeNumber()),
+
+            entry(Number.class, new TypeNumber()),
+
+            entry(Year.class, new TypeYear()),
+            entry(LocalDate.class, new TypeLocalDate()),
+            entry(LocalTime.class, new TypeLocalTime()),
+            entry(OffsetTime.class, new TypeOffsetTime()),
+            entry(LocalDateTime.class, new TypeLocalDateTime()),
+            entry(OffsetDateTime.class, new TypeOffsetDateTime()),
+            entry(Instant.class, new TypeInstant()),
+            entry(Period.class, new TypePeriod()),
+            entry(Duration.class, new TypeDuration()),
 
             entry(URI.class, new TypeURI()),
 
@@ -242,7 +272,7 @@ public final class JSON implements Codec {
 
         // !!! Decoder.decode() may silently return a stashed value (Query/Table): see TypeObject
 
-        if ( value != null && !clazz.isInstance(value) ) {
+        if ( value != null && !wrappers.getOrDefault(clazz, clazz).isInstance(value) ) {
             throw new JSONException("unexpected query outside collection");
         }
 

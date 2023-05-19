@@ -19,8 +19,6 @@ package com.metreeca.link.json;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 import static com.metreeca.link.json.JSONTest.encode;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,15 +27,15 @@ final class TypeStringTest {
 
     @Nested final class Encode {
 
-        @Test void testEncodeEmptyString() throws IOException {
+        @Test void testEncodeEmptyString() {
             assertThat(encode("")).isEqualTo("\"\"");
         }
 
-        @Test void testEncodePlainString() throws IOException {
+        @Test void testEncodePlainString() {
             assertThat(encode("ciao!")).isEqualTo("\"ciao!\"");
         }
 
-        @Test void testEscapesSpecialCharacter() throws IOException {
+        @Test void testEscapesSpecialCharacter() {
             assertThat(encode("\u0003\b\f\n\r\t \"\\"))
                     .isEqualTo("\"\\u0003\\b\\f\\n\\r\\t \\\"\\\\\"");
         }

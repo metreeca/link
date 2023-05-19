@@ -19,26 +19,41 @@ package com.metreeca.link.json;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.Period;
+
 import static com.metreeca.link.json.JSONTest.decode;
 import static com.metreeca.link.json.JSONTest.encode;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-final class TypeVoidTest {
+final class TypePeriodTest {
 
-    @Nested final class Encode {
+    private static final String encoded="\"P1Y2M3D\"";
+    private static final Period decoded=Period.of(1, 2, 3);
 
-        @Test void testEncodeNull() {
-            assertThat(encode(null)).isEqualTo("null");
+
+    @Nested
+    final class Encode {
+
+        @Test void testEncode() {
+            assertThat(encode(decoded))
+                    .isEqualTo(encoded);
         }
 
     }
 
-    @Nested final class Decode {
+    @Nested
+    final class Decode {
 
-        @Test void testDecodeNull() {
-            assertThat(decode("null", void.class)).isEqualTo(null);
-            assertThat(decode("null", Void.class)).isEqualTo(null);
+        @Test void testDecode() {
+            assertThat(decode(encoded, Period.class))
+                    .isEqualTo(decoded);
+        }
+
+        @Test void testReport() {
+            assertThatExceptionOfType(JSONException.class)
+                    .isThrownBy(() -> decode("malformed", Period.class));
         }
 
     }

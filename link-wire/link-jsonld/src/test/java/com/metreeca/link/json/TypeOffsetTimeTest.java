@@ -19,26 +19,47 @@ package com.metreeca.link.json;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
+
 import static com.metreeca.link.json.JSONTest.decode;
 import static com.metreeca.link.json.JSONTest.encode;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-final class TypeVoidTest {
+final class TypeOffsetTimeTest {
 
-    @Nested final class Encode {
+    private static final String encoded="\"17:05:19+01:02\"";
 
-        @Test void testEncodeNull() {
-            assertThat(encode(null)).isEqualTo("null");
+    private static final OffsetTime decoded=OffsetTime.of(
+            LocalTime.of(17, 5, 19),
+            ZoneOffset.ofHoursMinutes(1, 2)
+    );
+
+
+    @Nested
+    final class Encode {
+
+        @Test void testEncode() {
+            assertThat(encode(decoded))
+                    .isEqualTo(encoded);
         }
 
     }
 
-    @Nested final class Decode {
+    @Nested
+    final class Decode {
 
-        @Test void testDecodeNull() {
-            assertThat(decode("null", void.class)).isEqualTo(null);
-            assertThat(decode("null", Void.class)).isEqualTo(null);
+        @Test void testDecode() {
+            assertThat(decode(encoded, OffsetTime.class))
+                    .isEqualTo(decoded);
+        }
+
+        @Test void testReport() {
+            assertThatExceptionOfType(JSONException.class)
+                    .isThrownBy(() -> decode("malformed", OffsetTime.class));
         }
 
     }

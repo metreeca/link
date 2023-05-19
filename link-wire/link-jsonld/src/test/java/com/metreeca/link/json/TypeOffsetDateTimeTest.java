@@ -19,25 +19,34 @@ package com.metreeca.link.json;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
 import static com.metreeca.link.json.JSONTest.decode;
 import static com.metreeca.link.json.JSONTest.encode;
 
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-final class TypeBooleanTest {
+final class TypeOffsetDateTimeTest {
 
-    @Nested final class Encode {
+    private static final String encoded="\"2023-05-19T16:05:12+01:02\"";
 
-        @Test void testEncodePrimitive() {
-            assertThat(encode(true)).isEqualTo("true");
-            assertThat(encode(false)).isEqualTo("false");
-        }
+    private static final OffsetDateTime decoded=OffsetDateTime.of(
+            LocalDate.of(2023, 5, 19),
+            LocalTime.of(16, 5, 12),
+            ZoneOffset.ofHoursMinutes(1, 2)
+    );
 
-        @Test void testEncodeBoxed() {
-            assertThat(encode(TRUE)).isEqualTo("true");
-            assertThat(encode(FALSE)).isEqualTo("false");
+
+    @Nested
+    final class Encode {
+
+        @Test void testEncode() {
+            assertThat(encode(decoded))
+                    .isEqualTo(encoded);
         }
 
     }
@@ -45,14 +54,14 @@ final class TypeBooleanTest {
     @Nested
     final class Decode {
 
-        @Test void testDecodePrimitive() {
-            assertThat(decode("true", boolean.class)).isEqualTo(true);
-            assertThat(decode("false", boolean.class)).isEqualTo(false);
+        @Test void testDecode() {
+            assertThat(decode(encoded, OffsetDateTime.class))
+                    .isEqualTo(decoded);
         }
 
-        @Test void testDecodeBoxed() {
-            assertThat(decode("true", Boolean.class)).isEqualTo(true);
-            assertThat(decode("false", Boolean.class)).isEqualTo(false);
+        @Test void testReport() {
+            assertThatExceptionOfType(JSONException.class)
+                    .isThrownBy(() -> decode("malformed", OffsetDateTime.class));
         }
 
     }

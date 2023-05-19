@@ -19,26 +19,41 @@ package com.metreeca.link.json;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
+
 import static com.metreeca.link.json.JSONTest.decode;
 import static com.metreeca.link.json.JSONTest.encode;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-final class TypeVoidTest {
+final class TypeLocalDateTest {
 
-    @Nested final class Encode {
+    private static final String encoded="\"2023-05-19\"";
+    private static final LocalDate decoded=LocalDate.of(2023, 5, 19);
 
-        @Test void testEncodeNull() {
-            assertThat(encode(null)).isEqualTo("null");
+
+    @Nested
+    final class Encode {
+
+        @Test void testEncode() {
+            assertThat(encode(decoded))
+                    .isEqualTo(encoded);
         }
 
     }
 
-    @Nested final class Decode {
+    @Nested
+    final class Decode {
 
-        @Test void testDecodeNull() {
-            assertThat(decode("null", void.class)).isEqualTo(null);
-            assertThat(decode("null", Void.class)).isEqualTo(null);
+        @Test void testDecode() {
+            assertThat(decode(encoded, LocalDate.class))
+                    .isEqualTo(decoded);
+        }
+
+        @Test void testReport() {
+            assertThatExceptionOfType(JSONException.class)
+                    .isThrownBy(() -> decode("malformed", LocalDate.class));
         }
 
     }
