@@ -22,8 +22,17 @@ import com.metreeca.link.EngineTest;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+
+import static com.metreeca.link.Frame.with;
+import static com.metreeca.link.Query.Constraint.gte;
+import static com.metreeca.link.Query.*;
 import static com.metreeca.link.rdf4j.RDF4J.rdf4j;
+
+import static java.util.stream.Collectors.toList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 final class RDF4JTest extends EngineTest {
 
@@ -63,6 +72,31 @@ final class RDF4JTest extends EngineTest {
 
     @Nested
     final class Sorting {
+
+    }
+
+
+    @Test void testFilterOnComputedExpression() {
+
+        assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+            employees.setId(id("/employees/"));
+            employees.setMembers(query(
+                    model(with(new Employee(), employee -> employee.setId(""))),
+                    filter("abs:seniority", gte(integer(3)))
+            ));
+
+        }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
+                .map(employee -> id(employee.getId()))
+                .containsExactlyElementsOf(Employees.stream()
+                        .filter(employee -> Optional.ofNullable(employee.getSupervisor())
+                                .filter(supervisor -> Math.abs(supervisor.getSeniority()) >= 3)
+                                .isPresent()
+                        )
+                        .map(Resource::getId)
+                        .collect(toList())
+                )
+        );
 
     }
 

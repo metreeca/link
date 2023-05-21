@@ -474,7 +474,7 @@ public abstract class EngineTestRetrieveQuery {
                     .map(employee -> id(employee.getId()))
                     .containsExactlyElementsOf(Employees.stream()
                             .filter(employee -> Optional.ofNullable(employee.getSupervisor())
-                                    .filter(supervisor -> supervisor.getSeniority() >= 3)
+                                    .filter(supervisor -> Math.abs(supervisor.getSeniority()) >= 3)
                                     .isPresent()
                             )
                             .map(Resource::getId)

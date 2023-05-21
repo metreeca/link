@@ -8,7 +8,7 @@ Its engines automatically convert annotated JavaBean classes and high-level decl
 engines supporting data validation, CRUD operations, faceted search and analytical queries, relieving backend developers
 from low-level chores and completely shielding frontend developers from linked data technicalities.
 
-> ❗client-driven templates on a par with GraphQL
+> ❗client-driven models on a par with GraphQL
 
 > ❗️NoSQL storage adapters (annotation/schema-driven)
 

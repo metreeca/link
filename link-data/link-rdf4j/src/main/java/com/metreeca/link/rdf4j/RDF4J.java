@@ -147,17 +147,17 @@ public final class RDF4J implements Engine {
 
 
     @SuppressWarnings("unchecked")
-    private <T> Type<T> type(final T template) {
+    private <T> Type<T> type(final T model) {
         return types.stream()
 
-                .filter(entry -> entry.getKey().isAssignableFrom(template.getClass()))
+                .filter(entry -> entry.getKey().isAssignableFrom(model.getClass()))
                 .findFirst()
                 .map(Entry::getValue)
 
                 .map(codec -> ((Type<T>)codec))
 
                 .orElseThrow(() -> new IllegalArgumentException(format(
-                        "unsupported value type <%s>", template.getClass().getName()
+                        "unsupported value type <%s>", model.getClass().getName()
                 )));
     }
 
@@ -203,7 +203,7 @@ public final class RDF4J implements Engine {
     @Override public <V> Optional<V> retrieve(final V model) {
 
         if ( model == null ) {
-            throw new NullPointerException("null template");
+            throw new NullPointerException("null model");
         }
 
         return process(model, (frame, base) -> {

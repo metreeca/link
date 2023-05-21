@@ -2,7 +2,7 @@ Controlled set of standard [XSD](https://www.w3.org/TR/xmlschema-2/#built-in-dat
 
 | UML         | RDF                                                                | Java               | JSON                              | TypeScript | Description                        |
 |-------------|--------------------------------------------------------------------|--------------------|-----------------------------------|------------|------------------------------------|
-| boolean     | [xsd:boolean](https://www.w3.org/TR/xmlschema-2/#boolean)          | Boolean            |                                   | boolean    |                                    |
+| boolean     | [xsd:boolean](https://www.w3.org/TR/xmlschema-2/#boolean)          | Boolean            | boolean                           | boolean    |                                    |
 | integer     | [xsd:integer](https://www.w3.org/TR/xmlschema-2/#integer)          | BigInteger         | number                            | number     | arbitrary precision integer number |
 | decimal     | [xsd:decimal](https://www.w3.org/TR/xmlschema-2/#decimal)          | BigDecimal         | number                            | number     | arbitrary precision decimal number |
 | year        | [xsd:gYear](https://www.w3.org/TR/xmlschema-2/#gYear)              | Year               | `“yyyy”`                          | number     | absolute ISO 8601 year (`yyyy`)    |

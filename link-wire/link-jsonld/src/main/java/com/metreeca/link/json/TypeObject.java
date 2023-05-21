@@ -385,9 +385,9 @@ final class TypeObject implements Type<Object> {
 
             final Shape _shape=shape.shape(expression).orElse(null); // ; null+if to handle IOException
 
-            final Object template=(_shape != null) ? value(decoder, _shape) : decoder.decode(Object.class);
+            final Object model=(_shape != null) ? value(decoder, _shape) : decoder.decode(Object.class);
 
-            return Map.of(name, column(expression, template));
+            return Map.of(name, column(expression, model));
 
         } else {
 

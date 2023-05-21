@@ -28,7 +28,7 @@ import static java.util.stream.Collectors.toMap;
 public final class Local<T> {
 
     /**
-     * A variant of the {@linkplain Locale#ROOT root locale}used in templates to match any locale.
+     * A variant of the {@linkplain Locale#ROOT root locale}used in models to match any locale.
      */
     public static final Locale Wildcard=new Locale.Builder()
             .setLocale(Locale.ROOT)

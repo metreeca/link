@@ -23,7 +23,6 @@ import java.util.Objects;
 
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
-import static java.util.stream.Collectors.toUnmodifiableMap;
 
 /**
  * Analytical query results.
@@ -47,17 +46,12 @@ public final class Table<T> extends Stash<T> {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private final Map<String, Column> columns;
-    private final Map<String, Expression> expressions;
 
     private final List<Map<String, Object>> records;
 
 
     private Table(final Map<String, Column> columns, final List<Map<String, Object>> records) {
-
         this.columns=unmodifiableMap(columns);
-        this.expressions=columns.entrySet().stream()
-                .collect(toUnmodifiableMap(Map.Entry::getKey, entry -> entry.getValue().expression()));
-
         this.records=new ArrayList<>(records);
     }
 
@@ -69,10 +63,6 @@ public final class Table<T> extends Stash<T> {
 
     public Map<String, Column> columns() {
         return columns;
-    }
-
-    public Map<String, Expression> expressions() {
-        return expressions;
     }
 
     public List<Map<String, Object>> records() {
@@ -104,27 +94,27 @@ public final class Table<T> extends Stash<T> {
 
     public static final class Column {
 
-        public static Column column(final Expression expression, final Object template) {
+        public static Column column(final Expression expression, final Object model) {
 
             if ( expression == null ) {
                 throw new NullPointerException("null expression");
             }
 
-            if ( template == null ) {
-                throw new NullPointerException("null template");
+            if ( model == null ) {
+                throw new NullPointerException("null model");
             }
 
-            return new Column(expression, template);
+            return new Column(expression, model);
         }
 
 
         private final Expression expression;
-        private final Object template;
+        private final Object model;
 
 
-        private Column(final Expression expression, final Object template) {
+        private Column(final Expression expression, final Object model) {
             this.expression=expression;
-            this.template=template;
+            this.model=model;
         }
 
 
@@ -132,24 +122,24 @@ public final class Table<T> extends Stash<T> {
             return expression;
         }
 
-        public Object template() {
-            return template;
+        public Object model() {
+            return model;
         }
 
 
         @Override public boolean equals(final Object object) {
             return this == object || object instanceof Column
                     && expression.equals(((Column)object).expression)
-                    && template.equals(((Column)object).template);
+                    && model.equals(((Column)object).model);
         }
 
         @Override public int hashCode() {
             return expression.hashCode()
-                    ^template.hashCode();
+                    ^model.hashCode();
         }
 
         @Override public String toString() {
-            return String.format("%s <%s>", expression, template);
+            return String.format("%s <%s>", expression, model);
         }
 
     }

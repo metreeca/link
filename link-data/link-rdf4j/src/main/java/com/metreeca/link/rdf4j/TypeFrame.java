@@ -266,10 +266,10 @@ final class TypeFrame implements Type<Frame<?>> {
 
                         final String alias=entry.getKey();
                         final Value _value=entry.getValue();
-                        final Object _template=columns.get(alias).template();
+                        final Object _model=columns.get(alias).model();
 
                         map.put(alias, decoder
-                                .decode(_value, _template) // !!! batch retrieval
+                                .decode(_value, _model) // !!! batch retrieval
                                 .orElse(null)
                         );
 

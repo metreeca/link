@@ -145,7 +145,7 @@ final class TypeObjectTest {
         }
 
 
-        @Test void testDecodeFrameTemplate() {
+        @Test void testDecodeFrameModel() {
             assertThat(query("{ \"label\": \"value\", \"~label\": \"keywords\" }").model())
                     .isInstanceOf(Item.class)
                     .extracting(Item.class::cast)
@@ -154,7 +154,7 @@ final class TypeObjectTest {
                     );
         }
 
-        @Test void testDecodeTableTemplate() {
+        @Test void testDecodeTableModel() {
             assertThat(query("{ \"alias=label\": \"\" }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
@@ -165,7 +165,7 @@ final class TypeObjectTest {
                     );
         }
 
-        @Test void testDecodeMixedTemplate() {
+        @Test void testDecodeMixedModel() {
             assertThat(query("{ \"label\": \"\", \"alias=label\": \"\" }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
@@ -194,7 +194,7 @@ final class TypeObjectTest {
             assertThat(query("{ \"alias=item\": { \"label\":  \"\"} }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
-                    .satisfies(table -> assertThat(table.columns().get("alias").template())
+                    .satisfies(table -> assertThat(table.columns().get("alias").model())
                             .isInstanceOf(Item.class)
                             .extracting(Item.class::cast)
                             .satisfies(item -> assertThat(item.getLabel())
@@ -207,7 +207,7 @@ final class TypeObjectTest {
             assertThat(query("{ \"alias=item.item\": { \"label\":  \"\"} }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
-                    .satisfies(table -> assertThat(table.columns().get("alias").template())
+                    .satisfies(table -> assertThat(table.columns().get("alias").model())
                             .isInstanceOf(Item.class)
                             .extracting(Item.class::cast)
                             .satisfies(item -> assertThat(item.getLabel())
@@ -220,7 +220,7 @@ final class TypeObjectTest {
             assertThat(query("{ \"alias=max:items\": { \"label\":  \"\"} }").model())
                     .isInstanceOf(Table.class)
                     .extracting(v -> (Table<?>)v)
-                    .satisfies(table -> assertThat(table.columns().get("alias").template())
+                    .satisfies(table -> assertThat(table.columns().get("alias").model())
                             .isInstanceOf(Map.class)
                             .extracting(v -> (Map<?, ?>)v)
                             .satisfies(map -> assertThat(map)

@@ -125,11 +125,11 @@ final class Glass<T> {
         }
     }
 
-    T create(final T template) {
+    T create(final T model) {
 
         final T copy=create();
 
-        properties.values().forEach(property -> property.set(copy, property.get(template))); // !!! readable/writable
+        properties.values().forEach(property -> property.set(copy, property.get(model))); // !!! readable/writable
 
         return copy;
 

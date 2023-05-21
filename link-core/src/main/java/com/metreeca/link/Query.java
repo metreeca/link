@@ -267,8 +267,8 @@ public abstract class Query<T> extends Stash<T> {
         return Map.of();
     }
 
-
     public Map<Expression, Criterion> order() { return Map.of(); }
+
 
     public int offset() {
         return 0;
@@ -567,7 +567,6 @@ public abstract class Query<T> extends Stash<T> {
 
     }
 
-
     /**
      * Sorting criterion.
      */
@@ -586,7 +585,6 @@ public abstract class Query<T> extends Stash<T> {
 
             return new Criterion(false, Set.of(values));
         }
-
 
         public static Criterion increasing(final Collection<?> values) {
 

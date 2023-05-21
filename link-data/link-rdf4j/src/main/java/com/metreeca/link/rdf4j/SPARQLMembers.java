@@ -53,9 +53,9 @@ final class SPARQLMembers extends SPARQL {
     ) {
 
         final URI base=URI.create(container.isIRI() ? container.stringValue() : Frame.DefaultBase);
-        final Object template=query.model();
+        final Object model=query.model();
 
-        final boolean plain=!(template instanceof Table);
+        final boolean plain=!(model instanceof Table);
 
 
         // filtering expressions
@@ -64,7 +64,7 @@ final class SPARQLMembers extends SPARQL {
 
         // projected variable names to/from projected expressions
 
-        final Map<String, Expression> alias2projected=plain ? Map.of() : ((Table<?>)template)
+        final Map<String, Expression> alias2projected=plain ? Map.of() : ((Table<?>)model)
                 .columns().entrySet().stream()
                 .collect(toMap(Entry::getKey, entry -> entry.getValue().expression()));
 
