@@ -583,7 +583,7 @@ public abstract class Query<T> extends Stash<T> {
                 throw new NullPointerException("null values");
             }
 
-            return new Criterion(false, Set.of(values));
+            return new Criterion(false, new HashSet<>(asList(values))); // ;( nullable values
         }
 
         public static Criterion increasing(final Collection<?> values) {
@@ -602,7 +602,7 @@ public abstract class Query<T> extends Stash<T> {
                 throw new NullPointerException("null values");
             }
 
-            return new Criterion(true, Set.of(values));
+            return new Criterion(true, new HashSet<>(asList(values))); // ;( nullable values
         }
 
         public static Criterion decreasing(final Collection<?> values) {
@@ -617,7 +617,7 @@ public abstract class Query<T> extends Stash<T> {
 
         private Criterion(final boolean inverse, final Collection<?> values) {
             this.inverse=inverse;
-            this.values=Set.copyOf(values);
+            this.values=new HashSet<>(values); // ;( nullable values
         }
 
         public boolean inverse() {

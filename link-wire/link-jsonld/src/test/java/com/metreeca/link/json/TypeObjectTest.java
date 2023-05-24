@@ -267,6 +267,10 @@ final class TypeObjectTest {
 
             assertThat(query("{ \"?field\": [null, true, 1, \"value\"] }").filters())
                     .containsExactly(entry(expression("field"), any(null, true, BigInteger.ONE, "value")));
+
+            assertThat(query("{ \"?label\": [null] }").filters()) // typed
+                    .containsExactly(entry(expression("label"), any((Object)null)));
+
         }
 
         @Test void testReportUnknownConstraints() {
@@ -288,6 +292,13 @@ final class TypeObjectTest {
                     .containsExactly(
                             entry(expression("y"), increasing("value")),
                             entry(expression("x"), decreasing("value"))
+                    );
+        }
+
+        @Test void testDecodeOrderWithNullTargetValues() {
+            assertThat(query("{ \"^\": { \"+x\": [null] } }").order().entrySet())
+                    .containsExactly(
+                            entry(expression("x"), increasing((Object)null))
                     );
         }
 

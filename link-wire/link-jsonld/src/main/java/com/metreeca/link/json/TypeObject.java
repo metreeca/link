@@ -225,6 +225,10 @@ final class TypeObject implements Type<Object> {
     }
 
     private Collection<?> array(final Decoder decoder, final Class<?> clazz) throws IOException {
+        return array(decoder, clazz, false);
+    }
+
+    private Collection<?> array(final Decoder decoder, final Class<?> clazz, final boolean nullable) throws IOException {
 
         final List<Object> items=new ArrayList<>();
 
@@ -236,7 +240,7 @@ final class TypeObject implements Type<Object> {
                 decoder.token(COMMA);
             }
 
-            items.add(decoder.decode(clazz));
+            items.add(nullable && decoder.type() == NULL ? decoder.decode(Void.class) : decoder.decode(clazz));
         }
 
         decoder.token(RBRACKET);
@@ -298,7 +302,7 @@ final class TypeObject implements Type<Object> {
         } else if ( constraint.startsWith("?") ) {
 
             final Expression expression=expression(constraint.substring(1));
-            final Collection<?> value=array(decoder, shape.shape(expression).flatMap(Shape::clazz).orElse(Object.class));
+            final Collection<?> value=array(decoder, shape.shape(expression).flatMap(Shape::clazz).orElse(Object.class), true);
 
             return filter(expression, any(value));
 
@@ -321,14 +325,14 @@ final class TypeObject implements Type<Object> {
                 if ( target.startsWith("+") ) {
 
                     final Expression expression=expression(target.substring(1));
-                    final Collection<?> values=decoder.decode(Collection.class);
+                    final Collection<?> values=array(decoder, Object.class, true);
 
                     queries.add(order(expression, increasing(values)));
 
                 } else if ( target.startsWith("-") ) {
 
                     final Expression expression=expression(target.substring(1));
-                    final Collection<?> values=decoder.decode(Collection.class);
+                    final Collection<?> values=array(decoder, Object.class, true);
 
                     queries.add(order(expression, decreasing(values)));
 

@@ -482,7 +482,7 @@ public final class RDF4J implements Engine {
         @SuppressWarnings("unchecked")
         public <T> Optional<T> decode(final Value value, final T model) {
 
-            return rdf4j.type(model).decode(this, value, model);
+            return value == null ? Optional.empty() : rdf4j.type(model).decode(this, value, model);
 
         }
 
