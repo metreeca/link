@@ -37,6 +37,22 @@ import static java.util.stream.Collectors.joining;
  */
 public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
 
+
+    @Override public int size() {
+        return 0;
+    }
+
+    @Override public T get(final int index) {
+        throw new IndexOutOfBoundsException();
+    }
+
+    @Override public Spliterator<T> spliterator() {
+        return super.spliterator();
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * Value transform.
      */
@@ -102,22 +118,6 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
 
     }
 
-
-    @Override public int size() {
-        return 0;
-    }
-
-    @Override public T get(final int index) {
-        throw new IndexOutOfBoundsException();
-    }
-
-    @Override public Spliterator<T> spliterator() {
-        return super.spliterator();
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     public static final class Expression {
 
         private static final Pattern TransformPattern=compile("(?<name>\\w+):");
@@ -171,7 +171,9 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
                     transforms.add(Transform.valueOf(name));
 
                 } catch ( final IllegalArgumentException ignored ) {
+
                     throw new IllegalArgumentException(format("unknown transform <%s>", name));
+
                 }
 
                 next=matcher.end();

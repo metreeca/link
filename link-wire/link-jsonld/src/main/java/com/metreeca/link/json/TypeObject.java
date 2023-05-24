@@ -31,8 +31,6 @@ import java.util.Map.Entry;
 
 import static com.metreeca.link.Frame.frame;
 import static com.metreeca.link.Query.Constraint.*;
-import static com.metreeca.link.Query.Criterion.decreasing;
-import static com.metreeca.link.Query.Criterion.increasing;
 import static com.metreeca.link.Query.*;
 import static com.metreeca.link.Stash.Expression.alias;
 import static com.metreeca.link.Stash.Expression.expression;
@@ -306,7 +304,7 @@ final class TypeObject implements Type<Object> {
 
             return filter(expression, any(value));
 
-        } else if ( constraint.startsWith("^") ) {
+        } else if ( constraint.equals("^") ) {
 
             final Collection<Query<?>> queries=new ArrayList<>();
 
@@ -318,43 +316,47 @@ final class TypeObject implements Type<Object> {
                     decoder.token(COMMA);
                 }
 
-                final String target=decoder.decode(String.class);
+                final Expression expression=expression(decoder.decode(String.class));
 
                 decoder.token(COLON);
 
-                if ( target.startsWith("+") ) {
+                final String direction=decoder.token(STRING);
 
-                    final Expression expression=expression(target.substring(1));
-                    final Collection<?> values=array(decoder, Object.class, true);
+                try {
 
-                    queries.add(order(expression, increasing(values)));
+                    queries.add(order(expression, Criterion.valueOf(direction)));
 
-                } else if ( target.startsWith("-") ) {
+                } catch ( final IllegalArgumentException ignored ) {
 
-                    final Expression expression=expression(target.substring(1));
-                    final Collection<?> values=array(decoder, Object.class, true);
-
-                    queries.add(order(expression, decreasing(values)));
-
-                } else {
-
-                    final String direction=decoder.token(STRING);
-
-                    if ( direction.equals("increasing") ) {
-
-                        queries.add(order(expression(target), increasing()));
-
-                    } else if ( direction.equals("decreasing") ) {
-
-                        queries.add(order(expression(target), decreasing()));
-
-                    } else {
-
-                        throw new IllegalArgumentException(format("unknown sorting direction <%s>", direction));
-
-                    }
+                    throw new IllegalArgumentException(format("unknown sorting direction <%s>", direction));
 
                 }
+
+            }
+
+            decoder.token(RBRACE);
+
+            return Query.query(queries);
+
+        } else if ( constraint.equals("$") ) {
+
+            final Collection<Query<?>> queries=new ArrayList<>();
+
+            decoder.token(LBRACE);
+
+            for (boolean tail=false; decoder.type() != RBRACE; tail=true) {
+
+                if ( tail ) {
+                    decoder.token(COMMA);
+                }
+
+                final Expression expression=expression(decoder.decode(String.class));
+
+                decoder.token(COLON);
+
+                final Collection<?> values=array(decoder, Object.class, true);
+
+                queries.add(focus(expression, new HashSet<>(values)));
 
             }
 

@@ -4,40 +4,43 @@ excerpt: Lorem ipsum sit amet.
 ---
 
 ```typescript
-type Model={
+type Value=boolean | number | string
 
-    "{field}": Value | Model | [Query]
+type Local={ [locale: string]: string } | { [locale: string]: string[] }
+
+type Frame={
+
+	"{field}": Value | Model | [Query]
 
 }
 
 type Query=Partial<Model & {
 
-    "{field}={expression}": Value | Model | [Query]
+	"{field}={expression}": Value | Model | [Query]
 
-    "<{expression}": Value // less than
-    ">{expression}": Value // greater than
+	"<{expression}": Value // less than
+	">{expression}": Value // greater than
 
-    "<={expression}": Value // less than or equal
-    ">={expression}": Value // greater than or equal
+	"<={expression}": Value // less than or equal
+	">={expression}": Value // greater than or equal
 
-    "~{expression}": string // like (stemmed word search)
+	"~{expression}": string // like (stemmed word search)
 
-    "?{expression}": (null | Value | Model)[] // any
+	"?{expression}": (null | Value | Model)[] // any
 
-    "^": { // order
-      	"{expression}": "increasing" | "decreasing",
-      	"+{expression}": (null | Value | Model)[],
-      	"-{expression}": (null | Value | Model)[]
-    }
+	"^": { // order
+		"{expression}": "increasing" | "decreasing"
+	}
 
-    "@": number // offset
-    "#": number // limit
+	"$": { // focus
+		"{expression}": (null | Value | Model)[]
+	}
+
+	"@": number // offset
+	"#": number // limit
 
 }>
 
-type Value=boolean | number | string
-
-type Local= { [locale: string]: string } | { [locale: string]: string[] }
 ```
 
 [ABNF](https://en.wikipedia.org/wiki/Augmented_Backus–Naur_form)

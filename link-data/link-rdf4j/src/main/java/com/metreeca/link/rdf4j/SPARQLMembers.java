@@ -29,6 +29,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Query.Constraint;
+import static com.metreeca.link.Query.Criterion.increasing;
 import static com.metreeca.link.Query.pattern;
 import static com.metreeca.link.Stash.Transform.count;
 import static com.metreeca.link.rdf4j.Coder.*;
@@ -192,6 +193,20 @@ final class SPARQLMembers extends SPARQL {
                         ?
                         order(items(
 
+                                // focus values
+
+                                items(query.focus().entrySet().stream()
+                                        .map(entry -> {
+
+                                            final Expression expression=entry.getKey();
+                                            final Set<Object> values=entry.getValue();
+
+                                            return focus(null, expression, values, base);
+
+                                        })
+                                        .collect(toList())
+                                ),
+
                                 // explicit criteria
 
                                 items(query.order().entrySet().stream()
@@ -200,8 +215,7 @@ final class SPARQLMembers extends SPARQL {
                                             final Expression expression=entry.getKey();
                                             final Criterion criterion=entry.getValue();
 
-                                            return order(null, expression, criterion, base);
-
+                                            return order(null, expression, criterion);
 
                                         })
                                         .collect(toList())
@@ -220,6 +234,22 @@ final class SPARQLMembers extends SPARQL {
                         ?
                         order(items(
 
+                                // focus values
+
+                                items(query.focus().entrySet().stream()
+                                        .map(entry -> {
+
+                                            final Expression expression=entry.getKey();
+                                            final Set<Object> values=entry.getValue();
+
+                                            final String alias=projected2alias.get(expression);
+
+                                            return focus(alias, expression, values, base);
+
+                                        })
+                                        .collect(toList())
+                                ),
+
                                 // explicit criteria
 
                                 items(query.order().entrySet().stream()
@@ -230,7 +260,7 @@ final class SPARQLMembers extends SPARQL {
 
                                             final String alias=projected2alias.get(expression);
 
-                                            return order(alias, expression, criterion, base);
+                                            return order(alias, expression, criterion);
 
                                         })
                                         .collect(toList())
@@ -269,18 +299,32 @@ final class SPARQLMembers extends SPARQL {
         return coders.isEmpty() ? nothing() : having(indent(list("\n&& ", coders)));
     }
 
-    private Coder order(final String alias, final Expression expression, final Criterion criterion, final URI base) {
-
-        final boolean inverse=criterion.inverse();
-        final Set<Object> values=criterion.values();
+    private Coder focus(final String alias, final Expression expression, final Set<Object> values, final URI base) {
 
         final Coder result=alias != null ? var(alias) : result(expression);
-        final Coder target=values.isEmpty() ? result : in(result, values.stream()
+
+        final boolean nulls=values.stream().anyMatch(Objects::isNull);
+        final boolean nonNulls=values.stream().anyMatch(Objects::nonNull);
+
+        final Coder nb=not(bound(result));
+
+        final Coder in=in(result, values.stream()
+                .filter(Objects::nonNull)
                 .map(v -> value(v, base))
                 .collect(toList())
         );
 
-        return inverse ? desc(target) : asc(target);
+        return desc(nulls && nonNulls ? or(nb, in)
+                : nonNulls ? and(bound(result), in)
+                : nb
+        );
+    }
+
+    private Coder order(final String alias, final Expression expression, final Criterion criterion) {
+
+        final Coder result=alias != null ? var(alias) : result(expression);
+
+        return criterion == increasing ? asc(result) : desc(result);
     }
 
 

@@ -516,7 +516,7 @@ public abstract class EngineTestRetrieveQuery {
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
                         model(with(new Employee(), employee -> employee.setId(""))),
-                        order("", decreasing())
+                        order("", decreasing)
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
@@ -537,7 +537,7 @@ public abstract class EngineTestRetrieveQuery {
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
                         model(with(new Employee(), employee -> employee.setId(""))),
-                        order("label", increasing())
+                        order("label", increasing)
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
@@ -558,7 +558,7 @@ public abstract class EngineTestRetrieveQuery {
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
                         model(with(new Employee(), employee -> employee.setId(""))),
-                        order("label", decreasing())
+                        order("label", decreasing)
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
@@ -579,7 +579,7 @@ public abstract class EngineTestRetrieveQuery {
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
                         model(with(new Employee(), employee -> employee.setId(""))),
-                        order("supervisor.label", increasing())
+                        order("supervisor.label", increasing)
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
@@ -603,8 +603,8 @@ public abstract class EngineTestRetrieveQuery {
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
                         model(with(new Employee(), employee -> employee.setId(""))),
-                        order("seniority", decreasing()),
-                        order("label", increasing())
+                        order("seniority", decreasing),
+                        order("label", increasing)
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())

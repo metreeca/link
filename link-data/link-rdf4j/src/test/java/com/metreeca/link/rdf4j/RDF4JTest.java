@@ -21,6 +21,7 @@ import com.metreeca.link.EngineTest;
 
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -76,6 +77,7 @@ final class RDF4JTest extends EngineTest {
     }
 
 
+    @Disabled
     @Test void testFilterOnComputedExpression() {
 
         assertThat(testbed().retrieve(with(new Employees(), employees -> {

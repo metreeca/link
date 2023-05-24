@@ -81,6 +81,14 @@ public abstract class Query<T> extends Stash<T> {
                         LinkedHashMap::new
                 ));
 
+        final Map<Expression, Set<Object>> focus=queries.stream()
+                .flatMap(query -> query.focus().entrySet().stream())
+                .collect(toMap(
+                        Map.Entry::getKey, Map.Entry::getValue,
+                        (x, y) -> x.equals(y) ? x : error("conflicting <focus> <%s> / <%s>", x, y),
+                        LinkedHashMap::new
+                ));
+
         final int offset=queries.stream().map(Query::offset)
                 .filter(value -> value > 0)
                 .reduce((x, y) -> x.equals(y) ? x : error("conflicting <offset> constraints <%s> / <%s>", x, y))
@@ -100,6 +108,10 @@ public abstract class Query<T> extends Stash<T> {
                 return facets;
             }
 
+            @Override public Map<Expression, Criterion> order() { return order; }
+
+            @Override public Map<Expression, Set<Object>> focus() { return focus; }
+
             @Override public int offset() {
                 return offset;
             }
@@ -107,8 +119,6 @@ public abstract class Query<T> extends Stash<T> {
             @Override public int limit() {
                 return limit;
             }
-
-            @Override public Map<Expression, Criterion> order() { return order; }
 
         };
     }
@@ -193,6 +203,40 @@ public abstract class Query<T> extends Stash<T> {
         };
     }
 
+
+    public static <T> Query<T> focus(final String expression, final Set<Object> values) {
+
+        if ( expression == null ) {
+            throw new NullPointerException("null expression");
+        }
+
+        if ( values == null ) {
+            throw new NullPointerException("null values");
+        }
+
+        return focus(expression(expression), values);
+    }
+
+    public static <T> Query<T> focus(final Expression expression, final Set<Object> values) {
+
+        if ( expression == null ) {
+            throw new NullPointerException("null expression");
+        }
+
+        if ( values == null ) {
+            throw new NullPointerException("null values");
+        }
+
+        final Map<Expression, Set<Object>> focus=values.isEmpty() ? Map.of() : Map.of(expression, values);
+
+        return new Query<>() {
+
+            @Override public Map<Expression, Set<Object>> focus() { return focus; }
+
+        };
+    }
+
+
     public static <T> Query<T> offset(final int offset) {
 
         if ( offset < 0 ) {
@@ -269,6 +313,8 @@ public abstract class Query<T> extends Stash<T> {
 
     public Map<Expression, Criterion> order() { return Map.of(); }
 
+    public Map<Expression, Set<Object>> focus() { return Map.of(); }
+
 
     public int offset() {
         return 0;
@@ -280,6 +326,16 @@ public abstract class Query<T> extends Stash<T> {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Sorting criterion.
+     */
+    public static enum Criterion {
+
+        increasing,
+        decreasing
+
+    }
 
     /**
      * Filtering constraint.
@@ -563,87 +619,6 @@ public abstract class Query<T> extends Stash<T> {
 
                     .flatMap(Optional::stream)
                     .collect(joining(" & ", "{ ", " }"));
-        }
-
-    }
-
-    /**
-     * Sorting criterion.
-     */
-    public static final class Criterion {
-
-        private final boolean inverse;
-
-        private final Set<Object> values;
-
-
-        public static Criterion increasing(final Object... values) {
-
-            if ( values == null ) {
-                throw new NullPointerException("null values");
-            }
-
-            return new Criterion(false, new HashSet<>(asList(values))); // ;( nullable values
-        }
-
-        public static Criterion increasing(final Collection<?> values) {
-
-            if ( values == null ) {
-                throw new NullPointerException("null values");
-            }
-
-            return new Criterion(false, values);
-        }
-
-
-        public static Criterion decreasing(final Object... values) {
-
-            if ( values == null ) {
-                throw new NullPointerException("null values");
-            }
-
-            return new Criterion(true, new HashSet<>(asList(values))); // ;( nullable values
-        }
-
-        public static Criterion decreasing(final Collection<?> values) {
-
-            if ( values == null ) {
-                throw new NullPointerException("null values");
-            }
-
-            return new Criterion(true, values);
-        }
-
-
-        private Criterion(final boolean inverse, final Collection<?> values) {
-            this.inverse=inverse;
-            this.values=new HashSet<>(values); // ;( nullable values
-        }
-
-        public boolean inverse() {
-            return inverse;
-        }
-
-        public Set<Object> values() {
-            return values;
-        }
-
-
-        @Override public boolean equals(final Object object) {
-            return this == object || object instanceof Criterion
-                    && inverse == ((Criterion)object).inverse
-                    && values.equals(((Criterion)object).values);
-        }
-
-        @Override public int hashCode() {
-            return Boolean.hashCode(inverse)
-                    ^values.hashCode();
-        }
-
-        @Override public String toString() {
-            return values.stream()
-                    .map(v -> format("<%s>", v))
-                    .collect(joining(", ", inverse ? "decreasing(" : "increasing(", ")"));
         }
 
     }

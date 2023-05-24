@@ -34,6 +34,7 @@ import static com.metreeca.link.Table.Column.column;
 import static com.metreeca.link.json.JSONTest.decode;
 import static com.metreeca.link.json.JSONTest.encode;
 
+import static java.util.Arrays.asList;
 import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -282,23 +283,8 @@ final class TypeObjectTest {
         @Test void testDecodeOrder() {
             assertThat(query("{ \"^\": { \"y\": \"increasing\", \"x\": \"decreasing\" } }").order().entrySet())
                     .containsExactly(
-                            entry(expression("y"), increasing()),
-                            entry(expression("x"), decreasing())
-                    );
-        }
-
-        @Test void testDecodeOrderWithTargetValues() {
-            assertThat(query("{ \"^\": { \"+y\": [\"value\"], \"-x\": [\"value\"] } }").order().entrySet())
-                    .containsExactly(
-                            entry(expression("y"), increasing("value")),
-                            entry(expression("x"), decreasing("value"))
-                    );
-        }
-
-        @Test void testDecodeOrderWithNullTargetValues() {
-            assertThat(query("{ \"^\": { \"+x\": [null] } }").order().entrySet())
-                    .containsExactly(
-                            entry(expression("x"), increasing((Object)null))
+                            entry(expression("y"), increasing),
+                            entry(expression("x"), decreasing)
                     );
         }
 
@@ -310,6 +296,14 @@ final class TypeObjectTest {
             assertThatExceptionOfType(JSONException.class)
                     .isThrownBy(() -> query("{ \"^\": { \"y\": 0 } }"));
 
+        }
+
+
+        @Test void testDecodeFocus() {
+            assertThat(query("{ \"$\": { \"x\": [null, \"value\"] } }").focus().entrySet())
+                    .containsExactly(
+                            entry(expression("x"), new HashSet<>(asList(null, "value")))
+                    );
         }
 
 
