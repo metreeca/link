@@ -16,13 +16,11 @@
 
 package com.metreeca.link;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
-import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
+import static java.util.stream.Collectors.toUnmodifiableList;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 
 /**
  * Analytical query results.
@@ -42,22 +40,45 @@ public final class Table<T> extends Stash<T> {
         return new Table<>(columns, List.of());
     }
 
+    public static <T> Table<T> table(final Map<String, Column> columns, final List<Map<String, Object>> records) {
+
+        if ( columns == null || columns.values().stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null columns");
+        }
+
+        if ( columns.keySet().stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null column labels");
+        }
+
+        if ( records == null || records.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null records");
+        }
+
+        for (final Map<String, Object> record : records) {
+
+            if ( record.keySet().stream().anyMatch(Objects::isNull) ) {
+                throw new NullPointerException("null record labels");
+            }
+
+            if ( !columns.keySet().equals(record.keySet()) ) {
+                throw new IllegalArgumentException("mismatched record labels");
+            }
+
+        }
+
+        return new Table<>(columns, records);
+    }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private final Map<String, Column> columns;
-
     private final List<Map<String, Object>> records;
 
 
-    private Table(final Map<String, Column> columns, final List<Map<String, Object>> records) {
-        this.columns=unmodifiableMap(columns);
-        this.records=new ArrayList<>(records);
-    }
-
-
-    public Table<T> copy() { // !!! remove mutator
-        return new Table<>(columns, records);
+    private Table(final Map<String, Column> columns, final Collection<Map<String, Object>> records) {
+        this.columns=columns.entrySet().stream().collect(toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+        this.records=records.stream().map(r -> unmodifiableMap(new LinkedHashMap<>(r))).collect(toUnmodifiableList());
     }
 
 
@@ -66,27 +87,7 @@ public final class Table<T> extends Stash<T> {
     }
 
     public List<Map<String, Object>> records() {
-        return unmodifiableList(records);
-    }
-
-
-    public Table<T> append(final Map<String, Object> record) { // !!! remove mutator
-
-        if ( record == null ) {
-            throw new NullPointerException("null record");
-        }
-
-        if ( record.keySet().stream().anyMatch(Objects::isNull) ) {
-            throw new NullPointerException("null column labels");
-        }
-
-        if ( !columns.keySet().equals(record.keySet()) ) {
-            throw new IllegalArgumentException("mismatched columns");
-        }
-
-        records.add(record);
-
-        return this;
+        return records;
     }
 
 

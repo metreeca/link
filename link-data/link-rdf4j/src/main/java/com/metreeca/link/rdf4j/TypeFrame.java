@@ -34,6 +34,7 @@ import static com.metreeca.link.Local.local;
 import static com.metreeca.link.Query.query;
 import static com.metreeca.link.Shape.forward;
 import static com.metreeca.link.Shape.reverse;
+import static com.metreeca.link.Table.table;
 import static com.metreeca.link.rdf4j.RDF4J.*;
 
 import static java.lang.String.format;
@@ -248,8 +249,7 @@ final class TypeFrame implements Type<Frame<?>> {
         if ( model instanceof Table ) {
 
             final Table<?> table=(Table<?>)model;
-            final Table<?> copy=table.copy();
-            final Map<String, Column> columns=copy.columns();
+            final Map<String, Column> columns=table.columns();
 
             final List<Map<String, Value>> solutions=select(connection, members, bindings ->
                     columns.keySet().stream().collect(
@@ -260,24 +260,28 @@ final class TypeFrame implements Type<Frame<?>> {
                     )
             );
 
-            solutions.forEach(solution -> copy.append(solution.entrySet().stream().collect(
-                    LinkedHashMap::new,
-                    (map, entry) -> {
+            final List<Map<String, Object>> records=solutions.stream()
 
-                        final String alias=entry.getKey();
-                        final Value _value=entry.getValue();
-                        final Object _model=columns.get(alias).model();
+                    .map(solution -> solution.entrySet().stream().collect(
+                            () -> new LinkedHashMap<String, Object>(),
+                            (map, entry) -> {
 
-                        map.put(alias, decoder
-                                .decode(_value, _model) // !!! batch retrieval
-                                .orElse(null)
-                        );
+                                final String alias=entry.getKey();
+                                final Value _value=entry.getValue();
+                                final Object _model=columns.get(alias).model();
 
-                    },
-                    Map::putAll
-            )));
+                                map.put(alias, decoder
+                                        .decode(_value, _model) // !!! batch retrieval
+                                        .orElse(null)
+                                );
 
-            return copy;
+                            },
+                            Map::putAll
+                    ))
+
+                    .collect(toList());
+
+            return table(columns, records);
 
         } else {
 
