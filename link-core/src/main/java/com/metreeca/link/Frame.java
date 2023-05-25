@@ -136,7 +136,7 @@ public abstract class Frame<T> {
                 if ( model instanceof Query ) { // merge filters
 
                     final Query<Object> filters=query(((Query<?>)model)
-                            .filters().entrySet().stream()
+                            .filter().entrySet().stream()
                             .map(filter -> filter(filter.getKey(), filter.getValue()))
                             .collect(toList())
                     );

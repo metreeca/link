@@ -65,8 +65,8 @@ public abstract class Query<T> extends Stash<T> {
                 .reduce((x, y) -> x.equals(y) ? x : error("conflicting <model> <%s> / <%s>", x, y))
                 .orElse(null);
 
-        final Map<Expression, Constraint> facets=queries.stream()
-                .flatMap(query -> query.filters().entrySet().stream())
+        final Map<Expression, Constraint> filter=queries.stream()
+                .flatMap(query -> query.filter().entrySet().stream())
                 .collect(toMap(
                         Map.Entry::getKey, Map.Entry::getValue,
                         Constraint::and,
@@ -104,8 +104,8 @@ public abstract class Query<T> extends Stash<T> {
 
             @Override public Object model() { return model; }
 
-            @Override public Map<Expression, Constraint> filters() {
-                return facets;
+            @Override public Map<Expression, Constraint> filter() {
+                return filter;
             }
 
             @Override public Map<Expression, Criterion> order() { return order; }
@@ -161,11 +161,11 @@ public abstract class Query<T> extends Stash<T> {
             throw new NullPointerException("null constraint");
         }
 
-        final Map<Expression, Constraint> facets=Map.of(expression, constraint);
+        final Map<Expression, Constraint> filter=Map.of(expression, constraint);
 
         return new Query<>() {
 
-            @Override public Map<Expression, Constraint> filters() { return facets; }
+            @Override public Map<Expression, Constraint> filter() { return filter; }
 
         };
     }
@@ -307,7 +307,7 @@ public abstract class Query<T> extends Stash<T> {
     public Object model() { return null; }
 
 
-    public Map<Expression, Constraint> filters() {
+    public Map<Expression, Constraint> filter() {
         return Map.of();
     }
 

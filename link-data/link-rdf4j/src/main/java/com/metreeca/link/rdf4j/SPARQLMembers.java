@@ -61,7 +61,7 @@ final class SPARQLMembers extends SPARQL {
 
         // filtering expressions
 
-        final Set<Expression> filters=query.filters().keySet();
+        final Set<Expression> filters=query.filter().keySet();
 
         // projected variable names to/from projected expressions
 
@@ -90,7 +90,7 @@ final class SPARQLMembers extends SPARQL {
 
                 .of(
                         alias2projected.values(),
-                        query.filters().keySet(),
+                        query.filter().keySet(),
                         query.order().keySet()
                 )
 
@@ -150,7 +150,7 @@ final class SPARQLMembers extends SPARQL {
 
                         // non-aggregate filters
 
-                        space(filters(query.filters().entrySet().stream()
+                        space(filters(query.filter().entrySet().stream()
                                 .filter(Predicate.not(entry -> projected2expression.getOrDefault(entry.getKey(), entry.getKey()).aggregate())) // !!! review
                                 .flatMap(entry -> constraint(result(entry.getKey()), entry.getValue(), base))
                                 .collect(toList()))
@@ -173,7 +173,7 @@ final class SPARQLMembers extends SPARQL {
 
                 // aggregate filters // !!! refactor
 
-                space(havings(query.filters().entrySet().stream()
+                space(havings(query.filter().entrySet().stream()
                         .filter(entry -> projected2expression.getOrDefault(entry.getKey(), entry.getKey()).aggregate()) // !!! review
                         .flatMap(entry -> {
 

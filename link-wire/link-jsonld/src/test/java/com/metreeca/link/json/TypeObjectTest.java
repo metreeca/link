@@ -232,27 +232,27 @@ final class TypeObjectTest {
 
 
         @Test void testDecodeLtConstraint() {
-            assertThat(query("{ \"<field\": \"value\" }").filters())
+            assertThat(query("{ \"<field\": \"value\" }").filter())
                     .containsExactly(entry(expression("field"), lt("value")));
         }
 
         @Test void testDecodeGtConstraint() {
-            assertThat(query("{ \">field\": \"value\" }").filters())
+            assertThat(query("{ \">field\": \"value\" }").filter())
                     .containsExactly(entry(expression("field"), gt("value")));
         }
 
         @Test void testDecodeLteConstraint() {
-            assertThat(query("{ \"<=field\": \"value\" }").filters())
+            assertThat(query("{ \"<=field\": \"value\" }").filter())
                     .containsExactly(entry(expression("field"), lte("value")));
         }
 
         @Test void testDecodeGteConstraint() {
-            assertThat(query("{ \">=field\": \"value\" }").filters())
+            assertThat(query("{ \">=field\": \"value\" }").filter())
                     .containsExactly(entry(expression("field"), gte("value")));
         }
 
         @Test void testDecodeLikeConstraint() {
-            assertThat(query("{ \"~field\": \"value\" }").filters())
+            assertThat(query("{ \"~field\": \"value\" }").filter())
                     .containsExactly(entry(expression("field"), like("value")));
         }
 
@@ -263,13 +263,13 @@ final class TypeObjectTest {
 
         @Test void testDecodeAnyConstraint() {
 
-            assertThat(query("{ \"?field\": [] }").filters())
+            assertThat(query("{ \"?field\": [] }").filter())
                     .containsExactly(entry(expression("field"), any()));
 
-            assertThat(query("{ \"?field\": [null, true, 1, \"value\"] }").filters())
+            assertThat(query("{ \"?field\": [null, true, 1, \"value\"] }").filter())
                     .containsExactly(entry(expression("field"), any(null, true, BigInteger.ONE, "value")));
 
-            assertThat(query("{ \"?label\": [null] }").filters()) // typed
+            assertThat(query("{ \"?label\": [null] }").filter()) // typed
                     .containsExactly(entry(expression("label"), any((Object)null)));
 
         }
