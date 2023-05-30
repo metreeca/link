@@ -18,6 +18,7 @@ package com.metreeca.link;
 
 import java.util.*;
 
+import static java.lang.String.format;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.stream.Collectors.toUnmodifiableMap;
@@ -70,6 +71,33 @@ public final class Table<T> extends Stash<T> {
     }
 
 
+    public static Column column(final String expression, final Object model) {
+
+        if ( expression == null ) {
+            throw new NullPointerException("null expression");
+        }
+
+        if ( model == null ) {
+            throw new NullPointerException("null model");
+        }
+
+        return new Column(expression(expression), model);
+    }
+
+    public static Column column(final Expression expression, final Object model) {
+
+        if ( expression == null ) {
+            throw new NullPointerException("null expression");
+        }
+
+        if ( model == null ) {
+            throw new NullPointerException("null model");
+        }
+
+        return new Column(expression, model);
+    }
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private final Map<String, Column> columns;
@@ -94,20 +122,6 @@ public final class Table<T> extends Stash<T> {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static final class Column {
-
-        public static Column column(final Expression expression, final Object model) {
-
-            if ( expression == null ) {
-                throw new NullPointerException("null expression");
-            }
-
-            if ( model == null ) {
-                throw new NullPointerException("null model");
-            }
-
-            return new Column(expression, model);
-        }
-
 
         private final Expression expression;
         private final Object model;
@@ -140,7 +154,7 @@ public final class Table<T> extends Stash<T> {
         }
 
         @Override public String toString() {
-            return String.format("%s <%s>", expression, model);
+            return format("%s <%s>", expression, model);
         }
 
     }

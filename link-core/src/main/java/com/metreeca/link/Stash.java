@@ -16,6 +16,8 @@
 
 package com.metreeca.link;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -37,6 +39,120 @@ import static java.util.stream.Collectors.joining;
  */
 public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
 
+    private static final Pattern TransformPattern=compile("(?<name>\\w+):");
+
+    private static final Pattern IdPattern=compile("\\w+");
+    private static final Pattern EscapedPattern=compile("\\\\(?<char>.)");
+    private static final Pattern ReservedPattern=compile("['\\\\]");
+    private static final Pattern LabelPattern=compile("(?:[^"+ReservedPattern+"]|"+EscapedPattern+")*");
+
+    private static final Pattern FieldPattern=compile("(?<id>"+IdPattern+")|'(?<label>"+LabelPattern+")'");
+    private static final Pattern AliasPattern=compile("(?:"+FieldPattern+")=");
+
+
+    public static Optional<Entry<String, Expression>> alias(final String alias) {
+
+        if ( alias == null ) {
+            throw new NullPointerException("null alias");
+        }
+
+        final Matcher matcher=AliasPattern.matcher(alias);
+
+        return matcher.lookingAt() ?
+                Optional.of(entry(field(matcher), expression(alias.substring(matcher.end())))) :
+                Optional.empty();
+    }
+
+    public static Expression expression(final String expression) {
+
+        if ( expression == null ) {
+            throw new NullPointerException("null expression");
+        }
+
+        final List<String> path=new ArrayList<>();
+        final List<Transform> transforms=new ArrayList<>();
+
+        int next=0;
+
+        final int length=expression.length();
+
+        for (
+                final Matcher matcher=TransformPattern.matcher(expression).region(next, length);
+                matcher.lookingAt();
+                matcher.region(next, length)
+        ) {
+
+            final String name=matcher.group("name");
+
+            try {
+
+                transforms.add(Transform.valueOf(name));
+
+            } catch ( final IllegalArgumentException ignored ) {
+
+                throw new IllegalArgumentException(format("unknown transform <%s>", name));
+
+            }
+
+            next=matcher.end();
+        }
+
+        for (
+                final Matcher matcher=FieldPattern.matcher(expression).region(next, length);
+                matcher.lookingAt();
+                matcher.region(next, length)
+        ) {
+
+            path.add(field(matcher));
+
+            final int end=matcher.end();
+
+            next=(end < length && expression.charAt(end) == '.') ? end+1 : end;
+
+        }
+
+        if ( next < length ) {
+            throw new IllegalArgumentException(format("malformed expression <%s>", expression));
+        }
+
+        return expression(path, transforms);
+    }
+
+    public static Expression expression(final List<String> path, final List<Transform> transforms) {
+
+        if ( path == null || path.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null path");
+        }
+
+        if ( transforms == null || transforms.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null transforms");
+        }
+
+        return new Expression(path, transforms);
+    }
+
+
+    private static String field(final Matcher matcher) {
+
+        final String id=matcher.group("id");
+        final String label=matcher.group("label");
+
+        return id != null ? id : EscapedPattern.matcher(label).replaceAll("${char}");
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static BigInteger integer(final long value) {
+        return BigInteger.valueOf(value);
+    }
+
+    public static BigDecimal decimal(final double value) {
+        return BigDecimal.valueOf(value);
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override public int size() {
         return 0;
@@ -119,109 +235,6 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
     }
 
     public static final class Expression {
-
-        private static final Pattern TransformPattern=compile("(?<name>\\w+):");
-
-        private static final Pattern IdPattern=compile("\\w+");
-        private static final Pattern EscapedPattern=compile("\\\\(?<char>.)");
-        private static final Pattern ReservedPattern=compile("['\\\\]");
-        private static final Pattern LabelPattern=compile("(?:[^"+ReservedPattern+"]|"+EscapedPattern+")*");
-
-        private static final Pattern FieldPattern=compile("(?<id>"+IdPattern+")|'(?<label>"+LabelPattern+")'");
-        private static final Pattern AliasPattern=compile("(?:"+FieldPattern+")=");
-
-
-        public static Optional<Entry<String, Expression>> alias(final String alias) {
-
-            if ( alias == null ) {
-                throw new NullPointerException("null alias");
-            }
-
-            final Matcher matcher=AliasPattern.matcher(alias);
-
-            return matcher.lookingAt() ?
-                    Optional.of(entry(field(matcher), expression(alias.substring(matcher.end())))) :
-                    Optional.empty();
-        }
-
-
-        public static Expression expression(final String expression) {
-
-            if ( expression == null ) {
-                throw new NullPointerException("null expression");
-            }
-
-            final List<String> path=new ArrayList<>();
-            final List<Transform> transforms=new ArrayList<>();
-
-            int next=0;
-
-            final int length=expression.length();
-
-            for (
-                    final Matcher matcher=TransformPattern.matcher(expression).region(next, length);
-                    matcher.lookingAt();
-                    matcher.region(next, length)
-            ) {
-
-                final String name=matcher.group("name");
-
-                try {
-
-                    transforms.add(Transform.valueOf(name));
-
-                } catch ( final IllegalArgumentException ignored ) {
-
-                    throw new IllegalArgumentException(format("unknown transform <%s>", name));
-
-                }
-
-                next=matcher.end();
-            }
-
-            for (
-                    final Matcher matcher=FieldPattern.matcher(expression).region(next, length);
-                    matcher.lookingAt();
-                    matcher.region(next, length)
-            ) {
-
-                path.add(field(matcher));
-
-                final int end=matcher.end();
-
-                next=(end < length && expression.charAt(end) == '.') ? end+1 : end;
-
-            }
-
-            if ( next < length ) {
-                throw new IllegalArgumentException(format("malformed expression <%s>", expression));
-            }
-
-            return expression(path, transforms);
-        }
-
-        public static Expression expression(final List<String> path, final List<Transform> transforms) {
-
-            if ( path == null || path.stream().anyMatch(Objects::isNull) ) {
-                throw new NullPointerException("null path");
-            }
-
-            if ( transforms == null || transforms.stream().anyMatch(Objects::isNull) ) {
-                throw new NullPointerException("null transforms");
-            }
-
-            return new Expression(path, transforms);
-        }
-
-
-        private static String field(final Matcher matcher) {
-
-            final String id=matcher.group("id");
-            final String label=matcher.group("label");
-
-            return id != null ? id : EscapedPattern.matcher(label).replaceAll("${char}");
-        }
-
 
         private final List<String> path;
         private final List<Transform> transforms;

@@ -1,4 +1,4 @@
-code	forename	surname	birthdate	email	seniority	title	supervisor	officeCode	officeArea	city	cityLabel	cityAlso	country	countryLabel	countryAlso	active
+code	forename	surname	birthdate	email	seniority	title	supervisor	office	area	city	cityName	cityAlso	country	countryName	countryAlso	active
 1002	Diane	Murphy	1958-06-04	dmurphy@example.com	5	President		1		http://sws.geonames.org/5391959/	San Francisco	http://www.wikidata.org/entity/Q62	http://sws.geonames.org/6252001/	United States	http://www.wikidata.org/entity/Q30	2023-05-29T18:45:42.001Z
 1056	Mary	Patterson	1987-05-28	mpatterso@example.com	4	VP Sales	1002	1		http://sws.geonames.org/5391959/	San Francisco	http://www.wikidata.org/entity/Q62	http://sws.geonames.org/6252001/	United States	http://www.wikidata.org/entity/Q30	2023-05-23T18:47:34.008Z
 1076	Jeff	Firrelli	1982-05-29	jfirrelli@example.com	4	VP Marketing	1002	1		http://sws.geonames.org/5391959/	San Francisco	http://www.wikidata.org/entity/Q62	http://sws.geonames.org/6252001/	United States	http://www.wikidata.org/entity/Q30	2023-05-20T10:48:33.004Z

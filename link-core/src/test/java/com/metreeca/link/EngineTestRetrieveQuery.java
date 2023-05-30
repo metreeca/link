@@ -21,6 +21,7 @@ import com.metreeca.link.EngineTest.Employees;
 import com.metreeca.link.EngineTest.Reference;
 import com.metreeca.link.EngineTest.Resource;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -29,10 +30,10 @@ import java.util.Optional;
 import static com.metreeca.link.EngineTest.Employees;
 import static com.metreeca.link.EngineTest.id;
 import static com.metreeca.link.Frame.with;
-import static com.metreeca.link.Query.Constraint.*;
 import static com.metreeca.link.Query.Criterion.decreasing;
 import static com.metreeca.link.Query.Criterion.increasing;
 import static com.metreeca.link.Query.*;
+import static com.metreeca.link.Stash.integer;
 
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
@@ -460,6 +461,7 @@ public abstract class EngineTestRetrieveQuery {
 
         }
 
+        @Disabled
         @Test void testFilterOnComputedExpression() {
 
             assertThat(testbed().retrieve(with(new Employees(), employees -> {

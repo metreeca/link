@@ -26,11 +26,11 @@ import org.junit.jupiter.api.Test;
 import java.math.BigInteger;
 import java.util.*;
 
-import static com.metreeca.link.Query.Constraint.*;
 import static com.metreeca.link.Query.Criterion.decreasing;
 import static com.metreeca.link.Query.Criterion.increasing;
-import static com.metreeca.link.Stash.Expression.expression;
-import static com.metreeca.link.Table.Column.column;
+import static com.metreeca.link.Query.*;
+import static com.metreeca.link.Stash.expression;
+import static com.metreeca.link.Table.column;
 import static com.metreeca.link.json.JSONTest.decode;
 import static com.metreeca.link.json.JSONTest.encode;
 

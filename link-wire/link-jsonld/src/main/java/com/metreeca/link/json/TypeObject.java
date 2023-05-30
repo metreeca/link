@@ -30,11 +30,10 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import static com.metreeca.link.Frame.frame;
-import static com.metreeca.link.Query.Constraint.*;
 import static com.metreeca.link.Query.*;
-import static com.metreeca.link.Stash.Expression.alias;
-import static com.metreeca.link.Stash.Expression.expression;
-import static com.metreeca.link.Table.Column.column;
+import static com.metreeca.link.Stash.alias;
+import static com.metreeca.link.Stash.expression;
+import static com.metreeca.link.Table.column;
 import static com.metreeca.link.json.JSON.Tokens.*;
 
 import static java.lang.String.format;

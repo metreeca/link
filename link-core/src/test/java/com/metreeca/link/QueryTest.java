@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static com.metreeca.link.Query.Constraint.*;
+import static com.metreeca.link.Query.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

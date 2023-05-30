@@ -25,9 +25,9 @@ import static java.util.Arrays.asList;
 /**
  * Source code generator.
  */
-public abstract class Coder {
+abstract class Coder {
 
-    public static Coder block(final Coder... coders) {
+    static Coder block(final Coder... coders) {
 
         if ( coders == null ) {
             throw new NullPointerException("null coders");
@@ -36,7 +36,7 @@ public abstract class Coder {
         return items(text("\r{\t"), items(coders), text("\b }"));
     }
 
-    public static Coder parens(final Coder... coders) {
+    static Coder parens(final Coder... coders) {
 
         if ( coders == null ) {
             throw new NullPointerException("null coders");
@@ -55,7 +55,7 @@ public abstract class Coder {
         return items(text('\n'), items(coders), text('\n'));
     }
 
-    public static Coder space(final Coder... coders) {
+    static Coder space(final Coder... coders) {
 
         if ( coders == null ) {
             throw new NullPointerException("null coders");
@@ -64,7 +64,7 @@ public abstract class Coder {
         return items(text('\f'), items(coders), text('\f'));
     }
 
-    public static Coder indent(final Coder... items) {
+    static Coder indent(final Coder... items) {
 
         if ( items == null ) {
             throw new NullPointerException("null items");
@@ -74,7 +74,7 @@ public abstract class Coder {
     }
 
 
-    public static Coder items(final Coder... coders) {
+    static Coder items(final Coder... coders) {
 
         if ( coders == null ) {
             throw new NullPointerException("null coders");
@@ -83,7 +83,7 @@ public abstract class Coder {
         return items(List.of(coders));
     }
 
-    public static Coder items(final Iterable<Coder> coders) {
+    static Coder items(final Iterable<Coder> coders) {
 
         if ( coders == null ) {
             throw new NullPointerException("null coders");
@@ -135,7 +135,7 @@ public abstract class Coder {
     }
 
 
-    public static Coder quoted(final String string) {
+    static Coder quoted(final String string) {
 
         if ( string == null ) {
             throw new NullPointerException("null string");
@@ -144,7 +144,7 @@ public abstract class Coder {
         return quoted(string, '\'');
     }
 
-    public static Coder quoted(final String string, final char quote) {
+    private static Coder quoted(final String string, final char quote) {
 
         if ( string == null ) {
             throw new NullPointerException("null string");
@@ -246,7 +246,7 @@ public abstract class Coder {
     }
 
 
-    public static Coder nothing() {
+    static Coder nothing() {
         return new Coder() {
 
             @Override public void generate(final Code code) { }

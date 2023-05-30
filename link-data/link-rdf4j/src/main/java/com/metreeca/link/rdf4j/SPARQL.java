@@ -52,6 +52,10 @@ abstract class SPARQL {
         return id(List.of());
     }
 
+    String id(final String alias) {
+        return id(List.of(alias));
+    }
+
     String id(final Object object) {
         return scope.computeIfAbsent(object, o -> String.valueOf(scope.size()));
     }
@@ -61,7 +65,7 @@ abstract class SPARQL {
 
         final String code=query.toString();
 
-        logger.info(() -> code); // !!! debug
+        logger.info(() -> code); // !!! fine
 
         return code;
     }
@@ -328,15 +332,6 @@ abstract class SPARQL {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    Coder op(final Coder x, final String name, final Coder y) {
-        return items(x, text(' '), text(name), text(' '), y);
-    }
-
-    Coder function(final String name, final Coder... args) {
-        return items(text(name), text('('), list(", ", args), text(')'));
-    }
-
-
     Coder bind(final String id, final Coder expression) {
         return items(text(" bind"), as(id, expression));
     }
@@ -347,6 +342,15 @@ abstract class SPARQL {
 
     Coder var(final String id) {
         return text(" ?", id);
+    }
+
+
+    Coder op(final Coder x, final String name, final Coder y) {
+        return items(x, text(' '), text(name), text(' '), y);
+    }
+
+    Coder function(final String name, final Coder... args) {
+        return items(text(name), text('('), list(", ", args), text(')'));
     }
 
 

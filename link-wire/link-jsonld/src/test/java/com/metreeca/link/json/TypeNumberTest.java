@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
-import static com.metreeca.link.Query.decimal;
-import static com.metreeca.link.Query.integer;
+import static com.metreeca.link.Stash.decimal;
+import static com.metreeca.link.Stash.integer;
 import static com.metreeca.link.json.JSONTest.decode;
 import static com.metreeca.link.json.JSONTest.encode;
 

@@ -21,9 +21,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static com.metreeca.link.Stash.Expression.alias;
-import static com.metreeca.link.Stash.Expression.expression;
 import static com.metreeca.link.Stash.Transform.*;
+import static com.metreeca.link.Stash.alias;
+import static com.metreeca.link.Stash.expression;
 
 import static org.assertj.core.api.Assertions.*;
 

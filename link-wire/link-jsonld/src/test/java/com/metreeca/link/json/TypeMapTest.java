@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.metreeca.link.Query.integer;
+import static com.metreeca.link.Stash.integer;
 import static com.metreeca.link.json.JSONTest.*;
 
 import static java.util.Map.entry;

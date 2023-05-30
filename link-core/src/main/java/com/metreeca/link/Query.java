@@ -16,8 +16,6 @@
 
 package com.metreeca.link;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.text.Normalizer.Form;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -25,7 +23,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Glass.error;
-import static com.metreeca.link.Stash.Expression.expression;
 
 import static java.lang.String.format;
 import static java.text.Normalizer.normalize;
@@ -40,6 +37,25 @@ public abstract class Query<T> extends Stash<T> {
 
     private static final Pattern WordPattern=Pattern.compile("\\w+");
     private static final Pattern MarkPattern=Pattern.compile("\\p{M}");
+
+
+    public static String pattern(final CharSequence keywords, final boolean stemming) {
+
+        if ( keywords == null ) {
+            throw new NullPointerException("null keywords");
+        }
+
+        final StringBuilder builder=new StringBuilder(keywords.length()).append("(?i:.*");
+
+        final String normalized=MarkPattern.matcher(normalize(keywords, Form.NFD)).replaceAll("");
+        final Matcher matcher=WordPattern.matcher(normalized);
+
+        while ( matcher.find() ) {
+            builder.append("\\b").append(matcher.group()).append(stemming ? "" : "\\b").append(".*");
+        }
+
+        return builder.append(")").toString();
+    }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,7 +85,7 @@ public abstract class Query<T> extends Stash<T> {
                 .flatMap(query -> query.filter().entrySet().stream())
                 .collect(toMap(
                         Map.Entry::getKey, Map.Entry::getValue,
-                        Constraint::and,
+                        Query::and,
                         LinkedHashMap::new
                 ));
 
@@ -266,31 +282,205 @@ public abstract class Query<T> extends Stash<T> {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static String pattern(final CharSequence keywords, final boolean stemming) {
+    public static Constraint and(final Constraint... constraints) {
 
-        if ( keywords == null ) {
+        if ( constraints == null || Arrays.stream(constraints).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null constraints");
+        }
+
+        return and(asList(constraints));
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Constraint and(final Collection<Constraint> constraints) {
+
+        if ( constraints == null || constraints.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null constraints");
+        }
+
+
+        final Optional<Object> lt=constraints.stream().flatMap(c -> c.lt().stream()).reduce((x, y) ->
+                x.equals(y) ? x
+                        : comparable(x, y) ? ((Comparable<Object>)x).compareTo(y) <= 0 ? x : y
+                        : error("conflicting <lt> constraints <%s> / <%s>", x, y)
+        );
+
+        final Optional<Object> gt=constraints.stream().flatMap(c -> c.gt().stream()).reduce((x, y) ->
+                x.equals(y) ? x
+                        : comparable(x, y) ? ((Comparable<Object>)x).compareTo(y) >= 0 ? x : y
+                        : error("conflicting <gt> constraints <%s> / <%s>", x, y)
+        );
+
+
+        final Optional<Object> lte=constraints.stream().flatMap(c -> c.lte().stream()).reduce((x, y) ->
+                x.equals(y) ? x
+                        : comparable(x, y) ? ((Comparable<Object>)x).compareTo(y) <= 0 ? x : y
+                        : error("conflicting <lte> constraints <%s> / <%s>", x, y)
+        );
+
+        final Optional<Object> gte=constraints.stream().flatMap(c -> c.gte().stream()).reduce((x, y) ->
+                x.equals(y) ? x
+                        : comparable(x, y) ? ((Comparable<Object>)x).compareTo(y) >= 0 ? x : y
+                        : error("conflicting <gte> constraints <%s> / <%s>", x, y)
+        );
+
+
+        final Set<String> like=constraints.stream().flatMap(c -> c.like().stream()).collect(toSet());
+
+        final Set<Set<Object>> any=constraints.stream().flatMap(c -> c.any().stream()).collect(toSet());
+
+
+        if ( lt.isPresent() && lte.isPresent() ) {
+            error("conflicting <lt/lte> constraints <%s> / <%s>", lt.get(), lte.get());
+        }
+
+        if ( gt.isPresent() && gte.isPresent() ) {
+            error("conflicting <gt/gte> constraints <%s> / <%s>", gt.get(), gte.get());
+        }
+
+
+        return new Constraint() {
+
+            @Override public Optional<Object> lt() { return lt; }
+
+            @Override public Optional<Object> gt() { return gt; }
+
+
+            @Override public Optional<Object> lte() { return lte; }
+
+            @Override public Optional<Object> gte() { return gte; }
+
+
+            @Override public Set<String> like() { return like; }
+
+            @Override public Set<Set<Object>> any() { return any; }
+
+        };
+    }
+
+
+    public static Constraint lt(final Object limit) {
+
+        if ( limit == null ) {
+            throw new NullPointerException("null limit");
+        }
+
+        final Optional<Object> lt=Optional.of(limit);
+
+        return new Constraint() {
+
+            @Override public Optional<Object> lt() { return lt; }
+
+        };
+
+    }
+
+    public static Constraint gt(final Object limit) {
+
+        if ( limit == null ) {
+            throw new NullPointerException("null limit");
+        }
+
+        final Optional<Object> gt=Optional.of(limit);
+
+        return new Constraint() {
+
+            @Override public Optional<Object> gt() { return gt; }
+
+        };
+
+    }
+
+    public static Constraint lte(final Object limit) {
+
+        if ( limit == null ) {
+            throw new NullPointerException("null limit");
+        }
+
+        final Optional<Object> lte=Optional.of(limit);
+
+        return new Constraint() {
+
+            @Override public Optional<Object> lte() { return lte; }
+
+        };
+
+    }
+
+    public static Constraint gte(final Object limit) {
+
+        if ( limit == null ) {
+            throw new NullPointerException("null limit");
+        }
+
+        final Optional<Object> gte=Optional.of(limit);
+
+        return new Constraint() {
+
+            @Override public Optional<Object> gte() { return gte; }
+
+        };
+
+    }
+
+
+    public static Constraint like(final String... keywords) {
+
+        if ( keywords == null || Arrays.stream(keywords).anyMatch(Objects::isNull) ) {
             throw new NullPointerException("null keywords");
         }
 
-        final StringBuilder builder=new StringBuilder(keywords.length()).append("(?i:.*");
+        return like(asList(keywords));
+    }
 
-        final String normalized=MarkPattern.matcher(normalize(keywords, Form.NFD)).replaceAll("");
-        final Matcher matcher=WordPattern.matcher(normalized);
+    public static Constraint like(final Collection<String> keywords) {
 
-        while ( matcher.find() ) {
-            builder.append("\\b").append(matcher.group()).append(stemming ? "" : "\\b").append(".*");
+        if ( keywords == null || keywords.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null keywords");
         }
 
-        return builder.append(")").toString();
+        final Set<String> like=keywords.stream()
+                .map(String::trim)
+                .filter(not(String::isBlank))
+                .collect(toSet());
+
+        return new Constraint() {
+
+            @Override public Set<String> like() { return like; }
+
+        };
+
     }
 
 
-    public static BigInteger integer(final long value) {
-        return BigInteger.valueOf(value);
+    public static Constraint any(final Object... values) {
+
+        if ( values == null ) {
+            throw new NullPointerException("null values");
+        }
+
+        return any(asList(values));
     }
 
-    public static BigDecimal decimal(final double value) {
-        return BigDecimal.valueOf(value);
+    public static Constraint any(final Collection<?> values) {
+
+        if ( values == null ) {
+            throw new NullPointerException("null values");
+        }
+
+        final Set<Set<Object>> any=Set.of(new LinkedHashSet<>(values)); // ;( handle null values
+
+        return new Constraint() {
+
+            @Override public Set<Set<Object>> any() { return any; }
+
+        };
+
+    }
+
+
+    private static boolean comparable(final Object x, final Object y) {
+        return x instanceof Comparable && x.getClass().equals(y.getClass());
     }
 
 
@@ -341,208 +531,6 @@ public abstract class Query<T> extends Stash<T> {
      * Filtering constraint.
      */
     public abstract static class Constraint {
-
-        public static Constraint and(final Constraint... constraints) {
-
-            if ( constraints == null || Arrays.stream(constraints).anyMatch(Objects::isNull) ) {
-                throw new NullPointerException("null constraints");
-            }
-
-            return and(asList(constraints));
-        }
-
-        @SuppressWarnings("unchecked")
-        public static Constraint and(final Collection<Constraint> constraints) {
-
-            if ( constraints == null || constraints.stream().anyMatch(Objects::isNull) ) {
-                throw new NullPointerException("null constraints");
-            }
-
-
-            final Optional<Object> lt=constraints.stream().flatMap(c -> c.lt().stream()).reduce((x, y) ->
-                    x.equals(y) ? x
-                            : comparable(x, y) ? ((Comparable<Object>)x).compareTo(y) <= 0 ? x : y
-                            : error("conflicting <lt> constraints <%s> / <%s>", x, y)
-            );
-
-            final Optional<Object> gt=constraints.stream().flatMap(c -> c.gt().stream()).reduce((x, y) ->
-                    x.equals(y) ? x
-                            : comparable(x, y) ? ((Comparable<Object>)x).compareTo(y) >= 0 ? x : y
-                            : error("conflicting <gt> constraints <%s> / <%s>", x, y)
-            );
-
-
-            final Optional<Object> lte=constraints.stream().flatMap(c -> c.lte().stream()).reduce((x, y) ->
-                    x.equals(y) ? x
-                            : comparable(x, y) ? ((Comparable<Object>)x).compareTo(y) <= 0 ? x : y
-                            : error("conflicting <lte> constraints <%s> / <%s>", x, y)
-            );
-
-            final Optional<Object> gte=constraints.stream().flatMap(c -> c.gte().stream()).reduce((x, y) ->
-                    x.equals(y) ? x
-                            : comparable(x, y) ? ((Comparable<Object>)x).compareTo(y) >= 0 ? x : y
-                            : error("conflicting <gte> constraints <%s> / <%s>", x, y)
-            );
-
-
-            final Set<String> like=constraints.stream().flatMap(c -> c.like().stream()).collect(toSet());
-
-            final Set<Set<Object>> any=constraints.stream().flatMap(c -> c.any().stream()).collect(toSet());
-
-
-            if ( lt.isPresent() && lte.isPresent() ) {
-                error("conflicting <lt/lte> constraints <%s> / <%s>", lt.get(), lte.get());
-            }
-
-            if ( gt.isPresent() && gte.isPresent() ) {
-                error("conflicting <gt/gte> constraints <%s> / <%s>", gt.get(), gte.get());
-            }
-
-
-            return new Constraint() {
-
-                @Override public Optional<Object> lt() { return lt; }
-
-                @Override public Optional<Object> gt() { return gt; }
-
-
-                @Override public Optional<Object> lte() { return lte; }
-
-                @Override public Optional<Object> gte() { return gte; }
-
-
-                @Override public Set<String> like() { return like; }
-
-                @Override public Set<Set<Object>> any() { return any; }
-
-            };
-        }
-
-
-        private static boolean comparable(final Object x, final Object y) {
-            return x instanceof Comparable && x.getClass().equals(y.getClass());
-        }
-
-
-        public static Constraint lt(final Object limit) {
-
-            if ( limit == null ) {
-                throw new NullPointerException("null limit");
-            }
-
-            final Optional<Object> lt=Optional.of(limit);
-
-            return new Constraint() {
-
-                @Override public Optional<Object> lt() { return lt; }
-
-            };
-
-        }
-
-        public static Constraint gt(final Object limit) {
-
-            if ( limit == null ) {
-                throw new NullPointerException("null limit");
-            }
-
-            final Optional<Object> gt=Optional.of(limit);
-
-            return new Constraint() {
-
-                @Override public Optional<Object> gt() { return gt; }
-
-            };
-
-        }
-
-        public static Constraint lte(final Object limit) {
-
-            if ( limit == null ) {
-                throw new NullPointerException("null limit");
-            }
-
-            final Optional<Object> lte=Optional.of(limit);
-
-            return new Constraint() {
-
-                @Override public Optional<Object> lte() { return lte; }
-
-            };
-
-        }
-
-        public static Constraint gte(final Object limit) {
-
-            if ( limit == null ) {
-                throw new NullPointerException("null limit");
-            }
-
-            final Optional<Object> gte=Optional.of(limit);
-
-            return new Constraint() {
-
-                @Override public Optional<Object> gte() { return gte; }
-
-            };
-
-        }
-
-
-        public static Constraint like(final String... keywords) {
-
-            if ( keywords == null || Arrays.stream(keywords).anyMatch(Objects::isNull) ) {
-                throw new NullPointerException("null keywords");
-            }
-
-            return like(asList(keywords));
-        }
-
-        public static Constraint like(final Collection<String> keywords) {
-
-            if ( keywords == null || keywords.stream().anyMatch(Objects::isNull) ) {
-                throw new NullPointerException("null keywords");
-            }
-
-            final Set<String> like=keywords.stream()
-                    .map(String::trim)
-                    .filter(not(String::isBlank))
-                    .collect(toSet());
-
-            return new Constraint() {
-
-                @Override public Set<String> like() { return like; }
-
-            };
-
-        }
-
-
-        public static Constraint any(final Object... values) {
-
-            if ( values == null ) {
-                throw new NullPointerException("null values");
-            }
-
-            return any(asList(values));
-        }
-
-        public static Constraint any(final Collection<?> values) {
-
-            if ( values == null ) {
-                throw new NullPointerException("null values");
-            }
-
-            final Set<Set<Object>> any=Set.of(new LinkedHashSet<>(values)); // ;( handle null values
-
-            return new Constraint() {
-
-                @Override public Set<Set<Object>> any() { return any; }
-
-            };
-
-        }
-
 
         private Constraint() { }
 

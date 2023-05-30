@@ -19,6 +19,7 @@ package com.metreeca.link.rdf4j;
 import com.metreeca.link.*;
 import com.metreeca.link.Query.Criterion;
 import com.metreeca.link.Stash.Expression;
+import com.metreeca.link.Stash.Transform;
 
 import org.eclipse.rdf4j.model.Resource;
 
@@ -35,13 +36,16 @@ import static com.metreeca.link.Stash.Transform.count;
 import static com.metreeca.link.rdf4j.Coder.*;
 
 import static java.lang.String.format;
-import static java.util.Map.entry;
 import static java.util.function.UnaryOperator.identity;
 import static java.util.stream.Collectors.*;
 
 final class SPARQLMembers extends SPARQL {
 
     private static final int DefaultLimit=100;
+
+    private <T> Predicate<T> not(final Predicate<T> predicate) { // !!! review
+        return Predicate.not(predicate);
+    }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,68 +60,28 @@ final class SPARQLMembers extends SPARQL {
         final URI base=URI.create(container.isIRI() ? container.stringValue() : Frame.DefaultBase);
         final Object model=query.model();
 
+
         final boolean plain=!(model instanceof Table);
 
-
-        // filtering expressions
-
-        final Set<Expression> filters=query.filter().keySet();
-
-        // projected variable names to/from projected expressions
-
-        final Map<String, Expression> alias2projected=plain ? Map.of() : ((Table<?>)model)
+        final Map<List<String>, Expression> projection=plain ? Map.of() : ((Table<?>)model)
                 .columns().entrySet().stream()
-                .collect(toMap(Entry::getKey, entry -> entry.getValue().expression()));
+                .collect(toMap(entry -> List.of(entry.getKey()), entry -> entry.getValue().expression()));
 
-        final Map<Expression, String> projected2alias=alias2projected.entrySet().stream()
-                .collect(toMap(entry -> Expression.expression(List.of(entry.getKey()), List.of()), Entry::getKey));
+        final Map<Expression, Constraint> filter=query.filter().entrySet().stream()
+                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue));
 
-        // projected expressions to/from expressions referring to aliased variable names // !!! review
+        final Map<Expression, Set<Object>> focus=query.focus().entrySet().stream()
+                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue));
 
-        final Map<Expression, Expression> expression2projected=alias2projected.entrySet().stream()
-                .map(entry -> entry(entry.getValue(), Expression.expression(List.of(entry.getKey()), List.of())))
-                .filter(Predicate.not(entry -> entry.getKey().equals(entry.getValue()))) // ignore non-aliased expressions
-                .collect(toMap(Entry::getKey, Entry::getValue));
-
-        final Map<Expression, Expression> projected2expression=alias2projected.entrySet().stream()
-                .map(entry -> entry(Expression.expression(List.of(entry.getKey()), List.of()), entry.getValue()))
-                .filter(Predicate.not(entry -> entry.getKey().equals(entry.getValue()))) // ignore non-aliased expressions
-                .collect(toMap(Entry::getKey, Entry::getValue));
-
-        // expression paths
-
-        final Set<List<String>> paths=Stream
-
-                .of(
-                        alias2projected.values(),
-                        query.filter().keySet(),
-                        query.order().keySet()
-                )
-
-                .flatMap(Collection::stream)
-
-                .filter(Predicate.not(expression2projected::containsValue)) // not referring to a projected variable name
-                .filter(Predicate.not(expression -> expression.path().isEmpty())) // not referring to the root value
-
-                .map(Expression::path)
-                .collect(toSet());
+        final Map<Expression, Criterion> order=query.order().entrySet().stream()
+                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue));
 
 
         final Coder member=var(id());
 
         return query(items(
 
-                select(plain, plain ? member : items(alias2projected.entrySet().stream() // !!! refactor
-                        .map(projection -> {
-
-                            final String alias=projection.getKey();
-                            final Expression expression=projection.getValue();
-
-                            return expression.aggregate() ? as(alias, expression(expression)) : var(alias);
-
-                        })
-                        .collect(toList())
-                )),
+                select(plain, plain ? member : projection(projection)),
 
                 space(where(space(
 
@@ -135,23 +99,59 @@ final class SPARQLMembers extends SPARQL {
 
                         // raw expression values
 
-                        space(items(paths.stream()
-                                .map(path -> line(optional(edge(member, path(shape, path), var(id(path))))))
+                        space(items(Stream
+
+                                .of(
+                                        projection.values(),
+                                        filter.keySet(),
+                                        focus.keySet(),
+                                        order.keySet()
+                                )
+
+                                .flatMap(Collection::stream)
+                                .map(Expression::path)
+
+                                .filter(not(List::isEmpty)) // not referring to the root value
+
+                                .map(path -> line(optional(edge(member,
+
+                                        path(shape.properties(path).orElseThrow(() ->
+                                                new IllegalArgumentException(format(
+                                                        "unknown shape path <%s>", path
+                                                ))
+                                        )),
+
+                                        var(id(path))
+
+                                ))))
+
                                 .collect(toList())
                         )),
 
                         // non-aggregate computed values
 
-                        space(items(alias2projected.entrySet().stream()
-                                .filter(Predicate.not(entry -> entry.getValue().aggregate()))
-                                .map(entry -> line(bind(entry.getKey(), expression(entry.getValue()))))
+                        space(items(Stream
+
+                                .of(
+                                        projection.values(),
+                                        filter.keySet(),
+                                        focus.keySet(),
+                                        order.keySet()
+                                )
+
+                                .flatMap(Collection::stream)
+
+                                .filter(not(Expression::aggregate))
+                                .filter(Expression::computed)
+
+                                .map(expression -> line(bind(id(expression), expression(expression))))
                                 .collect(toList())
                         )),
 
                         // non-aggregate filters
 
-                        space(filters(query.filter().entrySet().stream()
-                                .filter(Predicate.not(entry -> projected2expression.getOrDefault(entry.getKey(), entry.getKey()).aggregate())) // !!! review
+                        space(filter(filter.entrySet().stream()
+                                .filter(not(entry -> entry.getKey().aggregate()))
                                 .flatMap(entry -> constraint(result(entry.getKey()), entry.getValue(), base))
                                 .collect(toList()))
                         )
@@ -160,24 +160,28 @@ final class SPARQLMembers extends SPARQL {
 
                 // aggregate grouping // !!! refactor
 
-                space(plain && filters.stream().anyMatch(Expression::aggregate) ? group(member)
-                        : !plain && alias2projected.values().stream().anyMatch(Predicate.not(Expression::aggregate)) ?
-                        group(items(
-                                alias2projected.entrySet().stream()
-                                        .filter(Predicate.not(entry -> entry.getValue().aggregate()))
-                                        .map(entry -> var(entry.getKey()))
-                                        .collect(toList())
+                space(plain && filter.keySet().stream().anyMatch(Expression::aggregate) ?
+
+                        group(member)
+
+                        : projection.values().stream().anyMatch(not(Expression::aggregate)) ?
+
+                        group(items(projection.values().stream()
+                                .filter(not(Expression::aggregate))
+                                .map(this::result)
+                                .collect(toList())
                         ))
+
                         : nothing()
                 ),
 
                 // aggregate filters // !!! refactor
 
-                space(havings(query.filter().entrySet().stream()
-                        .filter(entry -> projected2expression.getOrDefault(entry.getKey(), entry.getKey()).aggregate()) // !!! review
+                space(having(filter.entrySet().stream()
+                        .filter(entry -> entry.getKey().aggregate())
                         .flatMap(entry -> {
 
-                            final String alias=projected2alias.get(entry.getKey());
+                            final String alias=null; // !!!
 
                             return constraint(alias != null ? var(alias) : result(entry.getKey()), entry.getValue(), base);
 
@@ -188,14 +192,13 @@ final class SPARQLMembers extends SPARQL {
 
                 // sorting // !!! refactor
 
-                space(plain
+                space(plain ?
 
-                        ?
                         order(items(
 
                                 // focus values
 
-                                items(query.focus().entrySet().stream()
+                                items(focus.entrySet().stream()
                                         .map(entry -> {
 
                                             final Expression expression=entry.getKey();
@@ -209,7 +212,7 @@ final class SPARQLMembers extends SPARQL {
 
                                 // explicit criteria
 
-                                items(query.order().entrySet().stream()
+                                items(order.entrySet().stream()
                                         .map(entry -> {
 
                                             final Expression expression=entry.getKey();
@@ -229,9 +232,8 @@ final class SPARQLMembers extends SPARQL {
 
                         // all aggregates >> single record >> no order
 
-                        : alias2projected.values().stream().anyMatch(Predicate.not(Expression::aggregate))
+                        : projection.values().stream().anyMatch(not(Expression::aggregate)) ?
 
-                        ?
                         order(items(
 
                                 // focus values
@@ -242,7 +244,7 @@ final class SPARQLMembers extends SPARQL {
                                             final Expression expression=entry.getKey();
                                             final Set<Object> values=entry.getValue();
 
-                                            final String alias=projected2alias.get(expression);
+                                            final String alias=null; // !!!
 
                                             return focus(alias, expression, values, base);
 
@@ -258,7 +260,7 @@ final class SPARQLMembers extends SPARQL {
                                             final Criterion criterion=entry.getValue();
                                             final Expression expression=entry.getKey();
 
-                                            final String alias=projected2alias.get(expression);
+                                            final String alias=null; // !!!
 
                                             return order(alias, expression, criterion);
 
@@ -266,12 +268,10 @@ final class SPARQLMembers extends SPARQL {
                                         .collect(toList())
                                 ),
 
-                                // default criteria
+                                // default criteria // !!! exclude projected values already ordered
 
-                                // !!! exclude projected values already ordered
-
-                                items(alias2projected.keySet().stream()
-                                        .map(this::var)
+                                items(projection.keySet().stream()
+                                        .map(x -> var(id(x))) // !!!
                                         .collect(toList())
                                 )
 
@@ -291,11 +291,40 @@ final class SPARQLMembers extends SPARQL {
     }
 
 
-    private Coder filters(final Collection<Coder> coders) {
+    private static Expression expand(final Map<List<String>, Expression> projection, final Expression expression) {
+        return Optional.ofNullable(projection.get(expression.path()))
+                .map(projected -> Stash.expression(
+                        projected.path(),
+                        Stream.of(expression.transforms(), projected.transforms())
+                                .flatMap(Collection::stream)
+                                .collect(toList())
+                ))
+                .orElse(expression);
+    }
+
+
+    private Coder projection(final Map<List<String>, Expression> projection) {
+        return items(projection.entrySet().stream()
+                .map(entry -> {
+
+                    final List<String> alias=entry.getKey();
+                    final Expression expression=entry.getValue();
+
+                    return expression.aggregate() ? as(id(alias), expression(expression))
+                            : expression.computed() ? var(id(expression))
+                            : var(id(expression.path()));
+
+                })
+                .collect(toList())
+        );
+    }
+
+
+    private Coder filter(final Collection<Coder> coders) {
         return coders.isEmpty() ? nothing() : filter(indent(list("\n&& ", coders)));
     }
 
-    private Coder havings(final Collection<Coder> coders) {
+    private Coder having(final Collection<Coder> coders) {
         return coders.isEmpty() ? nothing() : having(indent(list("\n&& ", coders)));
     }
 
@@ -330,6 +359,13 @@ final class SPARQLMembers extends SPARQL {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private Coder path(final List<String> path) {
+        return list("/", path.stream()
+                .map(this::iri)
+                .collect(toList())
+        );
+    }
+
     private Coder result(final Expression expression) {
         return var(id(expression.computed() ? expression : expression.path()));
     }
@@ -341,11 +377,11 @@ final class SPARQLMembers extends SPARQL {
         );
     }
 
-    private Coder transform(final List<Stash.Transform> transforms, final Coder value) {
+    private Coder transform(final List<Transform> transforms, final Coder value) {
         if ( transforms.isEmpty() ) { return value; } else {
 
-            final Stash.Transform head=transforms.get(0);
-            final List<Stash.Transform> tail=transforms.subList(1, transforms.size());
+            final Transform head=transforms.get(0);
+            final List<Transform> tail=transforms.subList(1, transforms.size());
 
             return head == count
                     ? count(true, transform(tail, value))
@@ -357,31 +393,16 @@ final class SPARQLMembers extends SPARQL {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private Coder path(final Shape shape, final List<String> path) {
-        return list("/", shape
-
-                .properties(path).orElseThrow(() ->
-                        new IllegalArgumentException(format(
-                                "unknown shape path <%s>", path
-                        ))
-                )
-
-                .stream()
-                .map(this::iri)
-                .collect(toList())
-        );
-    }
-
     private Stream<Coder> constraint(final Coder value, final Constraint constraint, final URI base) {
         return Stream.
 
                 of(
 
-                        constraint.lt().map(limit -> (_lt(value, limit, base))).stream(),
-                        constraint.gt().map(limit -> (_gt(value, limit, base))).stream(),
+                        constraint.lt().map(limit -> (lt(value, limit, base))).stream(),
+                        constraint.gt().map(limit -> (gt(value, limit, base))).stream(),
 
-                        constraint.lte().map(limit -> (_lte(value, limit, base))).stream(),
-                        constraint.gte().map(limit -> (_gte(value, limit, base))).stream(),
+                        constraint.lte().map(limit -> (lte(value, limit, base))).stream(),
+                        constraint.gte().map(limit -> (gte(value, limit, base))).stream(),
 
                         constraint.like().stream().map(keywords -> (like(value, keywords))),
                         constraint.any().stream().map(values -> any(value, values, base))
@@ -392,20 +413,20 @@ final class SPARQLMembers extends SPARQL {
     }
 
 
-    private Coder _lt(final Coder value, final Object limit, final URI base) {
+    private Coder lt(final Coder value, final Object limit, final URI base) {
         return lt(value, value(limit, base));
     }
 
-    private Coder _gt(final Coder value, final Object limit, final URI base) {
+    private Coder gt(final Coder value, final Object limit, final URI base) {
         return gt(value, value(limit, base));
     }
 
 
-    private Coder _lte(final Coder value, final Object limit, final URI base) {
+    private Coder lte(final Coder value, final Object limit, final URI base) {
         return lte(value, value(limit, base));
     }
 
-    private Coder _gte(final Coder value, final Object limit, final URI base) {
+    private Coder gte(final Coder value, final Object limit, final URI base) {
         return gte(value, value(limit, base));
     }
 

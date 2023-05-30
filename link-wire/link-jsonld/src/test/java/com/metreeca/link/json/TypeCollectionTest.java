@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static com.metreeca.link.Query.integer;
+import static com.metreeca.link.Stash.integer;
 import static com.metreeca.link.json.JSONTest.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
