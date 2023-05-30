@@ -17,16 +17,40 @@
 package com.metreeca.link;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import static java.lang.String.format;
+import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
-import static java.util.stream.Collectors.toUnmodifiableList;
-import static java.util.stream.Collectors.toUnmodifiableMap;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Analytical query results.
  */
 public final class Table<T> extends Stash<T> {
+
+    @SafeVarargs public static <T> Table<T> table(final Entry<String, Column>... columns) {
+
+        if ( columns == null || Arrays.stream(columns).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null columns");
+        }
+
+        if ( Arrays.stream(columns).map(Entry::getKey).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null column alias");
+        }
+
+        if ( Arrays.stream(columns).map(Entry::getValue).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null column");
+        }
+
+        final Map<String, Column> map=new LinkedHashMap<>();
+
+        for (final Entry<String, Column> column : columns) {
+            map.put(column.getKey(), column.getValue());
+        }
+
+        return new Table<>(map, List.of());
+    }
 
     public static <T> Table<T> table(final Map<String, Column> columns) {
 
@@ -67,7 +91,10 @@ public final class Table<T> extends Stash<T> {
 
         }
 
-        return new Table<>(columns, records);
+        return new Table<>(columns, records.stream()
+                .map(record -> unmodifiableMap(new LinkedHashMap<>(record)))
+                .collect(toList())
+        );
     }
 
 
@@ -104,9 +131,9 @@ public final class Table<T> extends Stash<T> {
     private final List<Map<String, Object>> records;
 
 
-    private Table(final Map<String, Column> columns, final Collection<Map<String, Object>> records) {
-        this.columns=columns.entrySet().stream().collect(toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
-        this.records=records.stream().map(r -> unmodifiableMap(new LinkedHashMap<>(r))).collect(toUnmodifiableList());
+    private Table(final Map<String, Column> columns, final List<Map<String, Object>> records) {
+        this.columns=unmodifiableMap(columns);
+        this.records=unmodifiableList(records);
     }
 
 

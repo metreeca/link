@@ -21,7 +21,6 @@ import com.metreeca.link.EngineTest.Employees;
 import com.metreeca.link.EngineTest.Reference;
 import com.metreeca.link.EngineTest.Resource;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -46,23 +45,6 @@ public abstract class EngineTestRetrieveQuery {
     @Nested
     final class Fetching {
 
-        @Test void testFetchEmptyResultSet() {
-
-            assertThat(testbed().retrieve(with(new Employees(), employees -> {
-
-                employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
-                        filter("label", like("none"))
-                ));
-
-            }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
-                    .map(employee -> id(employee.getId()))
-                    .containsExactly()
-            );
-
-        }
-
         @Test void testFetchEmptyModel() {
 
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
@@ -78,6 +60,22 @@ public abstract class EngineTestRetrieveQuery {
                             .map(e -> (String)null)
                             .collect(toList())
                     ));
+
+        }
+
+        @Test void testFetchEmptyResultSet() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(with(new Employee(), employee -> employee.setId(""))),
+                        filter("label", like("none"))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
+                    .isEmpty()
+            );
 
         }
 
@@ -461,7 +459,6 @@ public abstract class EngineTestRetrieveQuery {
 
         }
 
-        @Disabled
         @Test void testFilterOnComputedExpression() {
 
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
@@ -469,7 +466,7 @@ public abstract class EngineTestRetrieveQuery {
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
                         model(with(new Employee(), employee -> employee.setId(""))),
-                        filter("abs:seniority", gte(integer(3)))
+                        filter("abs:supervisor.seniority", gte(integer(3)))
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())

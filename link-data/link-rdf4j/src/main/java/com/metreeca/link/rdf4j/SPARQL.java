@@ -16,6 +16,9 @@
 
 package com.metreeca.link.rdf4j;
 
+import com.metreeca.link.Stash.Expression;
+import com.metreeca.link.Table;
+
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -52,8 +55,16 @@ abstract class SPARQL {
         return id(List.of());
     }
 
-    String id(final String alias) {
-        return id(List.of(alias));
+    String id(final String alias, final Table.Column column) {
+        return id(alias, column.expression());
+    }
+
+    String id(final String alias, final Expression expression) {
+        return expression.aggregate() ? id(alias) : id(expression);
+    }
+
+    String id(final Expression expression) {
+        return id(expression.computed() ? expression : expression.path());
     }
 
     String id(final Object object) {
@@ -331,6 +342,10 @@ abstract class SPARQL {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    Coder star() {
+        return text(" *");
+    }
 
     Coder bind(final String id, final Coder expression) {
         return items(text(" bind"), as(id, expression));

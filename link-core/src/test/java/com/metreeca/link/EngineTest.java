@@ -27,15 +27,19 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.BiFunction;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Frame.with;
+import static com.metreeca.link.Stash.integer;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -47,8 +51,15 @@ public abstract class EngineTest {
 
     private static final String Base="https://data.example.com";
 
-    public static final List<Office> Offices=Offices();
+    public static final List<Reference> Offices=Offices();
     public static final List<Employee> Employees=Employees();
+
+
+    static {
+        final Logger logger=Logger.getLogger("com.metreeca");
+        logger.setLevel(Level.ALL);
+        logger.addHandler(with(new ConsoleHandler(), handler -> handler.setLevel(Level.ALL)));
+    }
 
 
     public static String id(final String id) {
@@ -56,10 +67,10 @@ public abstract class EngineTest {
     }
 
 
-    private static List<Office> Offices() {
+    private static List<Reference> Offices() {
         return Records((header, records) -> records
 
-                .map(record -> with(new Office(), office -> {
+                .map(record -> with(new Reference(), office -> {
 
                     final String code=record.get(header.indexOf("office"));
                     final String city=record.get(header.indexOf("cityName"));
@@ -67,11 +78,6 @@ public abstract class EngineTest {
 
                     office.setId(id(format("/offices/%s", code)));
                     office.setLabel(format("%s (%s)", city, country));
-
-                    office.setCode(code);
-                    office.setCity(city);
-                    office.setCountry(country);
-                    office.setArea(record.get(header.indexOf("area")));
 
                 }))
 
@@ -115,7 +121,7 @@ public abstract class EngineTest {
                         employee.setActive(Instant.parse(record.get(header.indexOf("active"))));
 
                         employee.setOffice(Offices.stream()
-                                .filter(office -> office.getCode().equals(record.get(header.indexOf("office"))))
+                                .filter(office -> office.getId().endsWith(format("/%s", record.get(header.indexOf("office")))))
                                 .findFirst()
                                 .orElseThrow()
                         );
@@ -160,7 +166,6 @@ public abstract class EngineTest {
         });
     }
 
-
     private static <T> List<T> Records(final BiFunction<? super List<String>, ? super Stream<List<String>>, List<T>> mapper) {
         try ( final BufferedReader reader=new BufferedReader(new InputStreamReader(
                 requireNonNull(EngineTest.class.getResourceAsStream("EngineTest.tsv")), UTF_8
@@ -177,6 +182,49 @@ public abstract class EngineTest {
             throw new UncheckedIOException(e);
 
         }
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static String label(final Resource resource) {
+        return resource == null ? null : resource.getLabel();
+    }
+
+    public static Resource office(final Employee employee) {
+        return employee == null ? null : employee.getOffice();
+    }
+
+    public static Employee supervisor(final Employee employee) {
+        return employee == null ? null : employee.getSupervisor();
+    }
+
+    public static Set<Employee> reports(final Employee employee) {
+        return employee == null ? null : employee.getReports();
+    }
+
+    public static BigInteger size(final Collection<?> collection) {
+        return collection == null ? BigInteger.ZERO : integer(collection.size());
+    }
+
+
+    public static <K, V> Entry<K, V> entry(final K key, final V value) {
+        return new AbstractMap.SimpleImmutableEntry<>(key, value);
+    }
+
+    @SafeVarargs public static <K, V> Map<K, V> map(final Entry<K, V>... entries) {
+
+        if ( entries == null || Arrays.stream(entries).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null entries");
+        }
+
+        final Map<K, V> map=new LinkedHashMap<>();
+
+        for (final Entry<K, V> entry : entries) {
+            map.put(entry.getKey(), entry.getValue());
+        }
+
+        return map;
     }
 
 
@@ -228,15 +276,6 @@ public abstract class EngineTest {
 
     @Nested
     final class RetrieveTable extends EngineTestRetrieveTable {
-
-        @Override public Engine testbed() {
-            return EngineTest.this.testbed();
-        }
-
-    }
-
-    @Nested
-    final class RetrieveXform extends EngineTestRetrieveXform {
 
         @Override public Engine testbed() {
             return EngineTest.this.testbed();
@@ -350,62 +389,6 @@ public abstract class EngineTest {
 
 
     @Type
-    public static final class Office extends Resource {
-
-        @Required
-        @Pattern("\\d{1}")
-        private String code;
-
-
-        @Required
-        private String city;
-
-        @Required
-        private String country;
-
-        @Required
-        private String area;
-
-
-        public String getCode() {
-            return code;
-        }
-
-        public void setCode(final String code) {
-            this.code=code;
-        }
-
-
-        public String getCity() {
-            return city;
-        }
-
-        public void setCity(final String city) {
-            this.city=city;
-        }
-
-
-        public String getCountry() {
-            return country;
-        }
-
-        public void setCountry(final String country) {
-            this.country=country;
-        }
-
-
-        public String getArea() {
-            return area;
-        }
-
-        public void setArea(final String area) {
-            this.area=area;
-        }
-
-    }
-
-
-    @Type
     public static final class Employee extends Resource {
 
         @Required
@@ -436,7 +419,7 @@ public abstract class EngineTest {
 
 
         @Required
-        private Office office;
+        private Reference office;
 
 
         @Optional
@@ -514,11 +497,11 @@ public abstract class EngineTest {
         }
 
 
-        public Office getOffice() {
+        public Reference getOffice() {
             return office;
         }
 
-        public void setOffice(final Office office) {
+        public void setOffice(final Reference office) {
             this.office=office;
         }
 

@@ -252,11 +252,13 @@ final class TypeFrame implements Type<Frame<?>> {
             final Map<String, Column> columns=table.columns();
 
             final List<Map<String, Value>> solutions=select(connection, members, bindings ->
-                    columns.keySet().stream().collect(
+                    columns.entrySet().stream().collect(
                             HashMap::new, // ;( handle null values
-                            (map, alias) -> map.put(alias, bindings.getValue(sparql.id(alias))),
+                            (map, entry) -> map.put(
+                                    entry.getKey(),
+                                    bindings.getValue(sparql.id(entry.getKey(), entry.getValue()))
+                            ),
                             Map::putAll
-
                     )
             );
 
