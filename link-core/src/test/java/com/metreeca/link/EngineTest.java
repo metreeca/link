@@ -18,8 +18,7 @@ package com.metreeca.link;
 
 import com.metreeca.link.jsonld.*;
 import com.metreeca.link.shacl.Optional;
-import com.metreeca.link.shacl.Pattern;
-import com.metreeca.link.shacl.Required;
+import com.metreeca.link.shacl.*;
 
 import org.junit.jupiter.api.Nested;
 
@@ -27,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -119,6 +119,24 @@ public abstract class EngineTest {
                         );
 
                         employee.setActive(Instant.parse(record.get(header.indexOf("active"))));
+
+                        employee.setYtd(java.util.Optional.of(record.get(header.indexOf("ytd")))
+                                .filter(not(String::isEmpty))
+                                .map(BigDecimal::new)
+                                .orElse(null)
+                        );
+
+                        employee.setLast(java.util.Optional.of(record.get(header.indexOf("last")))
+                                .filter(not(String::isEmpty))
+                                .map(BigDecimal::new)
+                                .orElse(null)
+                        );
+
+                        employee.setDelta(java.util.Optional.of(record.get(header.indexOf("delta")))
+                                .filter(not(String::isEmpty))
+                                .map(BigDecimal::new)
+                                .orElse(null)
+                        );
 
                         employee.setOffice(Offices.stream()
                                 .filter(office -> office.getId().endsWith(format("/%s", record.get(header.indexOf("office")))))
@@ -413,8 +431,8 @@ public abstract class EngineTest {
         private String title;
 
         @Required
-        //@MinExclusive(integer=1)
-        //@MaxInclusive(integer=5)
+        @MinInclusive(integer=1)
+        @MaxInclusive(integer=5)
         private Integer seniority;
 
 
@@ -432,6 +450,18 @@ public abstract class EngineTest {
 
         @Required
         private Instant active;
+
+
+        @Optional
+        @MinInclusive()
+        private BigDecimal ytd;
+
+        @Optional
+        @MinInclusive()
+        private BigDecimal last;
+
+        @Optional
+        private BigDecimal delta;
 
 
         public String getCode() {
@@ -530,6 +560,33 @@ public abstract class EngineTest {
 
         public void setActive(final Instant active) {
             this.active=active;
+        }
+
+
+        public BigDecimal getYtd() {
+            return ytd;
+        }
+
+        public void setYtd(final BigDecimal ytd) {
+            this.ytd=ytd;
+        }
+
+
+        public BigDecimal getLast() {
+            return last;
+        }
+
+        public void setLast(final BigDecimal last) {
+            this.last=last;
+        }
+
+
+        public BigDecimal getDelta() {
+            return delta;
+        }
+
+        public void setDelta(final BigDecimal delta) {
+            this.delta=delta;
         }
 
     }

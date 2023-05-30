@@ -22,8 +22,14 @@ import com.metreeca.link.Table;
 
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.metreeca.link.Frame.with;
 import static com.metreeca.link.Query.*;
@@ -33,6 +39,7 @@ import static com.metreeca.link.Table.table;
 import static com.metreeca.link.rdf4j.RDF4J.rdf4j;
 
 import static java.util.Comparator.comparing;
+import static java.util.Comparator.nullsFirst;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -220,21 +227,175 @@ final class RDF4JTest extends EngineTest {
     }
 
     @Nested
-    final class Transforming {
+    final class Transform {
 
-        // abs
+        @Test void testComputeAbs() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("abs", column("abs:delta", decimal(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .map(employee -> Optional
+                                    .ofNullable(employee.getDelta())
+                                    .map(BigDecimal::abs)
+                                    .orElse(null)
+                            )
+
+                            .sorted(nullsFirst(BigDecimal::compareTo))
+
+                            .map(v -> map(entry("abs", v)))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
 
     }
 
     @Nested
     final class Aggregating {
 
-        // count
-        // sum
-        // min
-        // max
-        // avg
-        // sample
+        @Test void testComputeCount() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column("count:code", integer(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(List.of(map(
+                            entry("value", size(Employees))
+                    )))
+
+            );
+
+        }
+
+        @Test void testComputeSum() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column("sum:ytd", decimal(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(List.of(map(
+                            entry("value", decimal(Employees.stream()
+                                    .map(Employee::getYtd)
+                                    .filter(Objects::nonNull)
+                                    .mapToDouble(BigDecimal::doubleValue)
+                                    .sum()
+                            ))
+                    )))
+
+            );
+
+        }
+
+        @Disabled
+        @Test void testComputeAvg() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column("avg:ytd", decimal(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(List.of(map(
+                            entry("value", decimal(Employees.stream()
+                                    .map(Employee::getYtd)
+                                    .filter(Objects::nonNull)
+                                    .mapToDouble(BigDecimal::doubleValue)
+                                    .average()
+                                    .orElse(0)
+                            ))
+                    )))
+
+            );
+
+        }
+
+        @Disabled
+        @Test void testComputeMin() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column("min:ytd", decimal(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(List.of(map(
+                            entry("value", decimal(Employees.stream()
+                                    .map(Employee::getYtd)
+                                    .filter(Objects::nonNull)
+                                    .mapToDouble(BigDecimal::doubleValue)
+                                    .min()
+                                    .orElse(Double.NaN)
+                            ))
+                    )))
+
+            );
+
+        }
+
+        @Disabled
+        @Test void testComputeMax() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column("max:ytd", decimal(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(List.of(map(
+                            entry("value", decimal(Employees.stream()
+                                    .map(Employee::getYtd)
+                                    .filter(Objects::nonNull)
+                                    .mapToDouble(BigDecimal::doubleValue)
+                                    .max()
+                                    .orElse(Double.NaN)
+                            ))
+                    )))
+
+            );
+
+        }
 
     }
 
@@ -258,7 +419,12 @@ final class RDF4JTest extends EngineTest {
 
         // order on expression
         // order on computed expression
+        // order on projected computed expression
 
     }
+
+    // !!! options
+    // !!! range
+    // !!! stats
 
 }

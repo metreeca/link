@@ -29,8 +29,8 @@ public @interface MinExclusive {
 
     public long integer() default 0L;
 
-    public double decimal();
+    public double decimal() default 0.0;
 
-    public String string();
+    public String value() default "";
 
 }

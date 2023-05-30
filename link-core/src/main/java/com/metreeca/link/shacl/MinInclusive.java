@@ -25,7 +25,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target({ FIELD, METHOD })
 @Retention(RUNTIME)
-public @interface MaxInclusive {
+public @interface MinInclusive {
 
     public long integer() default 0L;
 
