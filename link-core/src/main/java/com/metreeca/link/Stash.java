@@ -204,12 +204,6 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
             }
         },
 
-        sample(true) {
-            @Override public Optional<Shape> apply(final Shape shape) {
-                return shape.clazz().map(clazz -> shape(maxCount(1), clazz(clazz)));
-            }
-        },
-
 
         abs(false) {
             @Override public Optional<Shape> apply(final Shape shape) {

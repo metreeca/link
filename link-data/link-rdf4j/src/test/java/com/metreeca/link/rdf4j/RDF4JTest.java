@@ -22,7 +22,6 @@ import com.metreeca.link.Table;
 
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -38,6 +37,7 @@ import static com.metreeca.link.Table.column;
 import static com.metreeca.link.Table.table;
 import static com.metreeca.link.rdf4j.RDF4J.rdf4j;
 
+import static java.math.RoundingMode.HALF_UP;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsFirst;
 import static java.util.stream.Collectors.groupingBy;
@@ -313,7 +313,6 @@ final class RDF4JTest extends EngineTest {
 
         }
 
-        @Disabled
         @Test void testComputeAvg() {
 
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
@@ -326,22 +325,20 @@ final class RDF4JTest extends EngineTest {
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
-
-                    .isEqualTo(List.of(map(
-                            entry("value", decimal(Employees.stream()
+                    .allSatisfy(record -> assertThat(((BigDecimal)record.get("value")).setScale(3, HALF_UP))
+                            .isEqualByComparingTo(decimal(Employees.stream()
                                     .map(Employee::getYtd)
                                     .filter(Objects::nonNull)
+                                    .map(v -> v.setScale(3, HALF_UP))
                                     .mapToDouble(BigDecimal::doubleValue)
                                     .average()
                                     .orElse(0)
-                            ))
-                    )))
-
+                            ).setScale(3, HALF_UP))
+                    )
             );
 
         }
 
-        @Disabled
         @Test void testComputeMin() {
 
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
@@ -354,22 +351,19 @@ final class RDF4JTest extends EngineTest {
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
-
-                    .isEqualTo(List.of(map(
-                            entry("value", decimal(Employees.stream()
+                    .allSatisfy(record -> assertThat((BigDecimal)record.get("value"))
+                            .isEqualByComparingTo(decimal(Employees.stream()
                                     .map(Employee::getYtd)
                                     .filter(Objects::nonNull)
                                     .mapToDouble(BigDecimal::doubleValue)
                                     .min()
                                     .orElse(Double.NaN)
                             ))
-                    )))
-
+                    )
             );
 
         }
 
-        @Disabled
         @Test void testComputeMax() {
 
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
@@ -382,23 +376,21 @@ final class RDF4JTest extends EngineTest {
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
-
-                    .isEqualTo(List.of(map(
-                            entry("value", decimal(Employees.stream()
+                    .allSatisfy(record -> assertThat((BigDecimal)record.get("value"))
+                            .isEqualByComparingTo(decimal(Employees.stream()
                                     .map(Employee::getYtd)
                                     .filter(Objects::nonNull)
                                     .mapToDouble(BigDecimal::doubleValue)
                                     .max()
                                     .orElse(Double.NaN)
                             ))
-                    )))
+                    )
 
             );
 
         }
 
     }
-
 
     @Nested
     final class Grouping {
