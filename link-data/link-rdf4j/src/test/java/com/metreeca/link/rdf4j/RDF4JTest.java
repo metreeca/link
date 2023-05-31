@@ -26,9 +26,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static com.metreeca.link.Frame.with;
 import static com.metreeca.link.Query.*;
@@ -40,9 +42,11 @@ import static com.metreeca.link.rdf4j.RDF4J.rdf4j;
 import static java.math.RoundingMode.HALF_UP;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsFirst;
+import static java.util.Map.Entry.comparingByKey;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class RDF4JTest extends EngineTest {
 
@@ -227,7 +231,7 @@ final class RDF4JTest extends EngineTest {
     }
 
     @Nested
-    final class Transform {
+    final class Transforming {
 
         @Test void testComputeAbs() {
 
@@ -236,7 +240,7 @@ final class RDF4JTest extends EngineTest {
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
                         model(table(
-                                entry("abs", column("abs:delta", decimal(0)))
+                                entry("value", column("abs:delta", decimal(0)))
                         ))
                 ));
 
@@ -252,13 +256,87 @@ final class RDF4JTest extends EngineTest {
 
                             .sorted(nullsFirst(BigDecimal::compareTo))
 
-                            .map(v -> map(entry("abs", v)))
+                            .map(v -> map(entry("value", v)))
 
                             .collect(toList())
                     )
 
             );
 
+        }
+
+        @Test void testComputeRound() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column("round:delta", decimal(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .map(employee -> Optional
+                                    .ofNullable(employee.getDelta())
+                                    .map(v -> v.setScale(0, HALF_UP))
+                                    .orElse(null)
+                            )
+
+                            .sorted(nullsFirst(BigDecimal::compareTo))
+
+                            .map(v -> map(entry("value", v)))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
+
+        @Test void testComputeYear() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column("year:birthdate", integer(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .map(employee -> integer(employee.getBirthdate().getYear()))
+
+                            .sorted()
+
+                            .map(v -> map(entry("value", v)))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
+
+
+        @Test void testReportUnknownTransform() {
+            assertThatIllegalArgumentException().isThrownBy(() -> engine().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column("unknown:code", ""))
+                        ))
+                ));
+
+            })));
         }
 
     }
@@ -395,14 +473,243 @@ final class RDF4JTest extends EngineTest {
     @Nested
     final class Grouping {
 
-        // group on expression
-        // group on computed expression
-        // group on projected computed expression
+        @Test void testGroupOnRawExpression() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column(expression("seniority"), integer(0))),
+                                entry("count", column(expression("count:"), integer(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .collect(groupingBy(Employee::getSeniority))
+
+                            .entrySet().stream()
+
+                            .map(e -> map(
+                                    entry("value", integer(e.getKey())),
+                                    entry("count", integer(e.getValue().size()))
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
+
+        @Test void testGroupOnComputedExpression() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column(expression("year:birthdate"), integer(0))),
+                                entry("count", column(expression("count:"), integer(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .collect(groupingBy(e -> e.getBirthdate().getYear()))
+
+                            .entrySet().stream()
+
+                            .sorted(comparingByKey())
+
+                            .map(e -> map(
+                                    entry("value", integer(e.getKey())),
+                                    entry("count", integer(e.getValue().size()))
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
 
     }
 
     @Nested
     final class Filtering {
+
+        @Test void testFilterOnExpression() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column(expression("code"), ""))
+                        )),
+                        filter("avg:reports.delta", lte(integer(-100_000)))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .filter(employee -> Optional.ofNullable(employee.getReports())
+                                    .map(reports -> reports.stream()
+                                            .map(Employee::getDelta)
+                                            .filter(Objects::nonNull)
+                                            .mapToDouble(BigDecimal::doubleValue)
+                                            .average()
+                                            .orElse(0.0)
+                                    )
+                                    .filter(v -> v <= -100_000)
+                                    .isPresent()
+                            )
+
+                            .map(Employee::getCode)
+                            .sorted()
+
+                            .map(v -> map(
+                                    entry("value", v)
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
+
+        @Test void testFilterOnComputedExpression() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column(expression("code"), ""))
+                        )),
+                        filter("avg:year:reports.birthdate", gte(integer(1995)))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .filter(employee -> Optional.ofNullable(employee.getReports())
+                                    .map(reports -> reports.stream()
+                                            .map(Employee::getBirthdate)
+                                            .mapToDouble(LocalDate::getYear)
+                                            .average()
+                                            .orElse(Double.NaN)
+                                    )
+                                    .filter(v -> v >= 1995)
+                                    .isPresent()
+                            )
+
+                            .map(Employee::getCode)
+                            .sorted()
+
+                            .map(v -> map(
+                                    entry("value", v)
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
+
+
+        @Test void testFilterOnProjectedExpression() {
+
+            final Function<Employee, Double> value=employee -> Optional.ofNullable(employee.getReports())
+                    .map(reports -> reports.stream()
+                            .map(Employee::getDelta)
+                            .filter(Objects::nonNull)
+                            .mapToDouble(BigDecimal::doubleValue)
+                            .average()
+                            .orElse(0.0)
+                    )
+                    .map(v -> (double)Math.round(v))
+                    .orElse(0.0);
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("entry", column("code", "")),
+                                entry("value", column("round:avg:reports.delta", decimal(0)))
+                        )),
+                        filter("value", lte(decimal(-100_000)))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .filter(employee -> value.apply(employee) <= -100_000)
+
+                            .map(e -> map(
+                                    entry("entry", e.getCode()),
+                                    entry("value", decimal(value.apply(e)).setScale(0, HALF_UP))
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
+
+        @Test void testFilterOnTransformedProjectedExpression() {
+
+            final Function<Employee, Optional<LocalDate>> value=employee -> Optional
+                    .ofNullable(employee.getReports())
+                    .flatMap(reports -> reports.stream()
+                            .map(Employee::getBirthdate)
+                            .max(LocalDate::compareTo)
+                    );
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("entry", column("code", "")),
+                                entry("value", column("max:reports.birthdate", LocalDate.now()))
+                        )),
+                        filter("year:value", gte(integer(2000)))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .filter(employee -> value.apply(employee)
+                                    .filter(v -> v.getYear() >= 2000)
+                                    .isPresent()
+                            )
+
+                            .map(e -> map(
+                                    entry("entry", e.getCode()),
+                                    entry("value", value.apply(e).orElseThrow())
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
 
     }
 

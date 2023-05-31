@@ -67,7 +67,9 @@ final class SPARQLMembers extends SPARQL {
         final Map<Expression, Constraint> filter=query.filter().entrySet().stream()
                 .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue));
 
-        // !!! having
+        final Map<Expression, Constraint> having=query.filter().entrySet().stream()
+                .filter(entry -> entry.getKey().aggregate())
+                .collect(toMap(entry -> entry.getKey(), Entry::getValue));
 
         final Map<Expression, Set<Object>> focus=query.focus();
         final Map<Expression, Criterion> order=query.order();
@@ -157,12 +159,20 @@ final class SPARQLMembers extends SPARQL {
 
                 // grouping // !!! refactor
 
-                space(plain && filter.keySet().stream().anyMatch(Expression::aggregate) ?
+                space(plain ?
 
-                        group(member)
+                        !having.isEmpty()
+                                || focus.keySet().stream().anyMatch(Expression::aggregate)
+                                || order.keySet().stream().anyMatch(Expression::aggregate)
 
-                        : projection.values().stream().anyMatch(Expression::aggregate)
-                        && projection.values().stream().anyMatch(not(Expression::aggregate)) ?
+                                ? group(member)
+
+                                : nothing()
+
+                        // !!! order/focus ?
+
+                        : projection.values().stream().anyMatch(not(Expression::aggregate))
+                        && (!having.isEmpty() || projection.values().stream().anyMatch(Expression::aggregate)) ?
 
                         group(items(projection.values().stream()
                                 .filter(not(Expression::aggregate))
@@ -181,7 +191,10 @@ final class SPARQLMembers extends SPARQL {
 
                             final String alias=null; // !!!
 
-                            return constraint(alias != null ? var(alias) : var(id(entry.getKey())), entry.getValue(), base);
+                            final Expression expression=entry.getKey();
+                            final Constraint constraint=entry.getValue();
+
+                            return constraint(expression(expression), constraint, base);
 
                         })
 
@@ -202,7 +215,10 @@ final class SPARQLMembers extends SPARQL {
                                             final Expression expression=entry.getKey();
                                             final Set<Object> values=entry.getValue();
 
-                                            return focus(null, expression, values, base);
+                                            return focus(values, base, expression.aggregate()
+                                                    ? expression(expression)
+                                                    : var(id(expression))
+                                            );
 
                                         })
                                         .collect(toList())
@@ -216,7 +232,10 @@ final class SPARQLMembers extends SPARQL {
                                             final Expression expression=entry.getKey();
                                             final Criterion criterion=entry.getValue();
 
-                                            return order(null, expression, criterion);
+                                            return order(criterion, expression.aggregate()
+                                                    ? expression(expression)
+                                                    : var(id(expression))
+                                            );
 
                                         })
                                         .collect(toList())
@@ -343,33 +362,43 @@ final class SPARQLMembers extends SPARQL {
         return coders.isEmpty() ? nothing() : having(indent(list("\n&& ", coders)));
     }
 
-    private Coder focus(final String alias, final Expression expression, final Set<Object> values, final URI base) {
+    private Coder focus(final String alias, final Expression expression, final Collection<Object> values, final URI base) {
 
         final Coder result=alias != null ? var(alias) : var(id(expression));
+
+        return focus(values, base, result);
+    }
+
+    private Coder order(final String alias, final Expression expression, final Criterion criterion) {
+
+        final Coder result=(alias != null) ? var(alias)
+                : expression.aggregate() ? expression(expression)
+                : var(id(expression));
+
+        return order(criterion, result);
+    }
+
+    private Coder focus(final Collection<Object> values, final URI base, final Coder value) {
 
         final boolean nulls=values.stream().anyMatch(Objects::isNull);
         final boolean nonNulls=values.stream().anyMatch(Objects::nonNull);
 
-        final Coder nb=not(bound(result));
+        final Coder nb=not(bound(value));
 
-        final Coder in=in(result, values.stream()
+        final Coder in=in(value, values.stream()
                 .filter(Objects::nonNull)
                 .map(v -> value(v, base))
                 .collect(toList())
         );
 
         return desc(nulls && nonNulls ? or(nb, in)
-                : nonNulls ? and(bound(result), in)
+                : nonNulls ? and(bound(value), in)
                 : nb
         );
     }
 
-    private Coder order(final String alias, final Expression expression, final Criterion criterion) {
-
-        final Coder result;
-        result=alias != null ? var(alias) : var(id(expression));
-
-        return criterion == increasing ? asc(result) : desc(result);
+    private Coder order(final Criterion criterion, final Coder value) {
+        return criterion == increasing ? asc(value) : desc(value);
     }
 
 

@@ -24,7 +24,9 @@ import com.metreeca.link.EngineTest.Resource;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.metreeca.link.EngineTest.Employees;
 import static com.metreeca.link.EngineTest.id;
@@ -35,6 +37,7 @@ import static com.metreeca.link.Query.*;
 import static com.metreeca.link.Stash.integer;
 
 import static java.util.Comparator.comparing;
+import static java.util.Comparator.nullsFirst;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -466,19 +469,57 @@ public abstract class EngineTestRetrieveQuery {
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
                         model(with(new Employee(), employee -> employee.setId(""))),
-                        filter("abs:supervisor.seniority", gte(integer(3)))
+                        filter("year:birthdate", gte(integer(2000)))
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
-                    .map(employee -> id(employee.getId()))
-                    .containsExactlyElementsOf(Employees.stream()
-                            .filter(employee -> Optional.ofNullable(employee.getSupervisor())
-                                    .filter(supervisor -> Math.abs(supervisor.getSeniority()) >= 3)
-                                    .isPresent()
-                            )
-                            .map(Resource::getId)
+
+                    .map(e -> id(e.getId()))
+
+                    .isEqualTo(Employees.stream()
+
+                            .filter(employee -> employee.getBirthdate().getYear() >= 2000)
+
+                            .sorted(comparing(Resource::getId))
+
+                            .map(e -> id(e.getId()))
+
                             .collect(toList())
                     )
+
+            );
+
+        }
+
+        @Test void testFilterOnAggregateExpression() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(with(new Employee(), employee -> employee.setId(""))),
+                        filter("count:reports", gte(integer(3)))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
+
+                    .map(e -> id(e.getId()))
+
+                    .isEqualTo(Employees.stream()
+
+                            .filter(employee -> Optional.ofNullable(employee.getReports())
+                                    .map(Set::size)
+                                    .filter(v -> v >= 3)
+                                    .isPresent()
+                            )
+
+                            .sorted(comparing(Resource::getId))
+
+                            .map(e -> id(e.getId()))
+
+                            .collect(toList())
+                    )
+
             );
 
         }
@@ -571,6 +612,7 @@ public abstract class EngineTestRetrieveQuery {
 
         }
 
+
         @Test void testSortOnExpression() {
 
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
@@ -594,6 +636,61 @@ public abstract class EngineTestRetrieveQuery {
             );
 
         }
+
+        @Test void testSortOnComputedExpression() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(with(new Employee(), employee -> employee.setCode(""))),
+                        order("year:birthdate", increasing)
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
+                    .map(Employee::getCode)
+                    .containsExactlyElementsOf(Employees.stream()
+                            .sorted(comparing(employee -> employee.getBirthdate().getYear()))
+                            .map(Employee::getCode)
+                            .collect(toList())
+                    )
+            );
+
+        }
+
+        @Test void testSortOnComputedAggregateExpression() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(with(new Employee(), employee -> employee.setCode(""))),
+                        order("year:max:reports.birthdate", increasing)
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
+                    .map(Employee::getCode)
+                    .containsExactlyElementsOf(Employees.stream()
+                            .sorted(comparing(
+
+                                    employee -> Optional.ofNullable(employee.getReports())
+                                            .flatMap(reports -> reports.stream()
+                                                    .map(Employee::getBirthdate)
+                                                    .max(LocalDate::compareTo)
+                                            )
+                                            .map(LocalDate::getYear)
+                                            .orElse(null),
+
+                                    nullsFirst(Integer::compareTo)
+
+                            ))
+                            .map(Employee::getCode)
+                            .collect(toList())
+                    )
+            );
+
+        }
+
 
         @Test void testSortOnMultipleCriteria() {
 

@@ -176,7 +176,7 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
 
         count(true) {
             @Override public Optional<Shape> apply(final Shape shape) {
-                return Optional.of(shape(minCount(1), maxCount(1), clazz(Integer.class)));
+                return Optional.of(shape(minCount(1), maxCount(1), clazz(BigInteger.class)));
             }
         },
 
@@ -200,7 +200,7 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
 
         avg(true) {
             @Override public Optional<Shape> apply(final Shape shape) {
-                return shape.clazz().map(clazz -> shape(maxCount(1), clazz(clazz)));
+                return shape.clazz().map(clazz -> shape(maxCount(1), clazz(clazz))); // !!! integer -> decimal
             }
         },
 
@@ -208,6 +208,18 @@ public abstract class Stash<T> extends AbstractList<T> implements Set<T> {
         abs(false) {
             @Override public Optional<Shape> apply(final Shape shape) {
                 return Optional.of(shape);
+            }
+        },
+
+        round(false) {
+            @Override public Optional<Shape> apply(final Shape shape) {
+                return Optional.of(shape);
+            }
+        },
+
+        year(false) {
+            @Override public Optional<Shape> apply(final Shape shape) {
+                return Optional.of(clazz(BigInteger.class));
             }
         };
 

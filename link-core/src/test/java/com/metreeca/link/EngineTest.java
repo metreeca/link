@@ -184,6 +184,7 @@ public abstract class EngineTest {
         });
     }
 
+
     private static <T> List<T> Records(final BiFunction<? super List<String>, ? super Stream<List<String>>, List<T>> mapper) {
         try ( final BufferedReader reader=new BufferedReader(new InputStreamReader(
                 requireNonNull(EngineTest.class.getResourceAsStream("EngineTest.tsv")), UTF_8
@@ -203,7 +204,7 @@ public abstract class EngineTest {
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// !!! review ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static String label(final Resource resource) {
         return resource == null ? null : resource.getLabel();
@@ -225,6 +226,8 @@ public abstract class EngineTest {
         return collection == null ? BigInteger.ZERO : integer(collection.size());
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static <K, V> Entry<K, V> entry(final K key, final V value) {
         return new AbstractMap.SimpleImmutableEntry<>(key, value);
@@ -254,21 +257,13 @@ public abstract class EngineTest {
 
         final Engine engine=engine();
 
-        Offices.forEach(office -> {
+        Offices.forEach(office -> engine.create(office).orElseThrow(() -> new RuntimeException(format(
+                "unable to create office <%s>", office.getId()
+        ))));
 
-            engine.create(office).orElseThrow(() -> new RuntimeException(format(
-                    "unable to create office <%s>", office.getId()
-            )));
-
-        });
-
-        Employees.forEach(employee -> {
-
-            engine.create(employee).orElseThrow(() -> new RuntimeException(format(
-                    "unable to create employee <%s>", employee.getId()
-            )));
-
-        });
+        Employees.forEach(employee -> engine.create(employee).orElseThrow(() -> new RuntimeException(format(
+                "unable to create employee <%s>", employee.getId()
+        ))));
 
         return engine;
     }
