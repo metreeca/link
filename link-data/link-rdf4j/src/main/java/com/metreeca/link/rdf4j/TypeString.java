@@ -23,7 +23,6 @@ import com.metreeca.link.rdf4j.RDF4J.Type;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.vocabulary.XSD;
 
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -43,7 +42,6 @@ final class TypeString implements Type<String> {
                 .filter(Value::isLiteral)
                 .map(Literal.class::cast)
 
-                .filter(v -> v.getDatatype().equals(XSD.STRING))
                 .map(Value::stringValue);
     }
 

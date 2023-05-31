@@ -23,7 +23,6 @@ import com.metreeca.link.rdf4j.RDF4J.Type;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.vocabulary.XSD;
 
 import java.math.BigDecimal;
 import java.util.Map.Entry;
@@ -33,6 +32,7 @@ import java.util.stream.Stream;
 import static java.util.Map.entry;
 
 final class TypeBigDecimal implements Type<BigDecimal> {
+
 
     @Override public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final BigDecimal value) {
         return entry(Stream.of(encoder.factory().createLiteral(value)), Stream.empty());
@@ -44,7 +44,6 @@ final class TypeBigDecimal implements Type<BigDecimal> {
                 .filter(Value::isLiteral)
                 .map(Literal.class::cast)
 
-                .filter(v -> v.getDatatype().equals(XSD.DECIMAL))
                 .map(Literal::decimalValue);
     }
 

@@ -23,7 +23,6 @@ import com.metreeca.link.rdf4j.RDF4J.Type;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.vocabulary.XSD;
 
 import java.time.LocalDateTime;
 import java.util.Map.Entry;
@@ -44,7 +43,6 @@ final class TypeLocalDateTime implements Type<LocalDateTime> {
                 .filter(Value::isLiteral)
                 .map(Literal.class::cast)
 
-                .filter(v -> v.getDatatype().equals(XSD.DATETIME))
                 .map(Literal::temporalAccessorValue)
                 .map(LocalDateTime::from);
     }

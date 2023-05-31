@@ -23,7 +23,6 @@ import com.metreeca.link.rdf4j.RDF4J.Type;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.vocabulary.XSD;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -44,7 +43,6 @@ final class TypeInteger implements Type<Integer> { // !!! selective BigInteger c
                 .filter(Value::isLiteral)
                 .map(Literal.class::cast)
 
-                .filter(v -> v.getDatatype().equals(XSD.INTEGER) || v.getDatatype().equals(XSD.INT))
                 .map(Literal::intValue);
     }
 

@@ -837,7 +837,6 @@ final class RDF4JTest extends EngineTest {
 
         }
 
-
         @Test void testSortOnTransformedProjectedExpression() {
 
             final Function<Employee, LocalDate> value=employee -> Optional
