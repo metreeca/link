@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static com.metreeca.link.Frame.with;
+import static com.metreeca.link.Query.Criterion.increasing;
 import static com.metreeca.link.Query.*;
 import static com.metreeca.link.Stash.integer;
 import static com.metreeca.link.Table.column;
@@ -716,9 +717,167 @@ final class RDF4JTest extends EngineTest {
     @Nested
     final class Sorting {
 
-        // order on expression
-        // order on computed expression
-        // order on projected computed expression
+        @Test void testSortOnExpression() {
+
+            final Function<Employee, Double> value=employee -> Optional.ofNullable(employee.getReports())
+                    .map(reports -> reports.stream()
+                            .map(Employee::getDelta)
+                            .filter(Objects::nonNull)
+                            .mapToDouble(BigDecimal::doubleValue)
+                            .average()
+                            .orElse(0.0)
+                    )
+                    .orElse(0.0);
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column(expression("code"), ""))
+                        )),
+                        order("avg:reports.delta", increasing)
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .sorted(comparing(value).thenComparing(Employee::getCode))
+
+                            .map(employee -> map(
+                                    entry("value", employee.getCode())
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
+
+        @Test void testSortOnComputedExpression() {
+
+            final Function<Employee, Double> value=employee -> Optional.ofNullable(employee.getReports())
+                    .map(reports -> reports.stream()
+                            .map(Employee::getBirthdate)
+                            .mapToDouble(LocalDate::getYear)
+                            .average()
+                            .orElse(0.0)
+                    )
+                    .orElse(0.0);
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column(expression("code"), ""))
+                        )),
+                        order("avg:year:reports.birthdate", increasing)
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .sorted(comparing(value).thenComparing(Employee::getCode))
+
+                            .map(employee -> map(
+                                    entry("value", employee.getCode())
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
+
+
+        @Test void testSortOnProjectedExpression() {
+
+            final Function<Employee, Double> value=employee -> Optional.ofNullable(employee.getReports())
+                    .map(reports -> reports.stream()
+                            .map(Employee::getDelta)
+                            .filter(Objects::nonNull)
+                            .mapToDouble(BigDecimal::doubleValue)
+                            .average()
+                            .orElse(0.0)
+                    )
+                    .map(v -> (double)Math.round(v))
+                    .orElse(0.0);
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("entry", column("code", "")),
+                                entry("value", column("round:avg:reports.delta", decimal(0)))
+                        )),
+                        order("value", increasing)
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .sorted(comparing(value).thenComparing(Employee::getCode))
+
+                            .map(e -> map(
+                                    entry("entry", e.getCode()),
+                                    entry("value", decimal(value.apply(e)).setScale(0, HALF_UP))
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
+
+
+        @Test void testSortOnTransformedProjectedExpression() {
+
+            final Function<Employee, LocalDate> value=employee -> Optional
+                    .ofNullable(employee.getReports())
+                    .flatMap(reports -> reports.stream()
+                            .map(Employee::getBirthdate)
+                            .max(LocalDate::compareTo)
+                    )
+                    .orElse(null);
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("entry", column("code", "")),
+                                entry("value", column("max:reports.birthdate", LocalDate.now()))
+                        )),
+                        order("year:value", increasing)
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .sorted(comparing(value, nullsFirst(LocalDate::compareTo))
+                                    .thenComparing(Employee::getCode)
+                            )
+
+                            .map(e -> map(
+                                    entry("entry", e.getCode()),
+                                    entry("value", value.apply(e))
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
 
     }
 
