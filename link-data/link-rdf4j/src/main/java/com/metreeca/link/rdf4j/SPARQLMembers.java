@@ -65,17 +65,17 @@ final class SPARQLMembers extends SPARQL {
         final Map<String, Expression> projection=plain ? Map.of() : projection((Table<?>)model);
 
         final Map<Expression, Constraint> filter=query.filter().entrySet().stream()
-                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue));
+                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
 
         final Map<Expression, Constraint> having=query.filter().entrySet().stream()
                 .filter(entry -> entry.getKey().aggregate())
-                .collect(toMap(entry -> entry.getKey(), Entry::getValue));
+                .collect(toMap(entry -> entry.getKey(), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
 
         final Map<Expression, Set<Object>> focus=query.focus().entrySet().stream()
-                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue));
+                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
 
         final Map<Expression, Criterion> order=query.order().entrySet().stream()
-                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue));
+                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
 
 
         final Coder member=var(id());

@@ -26,13 +26,16 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
 import static com.metreeca.link.Frame.with;
+import static com.metreeca.link.Query.Criterion.decreasing;
 import static com.metreeca.link.Query.Criterion.increasing;
 import static com.metreeca.link.Query.*;
 import static com.metreeca.link.Stash.integer;
@@ -880,8 +883,90 @@ final class RDF4JTest extends EngineTest {
 
     }
 
-    // !!! options
-    // !!! range
-    // !!! stats
+    @Nested
+    final class Analyzing {
+
+        @Test void testAnalyzeStats() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("count", column("count:", integer(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(List.of(map(
+                            entry("count", integer(Employees.size()))
+                    )))
+
+            );
+
+        }
+
+
+        @Test void testAnalyzeOptions() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("value", column("office.label", "")),
+                                entry("count", column("count:", integer(0)))
+                        )),
+                        order("count", decreasing),
+                        order("value", increasing)
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .collect(groupingBy(e -> e.getOffice().getLabel()))
+                            .entrySet().stream()
+
+                            .map(e -> map(
+                                    entry("count", integer(e.getValue().size())),
+                                    entry("value", e.getKey())
+                            ))
+
+                            .sorted(comparing((Map<String, ?> e) -> (BigInteger)e.get("count")).reversed()
+                                    .thenComparing(e -> (String)e.get("value"))
+                            )
+
+                            .collect(toList())
+                    )
+            );
+
+        }
+
+        @Test void testAnalyzeRange() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("min", column("min:seniority", integer(0))),
+                                entry("max", column("max:seniority", integer(0)))
+                        ))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(List.of(map(
+                            entry("min", integer(Employees.stream().mapToInt(Employee::getSeniority).min().orElseThrow())),
+                            entry("max", integer(Employees.stream().mapToInt(Employee::getSeniority).max().orElseThrow()))
+                    )))
+
+            );
+
+        }
+
+    }
 
 }
