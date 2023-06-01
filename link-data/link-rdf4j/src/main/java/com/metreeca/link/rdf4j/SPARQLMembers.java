@@ -69,7 +69,7 @@ final class SPARQLMembers extends SPARQL {
 
         final Map<Expression, Constraint> having=query.filter().entrySet().stream()
                 .filter(entry -> entry.getKey().aggregate())
-                .collect(toMap(entry -> entry.getKey(), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
 
         final Map<Expression, Set<Object>> focus=query.focus().entrySet().stream()
                 .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
