@@ -25,7 +25,6 @@ import org.eclipse.rdf4j.model.Resource;
 
 import java.net.URI;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -37,11 +36,15 @@ import static com.metreeca.link.rdf4j.Coder.*;
 
 import static java.lang.String.format;
 import static java.util.function.UnaryOperator.identity;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 final class SPARQLMembers extends SPARQL {
 
     private static final int DefaultLimit=100;
+
+    private static final Expression Root=Stash.expression("");
+
 
     private <T> Predicate<T> not(final Predicate<T> predicate) { // !!! review
         return Predicate.not(predicate);
@@ -64,19 +67,23 @@ final class SPARQLMembers extends SPARQL {
 
         final Map<String, Expression> projection=plain ? Map.of() : projection((Table<?>)model);
 
-        final Map<Expression, Constraint> filter=query.filter().entrySet().stream()
-                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+        final Map<Expression, Constraint> filter=resolve(projection, query.filter());
+        final Map<Expression, Set<Object>> focus=resolve(projection, query.focus());
+        final Map<Expression, Criterion> order=resolve(projection, query.order());
 
-        final Map<Expression, Constraint> having=query.filter().entrySet().stream()
-                .filter(entry -> entry.getKey().aggregate())
-                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+        final boolean grouping=(
 
-        final Map<Expression, Set<Object>> focus=query.focus().entrySet().stream()
-                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+                projection.isEmpty()
+                        || projection.values().stream().anyMatch(not(Expression::aggregate))
 
-        final Map<Expression, Criterion> order=query.order().entrySet().stream()
-                .collect(toMap(entry -> expand(projection, entry.getKey()), Entry::getValue, (x, y) -> y, LinkedHashMap::new));
+        ) && (
 
+                projection.values().stream().anyMatch(Expression::aggregate)
+                        || filter.keySet().stream().anyMatch(Expression::aggregate)
+                        || order.keySet().stream().anyMatch(Expression::aggregate)
+                        || focus.keySet().stream().anyMatch(Expression::aggregate)
+
+        );
 
         final Coder member=var(id());
 
@@ -160,147 +167,60 @@ final class SPARQLMembers extends SPARQL {
 
                 ))),
 
-                // grouping // !!! refactor
+                // grouping
 
-                space(plain ?
+                space(grouping ?
 
-                        !having.isEmpty()
-                                || focus.keySet().stream().anyMatch(Expression::aggregate)
-                                || order.keySet().stream().anyMatch(Expression::aggregate)
-
-                                ? group(member)
-
-                                : nothing()
-
-                        : projection.values().stream().anyMatch(not(Expression::aggregate)) &&
-                        (
-                                !having.isEmpty()
-                                        || order.keySet().stream().anyMatch(Expression::aggregate)
-                                        || focus.keySet().stream().anyMatch(Expression::aggregate)
-                                        || projection.values().stream().anyMatch(Expression::aggregate)
-                        ) ?
-
-                        group(items(projection.values().stream()
+                        group(plain ? member : items(projection.values().stream()
                                 .filter(not(Expression::aggregate))
                                 .map(expression -> var(id(expression)))
                                 .collect(toList())
                         ))
 
                         : nothing()
+
                 ),
 
-                // aggregate filters // !!! refactor
+                // aggregate filters
 
                 space(having(filter.entrySet().stream()
                         .filter(entry -> entry.getKey().aggregate())
-                        .flatMap(entry -> {
-
-                            final Expression expression=entry.getKey();
-                            final Constraint constraint=entry.getValue();
-
-                            return constraint(expression(expression), constraint, base);
-
-                        })
-
+                        .flatMap(entry -> constraint(expression(entry.getKey()), entry.getValue(), base))
                         .collect(toList()))
                 ),
 
-                // sorting // !!! refactor
+                // sorting
 
                 space(plain ?
 
                         order(items(
 
-                                // focus values
+                                focus(base, focus), // focus values
+                                order(order), // explicit criteria
 
-                                items(focus.entrySet().stream()
-                                        .map(entry -> {
-
-                                            final Expression expression=entry.getKey();
-                                            final Set<Object> values=entry.getValue();
-
-                                            return focus(values, base, expression.aggregate()
-                                                    ? expression(expression)
-                                                    : var(id(expression))
-                                            );
-
-                                        })
-                                        .collect(toList())
-                                ),
-
-                                // explicit criteria
-
-                                items(order.entrySet().stream()
-                                        .map(entry -> {
-
-                                            final Expression expression=entry.getKey();
-                                            final Criterion criterion=entry.getValue();
-
-                                            return order(criterion, expression.aggregate()
-                                                    ? expression(expression)
-                                                    : var(id(expression))
-                                            );
-
-                                        })
-                                        .collect(toList())
-                                ),
-
-                                // default criteria
-
-                                asc(member)
+                                order.containsKey(Root) ? nothing() : asc(member) // default criteria
 
                         ))
-
-                        // all aggregates >> single record >> no order
 
                         : projection.values().stream().anyMatch(not(Expression::aggregate)) ?
 
                         order(items(
 
-                                // focus values
+                                focus(base, focus), // focus values
+                                order(order), // explicit criteria
 
-                                items(focus.entrySet().stream()
-                                        .map(entry -> {
-
-                                            final Expression expression=entry.getKey();
-                                            final Set<Object> values=entry.getValue();
-
-                                            return focus(values, base, expression.aggregate()
-                                                    ? expression(expression)
-                                                    : var(id(expression))
-                                            );
-
-                                        })
-                                        .collect(toList())
-                                ),
-
-                                // explicit criteria
-
-                                items(order.entrySet().stream()
-                                        .map(entry -> {
-
-                                            final Criterion criterion=entry.getValue();
-                                            final Expression expression=entry.getKey();
-
-                                            return order(criterion, expression.aggregate()
-                                                    ? expression(expression)
-                                                    : var(id(expression))
-                                            );
-
-                                        })
-                                        .collect(toList())
-                                ),
-
-                                // default criteria // !!! exclude projected values already ordered
-
-                                items(projection.entrySet().stream()
+                                items(projection.entrySet().stream() // default criteria
+                                        .filter(not(entry -> order.containsKey(entry.getValue())))
                                         .map(entry -> asc(var(id(entry.getKey(), entry.getValue()))))
                                         .collect(toList())
                                 )
 
                         ))
 
+                        // all aggregates >> single record >> no order
+
                         : nothing()
+
                 ),
 
                 // range
@@ -326,7 +246,16 @@ final class SPARQLMembers extends SPARQL {
     }
 
 
-    private static Expression expand(final Map<String, Expression> projection, final Expression expression) {
+    private static <V> Map<Expression, V> resolve(final Map<String, Expression> projection, final Map<Expression, V> map) {
+
+        final Map<Expression, V> expanded=new LinkedHashMap<>();
+
+        map.forEach((expression, value) -> expanded.put(resolve(projection, expression), value));
+
+        return expanded;
+    }
+
+    private static Expression resolve(final Map<String, Expression> projection, final Expression expression) {
         return Optional.of(expression.path())
                 .filter(path -> path.size() == 1)
                 .map(path -> path.get(0))
@@ -364,6 +293,41 @@ final class SPARQLMembers extends SPARQL {
 
     private Coder having(final Collection<Coder> coders) {
         return coders.isEmpty() ? nothing() : having(indent(list("\n&& ", coders)));
+    }
+
+
+    private Coder focus(final URI base, final Map<Expression, Set<Object>> focus) {
+        return items(focus.entrySet().stream()
+                .map(entry -> {
+
+                    final Expression expression=entry.getKey();
+                    final Set<Object> values=entry.getValue();
+
+                    return focus(values, base, expression.aggregate()
+                            ? expression(expression)
+                            : var(id(expression))
+                    );
+
+                })
+                .collect(toList())
+        );
+    }
+
+    private Coder order(final Map<Expression, Criterion> order) {
+        return items(order.entrySet().stream()
+                .map(entry -> {
+
+                    final Expression expression=entry.getKey();
+                    final Criterion criterion=entry.getValue();
+
+                    return order(criterion, expression.aggregate()
+                            ? expression(expression)
+                            : var(id(expression))
+                    );
+
+                })
+                .collect(toList())
+        );
     }
 
 

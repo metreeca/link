@@ -714,6 +714,37 @@ public abstract class EngineTestRetrieveTable {
 
         }
 
+        @Test void testFilterOnNonAggregateProjectedExpression() {
+
+            assertThat(testbed().retrieve(with(new Employees(), employees -> {
+
+                employees.setId(id("/employees/"));
+                employees.setMembers(query(
+                        model(table(
+                                entry("entry", column("code", "")),
+                                entry("value", column("seniority", integer(0)))
+                        )),
+                        filter("value", gte(integer(3)))
+                ));
+
+            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+
+                    .isEqualTo(Employees.stream()
+
+                            .filter(e -> e.getSeniority() >= 3)
+
+                            .map(e -> map(
+                                    entry("entry", e.getCode()),
+                                    entry("value", integer(e.getSeniority()))
+                            ))
+
+                            .collect(toList())
+                    )
+
+            );
+
+        }
+
     }
 
     @Nested
