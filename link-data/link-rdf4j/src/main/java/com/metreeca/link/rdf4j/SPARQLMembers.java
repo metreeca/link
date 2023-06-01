@@ -94,7 +94,7 @@ final class SPARQLMembers extends SPARQL {
 
                         // member type constraint
 
-                        shape.types().findFirst() // !!! only first?
+                        shape.types().findFirst() // !!! only most-specific?
                                 .map(type -> space(edge(member, text("a"), iri(type))))
                                 .orElseGet(Coder::nothing),
 
@@ -146,7 +146,7 @@ final class SPARQLMembers extends SPARQL {
                                 .filter(not(Expression::aggregate))
                                 .filter(Expression::computed)
 
-                                .map(expression -> line(bind(id(expression), expression(expression))))
+                                .map(expression -> line(bind(expression(expression), id(expression))))
                                 .collect(toList())
                         )),
 
@@ -314,6 +314,8 @@ final class SPARQLMembers extends SPARQL {
     }
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     private static Map<String, Expression> projection(final Table<?> model) {
 
         final Map<String, Expression> projection=new LinkedHashMap<>();
@@ -348,7 +350,7 @@ final class SPARQLMembers extends SPARQL {
                     final String alias=entry.getKey();
                     final Expression expression=entry.getValue();
 
-                    return expression.aggregate() ? as(id(alias), expression(expression)) : var(id(expression));
+                    return expression.aggregate() ? as(expression(expression), id(alias)) : var(id(expression));
 
                 })
                 .collect(toList())

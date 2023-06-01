@@ -347,11 +347,11 @@ abstract class SPARQL {
         return text(" *");
     }
 
-    Coder bind(final String id, final Coder expression) {
-        return items(text(" bind"), as(id, expression));
+    Coder bind(final Coder expression, final String id) {
+        return items(text(" bind"), as(expression, id));
     }
 
-    Coder as(final String id, final Coder expression) {
+    Coder as(final Coder expression, final String id) {
         return items(text(" ("), expression, text(" as "), var(id), text(')'));
     }
 
