@@ -36,10 +36,10 @@ import static com.metreeca.link.Shape.forward;
 import static com.metreeca.link.Shape.reverse;
 import static com.metreeca.link.Table.table;
 import static com.metreeca.link.rdf4j.RDF4J.*;
+import static com.metreeca.link.rdf4j.SPARQL.query;
 
 import static java.lang.String.format;
 import static java.util.Map.entry;
-import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.*;
 import static org.eclipse.rdf4j.model.util.Values.iri;
 
@@ -191,30 +191,6 @@ final class TypeFrame implements Type<Frame<?>> {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private Collection<Frame<?>> decode(final Decoder decoder, final Frame<?> model, final Collection<Resource> resources) {
-
-        final List<Entry<String, Object>> scalars=model.entries(false)
-
-                .filter(not(e -> e.getValue() == null))
-                .filter(not(e -> e.getValue() instanceof Collection))
-
-                .collect(toList());
-
-        final List<Entry<String, Object>> collections=model.entries(false)
-
-                .filter(not(e -> e.getValue() == null))
-                .filter(e -> e.getValue() instanceof Collection)
-
-                .collect(toList());
-
-        // frame.id(decoder.relativize(frame.id()));
-
-        throw new UnsupportedOperationException(";( be implemented"); // !!!
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     private static Object decode(
             final Decoder decoder, final Shape shape,
             final Resource resource, final String property, final Object object, final Shape subshape
@@ -236,14 +212,14 @@ final class TypeFrame implements Type<Frame<?>> {
 
         final Object model=query.model();
 
-        final SPARQLMembers sparql=new SPARQLMembers();
+        final TypeFrameGenerator generator=new TypeFrameGenerator();
 
-        final String members=sparql.members(
+        final String members=query(generator.members(
                 resource,
                 shape.virtual() ? Optional.empty() : Optional.of(property),
                 subshape,
                 query
-        );
+        ));
 
 
         if ( model instanceof Table ) {
@@ -256,7 +232,7 @@ final class TypeFrame implements Type<Frame<?>> {
                             HashMap::new, // ;( handle null values
                             (map, entry) -> map.put(
                                     entry.getKey(),
-                                    bindings.getValue(sparql.id(entry.getKey(), entry.getValue()))
+                                    bindings.getValue(generator.id(entry.getKey(), entry.getValue()))
                             ),
                             Map::putAll
                     )
@@ -288,7 +264,7 @@ final class TypeFrame implements Type<Frame<?>> {
         } else {
 
             final List<Value> values=select(connection, members, bindings ->
-                    bindings.getValue(sparql.id())
+                    bindings.getValue(generator.id())
             );
 
             return values.stream()
@@ -307,14 +283,14 @@ final class TypeFrame implements Type<Frame<?>> {
 
         final RepositoryConnection connection=decoder.connection();
 
-        final SPARQLMembers generator=new SPARQLMembers();
+        final TypeFrameGenerator generator=new TypeFrameGenerator();
 
-        final String members=generator.members(
+        final String members=query(generator.members(
                 resource,
                 shape.virtual() ? Optional.empty() : Optional.of(property),
                 subshape,
                 query()
-        );
+        ));
 
         final List<Value> values=select(connection, members, bindings ->
                 bindings.getValue(generator.id())

@@ -52,7 +52,7 @@ import static org.eclipse.rdf4j.model.vocabulary.RDF4J.SHACL_SHAPE_GRAPH;
  */
 public final class RDF4J implements Engine {
 
-    static final ValueFactory factory=new AbstractValueFactory() { };
+    private static final ValueFactory factory=new AbstractValueFactory() { };
 
 
     public static RDF4J rdf4j(final Repository repository) {

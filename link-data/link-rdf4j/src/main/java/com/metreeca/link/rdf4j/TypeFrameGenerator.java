@@ -20,12 +20,12 @@ import com.metreeca.link.*;
 import com.metreeca.link.Query.Criterion;
 import com.metreeca.link.Stash.Expression;
 import com.metreeca.link.Stash.Transform;
+import com.metreeca.link.Table.Column;
 
 import org.eclipse.rdf4j.model.Resource;
 
 import java.net.URI;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Query.Constraint;
@@ -33,27 +33,78 @@ import static com.metreeca.link.Query.Criterion.increasing;
 import static com.metreeca.link.Query.pattern;
 import static com.metreeca.link.Stash.Transform.count;
 import static com.metreeca.link.rdf4j.Coder.*;
+import static com.metreeca.link.rdf4j.SPARQL.and;
+import static com.metreeca.link.rdf4j.SPARQL.as;
+import static com.metreeca.link.rdf4j.SPARQL.asc;
+import static com.metreeca.link.rdf4j.SPARQL.bind;
+import static com.metreeca.link.rdf4j.SPARQL.bound;
+import static com.metreeca.link.rdf4j.SPARQL.count;
+import static com.metreeca.link.rdf4j.SPARQL.desc;
+import static com.metreeca.link.rdf4j.SPARQL.edge;
+import static com.metreeca.link.rdf4j.SPARQL.eq;
+import static com.metreeca.link.rdf4j.SPARQL.filter;
+import static com.metreeca.link.rdf4j.SPARQL.function;
+import static com.metreeca.link.rdf4j.SPARQL.having;
+import static com.metreeca.link.rdf4j.SPARQL.in;
+import static com.metreeca.link.rdf4j.SPARQL.iri;
+import static com.metreeca.link.rdf4j.SPARQL.limit;
+import static com.metreeca.link.rdf4j.SPARQL.not;
+import static com.metreeca.link.rdf4j.SPARQL.offset;
+import static com.metreeca.link.rdf4j.SPARQL.optional;
+import static com.metreeca.link.rdf4j.SPARQL.or;
+import static com.metreeca.link.rdf4j.SPARQL.orderBy;
+import static com.metreeca.link.rdf4j.SPARQL.regex;
+import static com.metreeca.link.rdf4j.SPARQL.select;
+import static com.metreeca.link.rdf4j.SPARQL.star;
+import static com.metreeca.link.rdf4j.SPARQL.str;
+import static com.metreeca.link.rdf4j.SPARQL.value;
+import static com.metreeca.link.rdf4j.SPARQL.var;
+import static com.metreeca.link.rdf4j.SPARQL.where;
 
 import static java.lang.String.format;
+import static java.util.function.Predicate.not;
 import static java.util.function.UnaryOperator.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
-final class SPARQLMembers extends SPARQL {
+final class TypeFrameGenerator {
 
     private static final int DefaultLimit=100;
 
     private static final Expression Root=Stash.expression("");
 
 
-    private <T> Predicate<T> not(final Predicate<T> predicate) { // !!! review
-        return Predicate.not(predicate);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private final Map<Object, String> scope=new HashMap<>();
+
+
+    String id() {
+        return id(List.of());
+    }
+
+    String id(final String alias, final Column column) {
+        return id(alias, column.expression());
+    }
+
+
+    private String id(final String alias, final Expression expression) {
+        return expression.aggregate() ? id(alias) : id(expression);
+    }
+
+    private String id(final Expression expression) {
+        return id(expression.computed() ? expression : expression.path());
+    }
+
+
+    private String id(final Object object) {
+        return scope.computeIfAbsent(object, o -> String.valueOf(scope.size()));
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    String members(
+    Coder members(
             final Resource container,
             final Optional<String> predicate,
             final Shape shape,
@@ -87,7 +138,7 @@ final class SPARQLMembers extends SPARQL {
 
         final Coder member=var(id());
 
-        return query(items(
+        return items(
 
                 select(plain, plain ? member : projection(projection)),
 
@@ -96,7 +147,7 @@ final class SPARQLMembers extends SPARQL {
                         // collection membership
 
                         predicate
-                                .map(iri -> edge(resource(container), iri, member))
+                                .map(iri -> edge(value(container), iri, member))
                                 .orElseGet(Coder::nothing),
 
                         // member type constraint
@@ -124,11 +175,11 @@ final class SPARQLMembers extends SPARQL {
 
                                 .map(path -> line(optional(edge(member,
 
-                                        path(shape.properties(path).orElseThrow(() ->
+                                        shape.properties(path).orElseThrow(() ->
                                                 new IllegalArgumentException(format(
                                                         "unknown shape path <%s>", path
                                                 ))
-                                        )),
+                                        ),
 
                                         var(id(path))
 
@@ -171,7 +222,7 @@ final class SPARQLMembers extends SPARQL {
 
                 space(grouping ?
 
-                        group(plain ? member : items(projection.values().stream()
+                        SPARQL.groupBy(plain ? member : items(projection.values().stream()
                                 .filter(not(Expression::aggregate))
                                 .map(expression -> var(id(expression)))
                                 .collect(toList())
@@ -193,7 +244,7 @@ final class SPARQLMembers extends SPARQL {
 
                 space(plain ?
 
-                        order(items(
+                        orderBy(items(
 
                                 focus(base, focus), // focus values
                                 order(order), // explicit criteria
@@ -204,7 +255,7 @@ final class SPARQLMembers extends SPARQL {
 
                         : projection.values().stream().anyMatch(not(Expression::aggregate)) ?
 
-                        order(items(
+                        orderBy(items(
 
                                 focus(base, focus), // focus values
                                 order(order), // explicit criteria
@@ -230,7 +281,7 @@ final class SPARQLMembers extends SPARQL {
                         line(limit(Optional.of(query.limit()).filter(v -> v > 0).orElse(DefaultLimit)))
                 )
 
-        ));
+        );
     }
 
 
@@ -284,15 +335,6 @@ final class SPARQLMembers extends SPARQL {
                 })
                 .collect(toList())
         );
-    }
-
-
-    private Coder filter(final Collection<Coder> coders) {
-        return coders.isEmpty() ? nothing() : filter(indent(list("\n&& ", coders)));
-    }
-
-    private Coder having(final Collection<Coder> coders) {
-        return coders.isEmpty() ? nothing() : having(indent(list("\n&& ", coders)));
     }
 
 
@@ -357,13 +399,6 @@ final class SPARQLMembers extends SPARQL {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private Coder path(final List<String> path) {
-        return list("/", path.stream()
-                .map(this::iri)
-                .collect(toList())
-        );
-    }
-
     private Coder expression(final Expression expression) {
         return transform(
                 expression.transforms(),
@@ -408,20 +443,20 @@ final class SPARQLMembers extends SPARQL {
 
 
     private Coder lt(final Coder value, final Object limit, final URI base) {
-        return lt(value, value(limit, base));
+        return SPARQL.lt(value, value(limit, base));
     }
 
     private Coder gt(final Coder value, final Object limit, final URI base) {
-        return gt(value, value(limit, base));
+        return SPARQL.gt(value, value(limit, base));
     }
 
 
     private Coder lte(final Coder value, final Object limit, final URI base) {
-        return lte(value, value(limit, base));
+        return SPARQL.lte(value, value(limit, base));
     }
 
     private Coder gte(final Coder value, final Object limit, final URI base) {
-        return gte(value, value(limit, base));
+        return SPARQL.gte(value, value(limit, base));
     }
 
 

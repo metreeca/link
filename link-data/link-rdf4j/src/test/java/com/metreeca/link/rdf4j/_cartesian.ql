@@ -11,20 +11,13 @@ construct where {
 
 		rdfs:label ?cl;
 		skos:prefLabel ?cp;
-		skos:altLabel ?ca;
-		dct:title ?ct;
-
-		skos:broader ?b;
 		skos:narrower ?n.
 
-    ?b rdfs:label ?bl;
-       dct:title ?bt;
-       skos:prefLabel ?bp;
-       skos:altLabel ?ba.
-
     ?n rdfs:label ?nl;
-       dct:title ?nt;
-       skos:prefLabel ?np;
-       skos:altLabel ?na.
+        skos:prefLabel ?np;
+	    skos:narrower ?nn.
+
+    ?nn rdfs:label ?nl;
+        skos:prefLabel ?np.
 
 }

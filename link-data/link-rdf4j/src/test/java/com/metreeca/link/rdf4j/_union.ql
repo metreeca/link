@@ -1,78 +1,52 @@
-prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-prefix skos: <http://www.w3.org/2004/02/skos/core#>
-prefix dct: <http://purl.org/dc/terms/>
+base <https://data.ec2u.eu/>
 
-# <https://data.ec2u.eu/concepts/euroscivoc/3d76a7f4-5a16-411e-ae44-7b712d5222ee> # natural sciences
-# <https://data.ec2u.eu/concepts/euroscivoc/803cff73-504b-41ae-9873-1836c76c15d1> # biological sciences
+prefix skos: <http://www.w3.org/2004/02/skos/core#>
 
 construct {
 
-    ?r ?l ?s . ?s ?p ?o
+    ?x ?xp ?xo.
+    ?y ?yp ?yo.
+    ?z ?zp ?zo.
 
 } where {
 
+	values ?x {
+		<https://data.ec2u.eu/concepts/euroscivoc/3d76a7f4-5a16-411e-ae44-7b712d5222ee>
+	}
+
 	{
 
-		values ?s {
-			<https://data.ec2u.eu/concepts/euroscivoc/803cff73-504b-41ae-9873-1836c76c15d1>
-		}
+	    values ?xp {
+            skos:prefLabel
+            skos:altLabel
+            skos:narrower
+	    }
 
-		values ?p {
-			rdfs:label
-			skos:prefLabel
-			skos:altLabel
-			dct:title
-		}
-
-		?s ?p ?o
+		?x ?xp ?xo
 
 	} union {
 
-		values ?r {
-			<https://data.ec2u.eu/concepts/euroscivoc/803cff73-504b-41ae-9873-1836c76c15d1>
-		}
+        ?x skos:narrower ?y
 
-		values ?l {
-			skos:broader
-		}
+        values ?yp {
+             skos:prefLabel
+             skos:altLabel
+             skos:narrower
+       }
 
-		?r ?l ?s
+       ?y ?yp ?yo
 
-		values ?p {
-			rdfs:label
-			skos:prefLabel
-			skos:altLabel
-			dct:title
-		}
+    } union {
 
-		?s ?p ?o
+        ?x skos:narrower/skos:narrower ?z
 
-	} union {
+        values ?zp {
+             skos:prefLabel
+             skos:altLabel
+       }
 
-		{ select * {
+       ?z ?zp ?zo
 
-			values ?r {
-				<https://data.ec2u.eu/concepts/euroscivoc/803cff73-504b-41ae-9873-1836c76c15d1>
-			}
-
-			values ?l {
-				skos:narrower
-			}
-
-			?r ?l ?s
-
-		} limit 3 }
-
-		values ?p {
-			rdfs:label
-			skos:prefLabel
-			skos:altLabel
-			dct:title
-		}
-
-		?s ?p ?o
-
-	}
+    }
 
 }
