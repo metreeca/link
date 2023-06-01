@@ -89,19 +89,19 @@ public abstract class Query<T> extends Stash<T> {
                         LinkedHashMap::new
                 ));
 
-        final Map<Expression, Criterion> order=queries.stream()
-                .flatMap(query -> query.order().entrySet().stream())
-                .collect(toMap(
-                        Map.Entry::getKey, Map.Entry::getValue,
-                        (x, y) -> x == y ? x : error("conflicting <order> <%s> / <%s>", x, y),
-                        LinkedHashMap::new
-                ));
-
         final Map<Expression, Set<Object>> focus=queries.stream()
                 .flatMap(query -> query.focus().entrySet().stream())
                 .collect(toMap(
                         Map.Entry::getKey, Map.Entry::getValue,
                         (x, y) -> x.equals(y) ? x : error("conflicting <focus> <%s> / <%s>", x, y),
+                        LinkedHashMap::new
+                ));
+
+        final Map<Expression, Criterion> order=queries.stream()
+                .flatMap(query -> query.order().entrySet().stream())
+                .collect(toMap(
+                        Map.Entry::getKey, Map.Entry::getValue,
+                        (x, y) -> x == y ? x : error("conflicting <order> <%s> / <%s>", x, y),
                         LinkedHashMap::new
                 ));
 
@@ -116,6 +116,24 @@ public abstract class Query<T> extends Stash<T> {
                 .orElse(0);
 
 
+        if ( model instanceof Table ) {
+
+            final Set<String> columns=((Table<?>)model).columns().keySet();
+
+            Stream.of(filter, focus, order)
+
+                    .map(Map::keySet)
+                    .flatMap(Collection::stream)
+                    .map(Expression::path)
+
+                    .filter(path -> path.size() > 1)
+                    .filter(path -> columns.contains(path.get(0)))
+
+                    .forEach(path -> error("expression path <%s> refers to a field of a projected value", path));
+
+        }
+
+
         return new Query<>() {
 
             @Override public Object model() { return model; }
@@ -124,9 +142,9 @@ public abstract class Query<T> extends Stash<T> {
                 return filter;
             }
 
-            @Override public Map<Expression, Criterion> order() { return order; }
-
             @Override public Map<Expression, Set<Object>> focus() { return focus; }
+
+            @Override public Map<Expression, Criterion> order() { return order; }
 
             @Override public int offset() {
                 return offset;
@@ -187,39 +205,6 @@ public abstract class Query<T> extends Stash<T> {
     }
 
 
-    public static <T> Query<T> order(final String expression, final Criterion criterion) {
-
-        if ( expression == null ) {
-            throw new NullPointerException("null expression");
-        }
-
-        if ( criterion == null ) {
-            throw new NullPointerException("null criterion");
-        }
-
-        return order(expression(expression), criterion);
-    }
-
-    public static <T> Query<T> order(final Expression expression, final Criterion criterion) {
-
-        if ( expression == null ) {
-            throw new NullPointerException("null expression");
-        }
-
-        if ( criterion == null ) {
-            throw new NullPointerException("null criterion");
-        }
-
-        final Map<Expression, Criterion> order=Map.of(expression, criterion);
-
-        return new Query<>() {
-
-            @Override public Map<Expression, Criterion> order() { return order; }
-
-        };
-    }
-
-
     public static <T> Query<T> focus(final String expression, final Set<Object> values) {
 
         if ( expression == null ) {
@@ -248,6 +233,39 @@ public abstract class Query<T> extends Stash<T> {
         return new Query<>() {
 
             @Override public Map<Expression, Set<Object>> focus() { return focus; }
+
+        };
+    }
+
+
+    public static <T> Query<T> order(final String expression, final Criterion criterion) {
+
+        if ( expression == null ) {
+            throw new NullPointerException("null expression");
+        }
+
+        if ( criterion == null ) {
+            throw new NullPointerException("null criterion");
+        }
+
+        return order(expression(expression), criterion);
+    }
+
+    public static <T> Query<T> order(final Expression expression, final Criterion criterion) {
+
+        if ( expression == null ) {
+            throw new NullPointerException("null expression");
+        }
+
+        if ( criterion == null ) {
+            throw new NullPointerException("null criterion");
+        }
+
+        final Map<Expression, Criterion> order=Map.of(expression, criterion);
+
+        return new Query<>() {
+
+            @Override public Map<Expression, Criterion> order() { return order; }
 
         };
     }

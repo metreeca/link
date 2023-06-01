@@ -21,13 +21,19 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
+import static com.metreeca.link.Query.Criterion.increasing;
 import static com.metreeca.link.Query.*;
+import static com.metreeca.link.Table.column;
+import static com.metreeca.link.Table.table;
 
+import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class QueryTest {
 
-    @Nested final class Constraints {
+    @Nested
+    final class Constraints {
 
         @Test void testMergeLt() {
             assertThat(and(lt(10), lt(100)))
@@ -67,6 +73,86 @@ final class QueryTest {
 
             assertThat(and(any("x"), any("y")).any())
                     .containsExactly(Set.of("x"), Set.of("y"));
+
+        }
+
+    }
+
+    @Nested
+    final class Projections {
+
+        @Test void testReportFilteringOnNestedProjectedValue() {
+
+            assertThatIllegalArgumentException().isThrownBy(() -> query(
+
+                    model(table(entry("value", column("field", "")))),
+                    filter("value.field", any())
+
+            ));
+
+            assertThat(query(
+
+                    model(table(entry("value", column("field", "")))),
+                    filter("abs:value", any())
+
+            )).isInstanceOf(Query.class);
+
+            assertThat(query(
+
+                    model(table(entry("value", column("field", "")))),
+                    filter("abs:field.value", any())
+
+            )).isInstanceOf(Query.class);
+
+        }
+
+        @Test void testReportFocusingOnNestedProjectedValue() {
+
+            assertThatIllegalArgumentException().isThrownBy(() -> query(
+
+                    model(table(entry("value", column("field", "")))),
+                    focus("value.field", Set.of(""))
+
+            ));
+
+            assertThat(query(
+
+                    model(table(entry("value", column("field", "")))),
+                    focus("abs:value", Set.of(""))
+
+            )).isInstanceOf(Query.class);
+
+            assertThat(query(
+
+                    model(table(entry("value", column("field", "")))),
+                    focus("abs:field.value", Set.of(""))
+
+            )).isInstanceOf(Query.class);
+
+        }
+
+        @Test void testReportOrderingOnNestedProjectedValue() {
+
+            assertThatIllegalArgumentException().isThrownBy(() -> query(
+
+                    model(table(entry("value", column("field", "")))),
+                    order("value.field", increasing)
+
+            ));
+
+            assertThat(query(
+
+                    model(table(entry("value", column("field", "")))),
+                    order("abs:value", increasing)
+
+            )).isInstanceOf(Query.class);
+
+            assertThat(query(
+
+                    model(table(entry("value", column("field", "")))),
+                    order("abs:field.value", increasing)
+
+            )).isInstanceOf(Query.class);
 
         }
 

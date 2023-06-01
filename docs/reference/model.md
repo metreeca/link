@@ -51,15 +51,18 @@ transform = 1*ALPHA
 field = 1*(DIGIT/ALPHA/"_") / "'" *(%[^'\\] / "\\" %['\\']) "'"; !!! review
 ```
 
+Expressions may refer to one of the projected fields (`"{field}={expression}"`), but in this case references to nested
+fields are not allowed.
+
 # Items
 
 ```json
 {
-    "members": [
-        {
-            "id": "",
-            "label": "",
-            ">=seniority": 3,
+  "members": [
+    {
+      "id": "",
+      "label": "",
+      ">=seniority": 3,
             "@": 100,
             "#": 10
         }
