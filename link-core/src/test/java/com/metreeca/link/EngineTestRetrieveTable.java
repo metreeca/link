@@ -22,10 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 import static com.metreeca.link.EngineTest.*;
@@ -33,7 +30,6 @@ import static com.metreeca.link.Frame.with;
 import static com.metreeca.link.Query.Criterion.decreasing;
 import static com.metreeca.link.Query.Criterion.increasing;
 import static com.metreeca.link.Query.*;
-import static com.metreeca.link.Stash.*;
 import static com.metreeca.link.Table.column;
 import static com.metreeca.link.Table.table;
 
@@ -91,13 +87,21 @@ public abstract class EngineTestRetrieveTable {
 
                     .isEqualTo(Employees.stream()
 
-                            .sorted(comparing((Employee employee) -> label(employee))
-                                    .thenComparing(e -> label(supervisor(e)))
+                            .sorted(comparing((Employee employee) -> employee.getLabel())
+                                    .thenComparing(e -> Optional.of(e)
+                                            .map(Employee::getSupervisor)
+                                            .map(Employee::getLabel)
+                                            .orElse(null)
+                                    )
                             )
 
                             .map(e -> map(
-                                    entry("employee", label(e)),
-                                    entry("supervisor", label(supervisor(e)))
+                                    entry("employee", e.getLabel()),
+                                    entry("supervisor", Optional.of(e)
+                                            .map(Employee::getSupervisor)
+                                            .map(Employee::getLabel)
+                                            .orElse(null)
+                                    )
                             ))
 
                             .collect(toList())
@@ -205,17 +209,21 @@ public abstract class EngineTestRetrieveTable {
             }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
 
                     .map(record -> map(
-                            entry("employee", label((Resource)record.get("employee"))),
-                            entry("office", label(office((Employee)record.get("employee")))),
+                            entry("employee", ((Resource)record.get("employee")).getLabel()),
+                            entry("office", ((Employee)record.get("employee")).getOffice().getLabel()),
                             entry("reports", record.get("reports"))
                     ))
 
                     .isEqualTo(Employees.stream()
 
                             .map(employee -> map(
-                                    entry("employee", label(employee)),
-                                    entry("office", label(office(employee))),
-                                    entry("reports", size(reports(employee)))
+                                    entry("employee", employee.getLabel()),
+                                    entry("office", employee.getOffice().getLabel()),
+                                    entry("reports", integer(Optional.of(employee)
+                                            .map(Employee::getReports)
+                                            .map(Set::size)
+                                            .orElse(0)
+                                    ))
                             ))
 
                             .collect(toList())
@@ -353,7 +361,7 @@ public abstract class EngineTestRetrieveTable {
             }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
 
                     .isEqualTo(List.of(map(
-                            entry("value", size(Employees))
+                            entry("value", integer(Employees.size()))
                     )))
 
             );

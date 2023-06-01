@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
@@ -39,7 +38,6 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Frame.with;
-import static com.metreeca.link.Stash.integer;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -201,29 +199,6 @@ public abstract class EngineTest {
             throw new UncheckedIOException(e);
 
         }
-    }
-
-
-    //// !!! review ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public static String label(final Resource resource) {
-        return resource == null ? null : resource.getLabel();
-    }
-
-    public static Resource office(final Employee employee) {
-        return employee == null ? null : employee.getOffice();
-    }
-
-    public static Employee supervisor(final Employee employee) {
-        return employee == null ? null : employee.getSupervisor();
-    }
-
-    public static Set<Employee> reports(final Employee employee) {
-        return employee == null ? null : employee.getReports();
-    }
-
-    public static BigInteger size(final Collection<?> collection) {
-        return collection == null ? BigInteger.ZERO : integer(collection.size());
     }
 
 
