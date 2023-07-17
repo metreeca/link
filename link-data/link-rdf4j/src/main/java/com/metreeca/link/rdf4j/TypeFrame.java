@@ -160,9 +160,12 @@ final class TypeFrame implements Type<Frame<?>> {
 
                 .map(resource -> {
 
-                    final Frame<?> frame=model.copy();
+                    final Frame<?> frame=model.copy().id(resource.isIRI() && model.id() != null
+                            ? decoder.relativize(resource.stringValue())
+                            : null
+                    );
 
-                    frame.entries(false).forEach(e -> {
+                    frame.entries(false).forEach(e -> { // !!! batch retrieval
 
                         final String field=e.getKey();
                         final Object object=e.getValue();
@@ -183,7 +186,7 @@ final class TypeFrame implements Type<Frame<?>> {
 
                     });
 
-                    return frame.id(decoder.relativize(frame.id()));
+                    return frame;
 
                 });
     }
@@ -267,8 +270,10 @@ final class TypeFrame implements Type<Frame<?>> {
                     bindings.getValue(generator.id())
             );
 
+            // !!! batch retrieval
+
             return values.stream()
-                    .flatMap(v -> decoder.decode(v, model).stream()) // !!! batch retrieval
+                    .flatMap(v -> decoder.decode(v, model).stream())
                     .collect(toList());
         }
 
@@ -384,6 +389,17 @@ final class TypeFrame implements Type<Frame<?>> {
         try ( final Stream<BindingSet> results=connection.prepareTupleQuery(query).evaluate().stream() ) {
 
             return results.map(mapper).collect(toList());
+
+        }
+
+    }
+
+
+    private static Collection<Statement> construct(final RepositoryConnection connection, final String query) {
+
+        try ( final Stream<Statement> results=connection.prepareGraphQuery(query).evaluate().stream() ) {
+
+            return results.collect(toList());
 
         }
 
