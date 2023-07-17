@@ -29,6 +29,8 @@ import java.util.function.Function;
 import static com.metreeca.link.EngineTest.id;
 import static com.metreeca.link.Frame.with;
 import static com.metreeca.link.Local.local;
+import static com.metreeca.link.Stash.decimal;
+import static com.metreeca.link.Stash.integer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -66,6 +68,20 @@ public abstract class EngineTestXcode {
 
     @Test void testBoolean() {
         xcode(false, true, Data::isBoolean_, Data::setBoolean_);
+    }
+
+
+    @Test void testInteger() {
+        xcode(integer(0), integer(123), Data::getInteger, Data::setInteger);
+    }
+
+    @Test void testDecimal() {
+        xcode(decimal(0), decimal(1.123), Data::getDecimal, Data::setDecimal);
+    }
+
+
+    @Test void testString() {
+        xcode("", "string", Data::getString, Data::setString);
     }
 
 
@@ -108,11 +124,6 @@ public abstract class EngineTestXcode {
 
     @Test void testURI() {
         xcode(URI.create(""), URI.create("https://example.com/"), Data::getUri, Data::setUri);
-    }
-
-
-    @Test void testString() {
-        xcode("", "string", Data::getString, Data::setString);
     }
 
 
@@ -180,6 +191,15 @@ public abstract class EngineTestXcode {
 
         public void setDecimal(final BigDecimal decimal) {
             this.decimal=decimal;
+        }
+
+
+        public String getString() {
+            return string;
+        }
+
+        public void setString(final String string) {
+            this.string=string;
         }
 
 
@@ -262,15 +282,6 @@ public abstract class EngineTestXcode {
 
         public void setUri(final URI uri) {
             this.uri=uri;
-        }
-
-
-        public String getString() {
-            return string;
-        }
-
-        public void setString(final String string) {
-            this.string=string;
         }
 
 
