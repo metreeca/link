@@ -30,8 +30,10 @@ public interface Engine {
      *
      * @param model the model for resource to be retrieved, possibly containing collection filters
      * @param <V>   the type of the resource to be retrieved
+     *
      * @return an optional containing a description of the retrieved resource modelled after {@code model}, if its
      * {@linkplain Frame#id() id} was present in the storage backend; an empty optional, otherwise
+     *
      * @throws NullPointerException     if {@code model} is null
      * @throws IllegalArgumentException if {@code model} doesn't define a well-formed id, according to driver-specific
      *                                  rules

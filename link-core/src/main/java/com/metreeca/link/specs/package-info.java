@@ -14,23 +14,7 @@
  * limitations under the License.
  */
 
-package com.metreeca.link.json;
-
-
-import com.metreeca.link.Table;
-import com.metreeca.link.json.JSON.Decoder;
-import com.metreeca.link.json.JSON.Encoder;
-
-import java.io.IOException;
-
-final class TypeTable implements com.metreeca.link.json.JSON.Type<Table<?>> {
-
-    @Override public void encode(final Encoder encoder, final Table<?> value) throws IOException {
-        encoder.encode(value.records());
-    }
-
-    @Override public Table<?> decode(final Decoder decoder, final Class<Table<?>> clazz) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-}
+/**
+ * Collection fetching specs.
+ */
+package com.metreeca.link.specs;

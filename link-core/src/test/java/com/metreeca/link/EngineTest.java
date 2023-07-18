@@ -17,8 +17,10 @@
 package com.metreeca.link;
 
 import com.metreeca.link.jsonld.*;
-import com.metreeca.link.shacl.Optional;
-import com.metreeca.link.shacl.*;
+import com.metreeca.link.shacl.MaxInclusive;
+import com.metreeca.link.shacl.MinInclusive;
+import com.metreeca.link.shacl.Pattern;
+import com.metreeca.link.shacl.Required;
 
 import org.junit.jupiter.api.Nested;
 
@@ -254,7 +256,7 @@ public abstract class EngineTest {
     }
 
     @Nested
-    final class RetrieveQuery extends EngineTestRetrieveQuery {
+    final class RetrieveObject extends EngineTestRetrieveObject {
 
         @Override public Engine testbed() {
             return EngineTest.this.testbed();
@@ -323,7 +325,6 @@ public abstract class EngineTest {
         @Property("rdfs:")
         private String label;
 
-        @Optional
         @Property("rdfs:")
         private String comment;
 
@@ -410,10 +411,8 @@ public abstract class EngineTest {
         private Reference office;
 
 
-        @Optional
         private Employee supervisor;
 
-        @Optional
         @Property("report")
         private Set<Employee> reports;
 
@@ -422,15 +421,12 @@ public abstract class EngineTest {
         private Instant active;
 
 
-        @Optional
         @MinInclusive()
         private BigDecimal ytd;
 
-        @Optional
         @MinInclusive()
         private BigDecimal last;
 
-        @Optional
         private BigDecimal delta;
 
 

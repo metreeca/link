@@ -23,6 +23,10 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * @see <a href="https://www.w3.org/TR/shacl/#MaxCountConstraintComponent">Shapes Constraint Language (SHACL) -
+ * 4.2.2 sh:maxCount</a>
+ */
 @Target({ FIELD, METHOD })
 @Retention(RUNTIME)
 public @interface MaxCount {

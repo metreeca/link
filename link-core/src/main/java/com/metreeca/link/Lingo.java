@@ -106,7 +106,7 @@ final class Lingo {
                     final Optional<String> value=Optional.ofNullable(namespaces.get(prefix));
 
                     final String base=prefix.isEmpty()
-                            ? value.orElse(Frame.DefaultSpace)
+                            ? value.orElse(Shape.DefaultSpace)
                             : value.orElseThrow(() -> new IllegalArgumentException(format(
                             "undefined namespace prefix <%s>", prefix
                     )));

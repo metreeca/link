@@ -15,6 +15,6 @@
  */
 
 /**
- * JSON-LD data model.
+ * Core data model.
  */
 package com.metreeca.link;

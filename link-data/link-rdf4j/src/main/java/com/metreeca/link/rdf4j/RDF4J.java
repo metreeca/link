@@ -22,7 +22,6 @@ import com.metreeca.link.Local;
 import com.metreeca.link.Shape;
 
 import org.eclipse.rdf4j.model.*;
-import org.eclipse.rdf4j.model.base.AbstractValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.SHACL;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -33,13 +32,17 @@ import java.net.URI;
 import java.time.*;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.metreeca.link.Frame.root;
+import static com.metreeca.link.Shape.root;
 
 import static java.lang.String.format;
 import static java.util.Map.entry;
+import static java.util.concurrent.CompletableFuture.allOf;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.eclipse.rdf4j.model.util.Values.iri;
 import static org.eclipse.rdf4j.model.vocabulary.RDF4J.NIL;
@@ -51,9 +54,6 @@ import static org.eclipse.rdf4j.model.vocabulary.RDF4J.SHACL_SHAPE_GRAPH;
  * @see <a href="https://www.w3.org/Submission/CBD/">CBD - Concise Bounded Description</a>
  */
 public final class RDF4J implements Engine {
-
-    private static final ValueFactory factory=new AbstractValueFactory() { };
-
 
     public static RDF4J rdf4j(final Repository repository) {
 
@@ -99,7 +99,7 @@ public final class RDF4J implements Engine {
 
             entry(Frame.class, new TypeFrame()),
             entry(List.class, new TypeList()),
-            entry(Set.class, new TypeSet()),
+            entry(Collection.class, new TypeCollection()),
 
             entry(Object.class, new TypeObject())
 
@@ -146,22 +146,6 @@ public final class RDF4J implements Engine {
     }
 
 
-    @SuppressWarnings("unchecked")
-    private <T> Type<T> type(final T model) {
-        return types.stream()
-
-                .filter(entry -> entry.getKey().isAssignableFrom(model.getClass()))
-                .findFirst()
-                .map(Entry::getValue)
-
-                .map(codec -> ((Type<T>)codec))
-
-                .orElseThrow(() -> new IllegalArgumentException(format(
-                        "unsupported value type <%s>", model.getClass().getName()
-                )));
-    }
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public RDF4J shape(final Shape shape, final IRI context) {
@@ -170,7 +154,7 @@ public final class RDF4J implements Engine {
             throw new NullPointerException("null shape");
         }
 
-        final Collection<Statement> model=new ShapeCodec().encode(shape).collect(toList());
+        final Collection<Statement> model=new SHACLCodec().encode(shape).collect(toList());
 
         try ( final RepositoryConnection connection=repository.getConnection() ) {
 
@@ -180,8 +164,7 @@ public final class RDF4J implements Engine {
 
                 connection.clear(context);
                 connection.add(model, context);
-                connection.add(this.context != null ? this.context : NIL, SHACL.SHAPES_GRAPH, context,
-                        SHACL_SHAPE_GRAPH);
+                connection.add(this.context != null ? this.context : NIL, SHACL.SHAPES_GRAPH, context, SHACL_SHAPE_GRAPH);
                 connection.commit();
 
             } catch ( final Throwable t ) {
@@ -208,10 +191,25 @@ public final class RDF4J implements Engine {
 
         return process(model, (frame, base) -> {
 
-            final IRI id=iri(frame.id());
+            final Shape shape=frame.shape();
+            final boolean virtual=shape.virtual();
 
             try ( final RepositoryConnection connection=repository.getConnection() ) {
-                return new Decoder(this, connection, base).decode(id, frame);
+
+                final Reader reader=new Reader(this, base, connection);
+
+                final CompletableFuture<Boolean> id;
+                if ( virtual ) { id=completedFuture(true); } else {
+                    final Resource resource=iri(frame.id());
+                    id=reader.fetcher().fetch(resource);
+                }
+
+                final CompletableFuture<Optional<Frame<V>>> future=reader.lookup(Set.of(iri(frame.id())), frame);
+
+                reader.execute();
+
+                return id.thenCombine(future, (present, value) -> value.filter(v -> present)).join();
+
             }
 
         });
@@ -226,16 +224,18 @@ public final class RDF4J implements Engine {
 
         return process(value, (frame, base) -> {
 
-            final IRI id=iri(frame.id());
-
-            final Stream<Statement> description=new Encoder(this, base)
-
-                    .encode(frame)
-                    .getValue()
-
-                    .filter(statement -> statement.getSubject().equals(id));
-
             try ( final RepositoryConnection connection=repository.getConnection() ) {
+
+                final IRI id=iri(frame.id());
+
+                final Stream<Statement> description=new Writer(this, base, connection)
+
+                        .encode(frame)
+                        .getValue()
+
+                        .filter(statement -> statement.getSubject().equals(id));
+
+                // !!! batch?
 
                 final boolean present=connection.hasStatement(id, null, null, true, context);
 
@@ -278,14 +278,16 @@ public final class RDF4J implements Engine {
 
             final IRI id=iri(frame.id());
 
-            final Stream<Statement> description=new Encoder(this, base)
-
-                    .encode(frame)
-                    .getValue()
-
-                    .filter(statement -> statement.getSubject().equals(id));
-
             try ( final RepositoryConnection connection=repository.getConnection() ) {
+
+                final Stream<Statement> description=new Writer(this, base, connection)
+
+                        .encode(frame)
+                        .getValue()
+
+                        .filter(statement -> statement.getSubject().equals(id));
+
+                // !!! batch?
 
                 final boolean present=connection.hasStatement(id, null, null, true, context)
                         || connection.hasStatement(null, null, id, true, context);
@@ -331,6 +333,8 @@ public final class RDF4J implements Engine {
             final IRI id=iri(frame.id());
 
             try ( final RepositoryConnection connection=repository.getConnection() ) {
+
+                // !!! batch?
 
                 final boolean present=connection.hasStatement(id, null, null, true, context)
                         || connection.hasStatement(null, null, id, true, context);
@@ -388,46 +392,144 @@ public final class RDF4J implements Engine {
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// !!! review ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static interface Type<T> {
+     static interface Type<T> {
 
-        public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final T value);
+         public CompletableFuture<Optional<T>> lookup(final Reader reader, final Set<Value> values, final T model);
 
-        public Optional<T> decode(final Decoder decoder, final Value value, final T model);
+         // !!! public CompletableFuture<Set<Value>> insert(final Encoder encoder, final T value);
+         // !!! public CompletableFuture<Set<Value>> remove(final Encoder encoder, final T value);
 
-    }
+         public Entry<Stream<Value>, Stream<Statement>> _encode(final Writer writer, final T value);
+
+     }
 
 
-    public static final class Encoder {
+    abstract static class Delegate {
 
-        private final String base;
         private final RDF4J rdf4j;
 
-        private final Map<Object, Collection<Value>> cache=new HashMap<>();
+        private final String base;
+        private final RepositoryConnection connection;
+
+        private final Map<Supplier<? extends SPARQL>, SPARQL> workers=new HashMap<>(); // async workers by factory
 
 
-        private Encoder(final RDF4J rdf4j, final String base) {
+        private Delegate(final RDF4J rdf4j, final String base, final RepositoryConnection connection) {
 
-            this.base=base;
             this.rdf4j=rdf4j;
 
+            this.base=base;
+            this.connection=connection;
         }
 
 
         public ValueFactory factory() {
-            return factory;
+            return connection.getValueFactory();
         }
 
 
-        public String resolve(final String iri) {
+        String relativize(final String iri) {
             return iri == null ? null
-                    : iri.startsWith("/") ? base + iri.substring(1)
+                    : iri.startsWith(base) ? iri.substring(base.length()-1)
+                    : iri;
+        }
+
+        String resolve(final String iri) {
+            return iri == null ? null
+                    : iri.startsWith("/") ? base+iri.substring(1)
                     : iri;
         }
 
 
-        public Entry<Stream<Value>, Stream<Statement>> encode(final Object value) {
+        @SuppressWarnings("unchecked") <T> Type<T> type(final T model) {
+            return rdf4j.types.stream()
+
+                    .filter(entry -> entry.getKey().isAssignableFrom(model.getClass()))
+                    .findFirst()
+                    .map(Entry::getValue)
+
+                    .map(codec -> (Type<T>)codec)
+
+                    .orElseThrow(() -> new IllegalArgumentException(format(
+                            "unsupported value type <%s>", model.getClass().getName()
+                    )));
+        }
+
+        @SuppressWarnings("unchecked") <T extends SPARQL> T worker(final Supplier<T> factory) { // !!! public
+
+            if ( factory == null ) {
+                throw new NullPointerException("null factory");
+            }
+
+            return (T)workers.computeIfAbsent(factory, Supplier::get);
+        }
+
+
+        void execute() {
+
+            CompletableFuture<?>[] batch;
+
+            do {
+
+                batch=workers.values().stream()
+                        .flatMap(v -> { // !!! private
+                            return v.run(connection).stream();
+                        })
+                        .toArray(CompletableFuture[]::new);
+
+                allOf(batch).join();
+
+            } while ( batch.length > 0 );
+
+        }
+
+    }
+
+
+    static final class Reader extends Delegate {
+
+        private Reader(final RDF4J rdf4j, final String base, final RepositoryConnection connection) {
+            super(rdf4j, base, connection);
+        }
+
+
+        <T> CompletableFuture<Optional<T>> lookup(final Set<Value> values, final T model) {
+
+            if ( values == null ) {
+                throw new NullPointerException("null values");
+            }
+
+            if ( model == null ) {
+                throw new NullPointerException("null model");
+            }
+
+            return type(model).lookup(this, values, model);
+        }
+
+
+        SPARQLFetcher fetcher() {
+            return worker(SPARQLFetcher::new);
+        }
+
+        SPARQLSelector selector() {
+            return worker(SPARQLSelector::new);
+        }
+
+    }
+
+    static final class Writer extends Delegate {
+
+        private final Map<Object, Collection<Value>> cache=new HashMap<>();
+
+
+        private Writer(final RDF4J rdf4j, final String base, final RepositoryConnection connection) {
+            super(rdf4j, base, connection);
+        }
+
+
+        Entry<Stream<Value>, Stream<Statement>> encode(final Object value) {
 
             final Collection<Value> cached=cache.get(value);
 
@@ -437,7 +539,7 @@ public final class RDF4J implements Engine {
 
             } else {
 
-                final Entry<Stream<Value>, Stream<Statement>> entry=rdf4j.type(value).encode(this, value);
+                final Entry<Stream<Value>, Stream<Statement>> entry=type(value)._encode(this, value);
 
                 final List<Value> values=entry.getKey().collect(toList());
 
@@ -448,42 +550,9 @@ public final class RDF4J implements Engine {
             }
         }
 
-    }
 
-    public static final class Decoder {
-
-        private final String base;
-        private final RDF4J rdf4j;
-
-        private final RepositoryConnection connection;
-
-
-        private Decoder(final RDF4J rdf4j, final RepositoryConnection connection, final String base) {
-
-            this.base=base;
-            this.rdf4j=rdf4j;
-
-            this.connection=connection;
-        }
-
-
-        public RepositoryConnection connection() {
-            return connection;
-        }
-
-
-        public String relativize(final String iri) {
-            return iri == null ? null
-                    : iri.startsWith(base) ? iri.substring(base.length()-1)
-                    : iri;
-        }
-
-
-        @SuppressWarnings("unchecked")
-        public <T> Optional<T> decode(final Value value, final T model) {
-
-            return value == null ? Optional.empty() : rdf4j.type(model).decode(this, value, model);
-
+        SPARQLUpdater updater() {
+            return worker(SPARQLUpdater::new);
         }
 
     }

@@ -16,7 +16,6 @@
 
 package com.metreeca.link.shacl;
 
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -24,8 +23,16 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Alternate regular expression pattern constraint.
+ *
+ * <p>Alternate annotation for {@link Pattern}, providing syntactic compatibility with
+ * {@link java.util.regex.Pattern} imports in the same compilation unit.</p>
+ */
 @Target({ FIELD, METHOD })
 @Retention(RUNTIME)
-public @interface Optional {
+public @interface Format {
+
+    public String value();
 
 }

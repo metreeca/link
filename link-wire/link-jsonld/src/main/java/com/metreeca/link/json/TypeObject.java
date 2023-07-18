@@ -17,26 +17,26 @@
 package com.metreeca.link.json;
 
 import com.metreeca.link.Frame;
-import com.metreeca.link.Query;
 import com.metreeca.link.Shape;
-import com.metreeca.link.Table;
-import com.metreeca.link.Table.Column;
 import com.metreeca.link.json.JSON.Decoder;
 import com.metreeca.link.json.JSON.Encoder;
 import com.metreeca.link.json.JSON.Type;
+import com.metreeca.link.specs.*;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
 import static com.metreeca.link.Frame.frame;
-import static com.metreeca.link.Query.*;
-import static com.metreeca.link.Stash.alias;
-import static com.metreeca.link.Stash.expression;
-import static com.metreeca.link.Table.column;
 import static com.metreeca.link.json.JSON.Tokens.*;
+import static com.metreeca.link.specs.Constraint.*;
+import static com.metreeca.link.specs.Expression.expression;
+import static com.metreeca.link.specs.Query.query;
+import static com.metreeca.link.specs.Specs.*;
+import static com.metreeca.link.specs.Table.table;
 
 import static java.lang.String.format;
+import static java.util.Map.entry;
 
 final class TypeObject implements Type<Object> {
 
@@ -147,7 +147,7 @@ final class TypeObject implements Type<Object> {
         final Frame<?> frame=frame(clazz);
         final Shape shape=frame.shape();
 
-        final Collection<Query<?>> queries=new ArrayList<>();
+        final Collection<Specs> specs=new ArrayList<>();
         final Map<String, Column> columns=new LinkedHashMap<>();
 
         decoder.token(LBRACE);
@@ -162,19 +162,19 @@ final class TypeObject implements Type<Object> {
 
             decoder.token(COLON);
 
-            final Query<?> query=query(decoder, field, shape);
+            final Specs spec=specs(decoder, field, shape);
 
-            if ( query != null ) {
+            if ( spec != null ) {
 
-                queries.add(query);
+                specs.add(spec);
 
             } else {
 
-                final Map<String, Column> table=table(decoder, field, shape);
+                final Map.Entry<String, Column> column=column(decoder, field, shape);
 
-                if ( table != null ) {
+                if ( column != null ) {
 
-                    columns.putAll(table);
+                    columns.put(column.getKey(), column.getValue());
 
                 } else {
 
@@ -198,20 +198,17 @@ final class TypeObject implements Type<Object> {
                 final Object value=entry.getValue();
 
                 if ( value != null ) {
-                    columns.put(field, column(expression(List.of(field), List.of()), value));
+                    columns.put(field, Column.column(expression(List.of(field), List.of()), value));
                 }
 
             });
 
-            queries.add(model(Table.table(columns)));
+            final Specs[] specs1=new Specs[]{ Specs.specs(specs) };
+            return query(table(columns), specs1);
 
-            return Query.query(queries);
+        } else if ( !specs.isEmpty() ) {
 
-        } else if ( !queries.isEmpty() ) {
-
-            queries.add(model(frame.value()));
-
-            return Query.query(queries);
+            return query(frame.value(), Specs.specs(specs));
 
         } else {
 
@@ -220,6 +217,7 @@ final class TypeObject implements Type<Object> {
         }
 
     }
+
 
     private Collection<?> array(final Decoder decoder, final Class<?> clazz) throws IOException {
         return array(decoder, clazz, false);
@@ -259,7 +257,7 @@ final class TypeObject implements Type<Object> {
     }
 
 
-    private Query<?> query(final Decoder decoder, final String constraint, final Shape shape) throws IOException {
+    private Specs specs(final Decoder decoder, final String constraint, final Shape shape) throws IOException {
 
         if ( constraint.startsWith("<=") ) {
 
@@ -305,7 +303,7 @@ final class TypeObject implements Type<Object> {
 
         } else if ( constraint.equals("^") ) {
 
-            final Collection<Query<?>> queries=new ArrayList<>();
+            final Collection<Specs> queries=new ArrayList<>();
 
             decoder.token(LBRACE);
 
@@ -335,11 +333,11 @@ final class TypeObject implements Type<Object> {
 
             decoder.token(RBRACE);
 
-            return Query.query(queries);
+            return Specs.specs(queries);
 
         } else if ( constraint.equals("$") ) {
 
-            final Collection<Query<?>> queries=new ArrayList<>();
+            final Collection<Specs> queries=new ArrayList<>();
 
             decoder.token(LBRACE);
 
@@ -361,7 +359,7 @@ final class TypeObject implements Type<Object> {
 
             decoder.token(RBRACE);
 
-            return Query.query(queries);
+            return Specs.specs(queries);
 
         } else if ( constraint.equals("@") ) {
 
@@ -379,9 +377,9 @@ final class TypeObject implements Type<Object> {
 
     }
 
-    private Map<String, Column> table(final Decoder decoder, final String field, final Shape shape) throws IOException {
+    private Entry<String, Column> column(final Decoder decoder, final String field, final Shape shape) throws IOException {
 
-        final Optional<Entry<String, Expression>> alias=alias(field);
+        final Optional<Entry<String, Expression>> alias=Expression.alias(field);
 
         if ( alias.isPresent() ) {
 
@@ -392,7 +390,7 @@ final class TypeObject implements Type<Object> {
 
             final Object model=(_shape != null) ? value(decoder, _shape) : decoder.decode(Object.class);
 
-            return Map.of(name, column(expression, model));
+            return entry(name, Column.column(expression, model));
 
         } else {
 

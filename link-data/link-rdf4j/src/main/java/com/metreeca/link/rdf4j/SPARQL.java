@@ -23,16 +23,17 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.util.Values;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 import static com.metreeca.link.Frame.frame;
+import static com.metreeca.link.Shape.direct;
 import static com.metreeca.link.Shape.forward;
-import static com.metreeca.link.Shape.reverse;
 import static com.metreeca.link.rdf4j.Coder.*;
 
 import static java.lang.String.format;
@@ -40,24 +41,24 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
 /**
- * SPARQL query generator.
+ * Async SPARQL worker.
  */
-final class SPARQL {
+abstract class SPARQL {
 
     private static final Logger logger=Logger.getLogger(SPARQL.class.getName());
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static String sparql(final Coder sparql) {
 
-    static String query(final Coder query) {
-
-        final String code=query.toString();
+        final String code=sparql.toString();
 
         logger.info(() -> code); // !!! fine
 
         return code;
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     static Coder comment(final String text) {
         return space(text("# ", text));
@@ -162,15 +163,29 @@ final class SPARQL {
     }
 
     static Coder union(final Collection<Coder> patterns) {
-        return list(" union ", patterns.stream().map(Coder::block).collect(toList()));
+
+        final List<Coder> coders=patterns.stream()
+                .filter(Predicate.not(nothing()::equals))
+                .collect(toList());
+        ;
+
+        return coders.isEmpty() ? nothing()
+                : coders.size() == 1 ? coders.get(0)
+                : list(" union ", coders.stream().map(Coder::block).collect(toList()));
     }
 
 
-    static Coder edge(final Coder source, final String predicate, final Coder target) {
-        return forward(predicate)
-                ? edge(source, iri(predicate), target)
-                : edge(target, iri(reverse(predicate)), source);
+    static Coder values(final List<Coder> vars, final List<List<? extends Value>> records) {
+        return items(text(" values "), parens(vars), block(records.stream()
+                .map(record -> parens(list(" ", record.stream()
+                        .map(SPARQL::value)
+                        .collect(toList())
+                )))
+                .map(Coder::line)
+                .collect(toList())
+        ));
     }
+
 
     static Coder edge(final Coder source, final List<String> path, final Coder target) {
         return edge(source, list("/", path.stream().map(SPARQL::iri).collect(toList())), target);
@@ -222,9 +237,9 @@ final class SPARQL {
 
 
     static Coder iri(final String iri) {
-        return forward(iri)
+        return direct(iri)
                 ? items(text('<'), text(iri), text('>'))
-                : items(text("^<"), text(reverse(iri)), text('>'));
+                : items(text("^<"), text(forward(iri)), text('>'));
     }
 
 
@@ -321,8 +336,16 @@ final class SPARQL {
     }
 
 
+    static Coder bound(final Coder expression) {
+        return function("bound", expression);
+    }
+
     static Coder in(final Coder expression, final Collection<Coder> expressions) {
         return items(expression, text(" in ("), list(", ", expressions), text(')'));
+    }
+
+    static Coder exists(final Coder pattern) {
+        return items(text(" exists "), block(pattern));
     }
 
 
@@ -336,10 +359,6 @@ final class SPARQL {
 
     static Coder isLiteral(final Coder expression) {
         return function("isLiteral", expression);
-    }
-
-    static Coder bound(final Coder expression) {
-        return function("bound", expression);
     }
 
 
@@ -395,6 +414,25 @@ final class SPARQL {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private SPARQL() { }
+    private final Map<Object, String> scope=new HashMap<>();
+
+
+    abstract Optional<CompletableFuture<Void>> run(final RepositoryConnection connection);
+
+
+    <T> Collection<T> snapshot(final Collection<T> queue) {
+        try {
+
+            return new ArrayList<>(queue);
+
+        } finally {
+
+            queue.clear();
+        }
+    }
+
+    String id(final Object object) {
+        return scope.computeIfAbsent(object, o -> String.valueOf(scope.size()));
+    }
 
 }

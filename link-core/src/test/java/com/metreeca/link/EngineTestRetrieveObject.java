@@ -30,18 +30,20 @@ import java.util.Set;
 
 import static com.metreeca.link.EngineTest.Employees;
 import static com.metreeca.link.EngineTest.id;
+import static com.metreeca.link.Frame.integer;
 import static com.metreeca.link.Frame.with;
-import static com.metreeca.link.Query.Criterion.decreasing;
-import static com.metreeca.link.Query.Criterion.increasing;
-import static com.metreeca.link.Query.*;
-import static com.metreeca.link.Stash.integer;
+import static com.metreeca.link.specs.Constraint.*;
+import static com.metreeca.link.specs.Criterion.decreasing;
+import static com.metreeca.link.specs.Criterion.increasing;
+import static com.metreeca.link.specs.Query.query;
+import static com.metreeca.link.specs.Specs.*;
 
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsFirst;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public abstract class EngineTestRetrieveQuery {
+public abstract class EngineTestRetrieveObject {
 
     protected abstract Engine testbed();
 
@@ -53,9 +55,7 @@ public abstract class EngineTestRetrieveQuery {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(new Employee())
-                ));
+                employees.setMembers(query(new Employee()));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
                     .map(Resource::getId)
@@ -72,7 +72,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("label", like("none"))
                 ));
 
@@ -88,11 +88,11 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> {
+                        with(new Employee(), employee -> {
                             employee.setId("");
                             employee.setLabel("");
                             employee.setSeniority(0);
-                        }))
+                        })
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
@@ -125,12 +125,12 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> {
+                        with(new Employee(), employee -> {
                             employee.setId("");
                             employee.setSupervisor(with(new Employee(), supervisor -> {
                                 supervisor.setLabel("");
                             }));
-                        }))
+                        })
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
@@ -160,7 +160,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("seniority", lt(integer(3)))
                 ));
 
@@ -181,7 +181,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("seniority", gt(integer(3)))
                 ));
 
@@ -202,7 +202,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("seniority", lte(integer(3)))
                 ));
 
@@ -223,7 +223,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("seniority", gte(integer(3)))
                 ));
 
@@ -245,7 +245,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("label", like("ger bo"))
                 ));
 
@@ -267,7 +267,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("label", like("ger")),
                         filter("label", like("bo"))
                 ));
@@ -290,7 +290,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("", any(
                                 with(new Reference(), reference -> reference.setId("/employees/1056")),
                                 with(new Reference(), reference -> reference.setId("/employees/1088"))
@@ -317,10 +317,10 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
-                        filter("supervisor",
-                                any(with(new Reference(), reference -> reference.setId("/employees/1088")))
-                        )
+                        with(new Employee(), employee -> employee.setId("")),
+                        filter("supervisor", any(
+                                with(new Reference(), reference -> reference.setId("/employees/1088"))
+                        ))
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
@@ -343,7 +343,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("supervisor", any(
                                 with(new Reference(), reference -> reference.setId("/employees/1056")),
                                 with(new Reference(), reference -> reference.setId("/employees/1088"))
@@ -373,7 +373,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("supervisor", any())
                 ));
 
@@ -396,7 +396,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("supervisor", any((Object)null))
                 ));
 
@@ -419,8 +419,11 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
-                        filter("supervisor", any(null, with(new Reference(), s -> s.setId(id("/employees/1002")))))
+                        with(new Employee(), employee -> employee.setId("")),
+                        filter("supervisor", any(
+                                null,
+                                with(new Reference(), s -> s.setId(id("/employees/1002")))
+                        ))
                 ));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
@@ -444,7 +447,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("supervisor.seniority", gte(integer(3)))
                 ));
 
@@ -468,7 +471,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("year:birthdate", gte(integer(2000)))
                 ));
 
@@ -497,7 +500,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         filter("count:reports", gte(integer(3)))
                 ));
 
@@ -534,9 +537,7 @@ public abstract class EngineTestRetrieveQuery {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId("")))
-                ));
+                employees.setMembers(query(with(new Employee(), employee -> employee.setId(""))));
 
             }))).hasValueSatisfying(employees -> assertThat(employees.getMembers())
                     .map(employee -> id(employee.getId()))
@@ -555,7 +556,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         order("", decreasing)
                 ));
 
@@ -576,7 +577,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         order("label", increasing)
                 ));
 
@@ -597,7 +598,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         order("label", decreasing)
                 ));
 
@@ -619,7 +620,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         order("supervisor.label", increasing)
                 ));
 
@@ -643,7 +644,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setCode(""))),
+                        with(new Employee(), employee -> employee.setCode("")),
                         order("year:birthdate", increasing)
                 ));
 
@@ -664,7 +665,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setCode(""))),
+                        with(new Employee(), employee -> employee.setCode("")),
                         order("year:max:reports.birthdate", increasing)
                 ));
 
@@ -698,7 +699,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         order("seniority", decreasing),
                         order("label", increasing)
                 ));
@@ -723,7 +724,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         offset(5),
                         limit(10)
                 ));
@@ -747,7 +748,7 @@ public abstract class EngineTestRetrieveQuery {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(with(new Employee(), employee -> employee.setId(""))),
+                        with(new Employee(), employee -> employee.setId("")),
                         offset(0),
                         limit(0)
                 ));

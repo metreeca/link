@@ -16,116 +16,202 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.*;
-import com.metreeca.link.Query.Criterion;
-import com.metreeca.link.Stash.Expression;
-import com.metreeca.link.Stash.Transform;
-import com.metreeca.link.Table.Column;
+import com.metreeca.link.Shape;
+import com.metreeca.link.specs.*;
 
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.metreeca.link.Query.Constraint;
-import static com.metreeca.link.Query.Criterion.increasing;
-import static com.metreeca.link.Query.pattern;
-import static com.metreeca.link.Stash.Transform.count;
+import static com.metreeca.link.Shape.direct;
+import static com.metreeca.link.Shape.forward;
 import static com.metreeca.link.rdf4j.Coder.*;
-import static com.metreeca.link.rdf4j.SPARQL.and;
-import static com.metreeca.link.rdf4j.SPARQL.as;
-import static com.metreeca.link.rdf4j.SPARQL.asc;
-import static com.metreeca.link.rdf4j.SPARQL.bind;
-import static com.metreeca.link.rdf4j.SPARQL.bound;
-import static com.metreeca.link.rdf4j.SPARQL.count;
-import static com.metreeca.link.rdf4j.SPARQL.desc;
-import static com.metreeca.link.rdf4j.SPARQL.edge;
-import static com.metreeca.link.rdf4j.SPARQL.eq;
-import static com.metreeca.link.rdf4j.SPARQL.filter;
-import static com.metreeca.link.rdf4j.SPARQL.function;
-import static com.metreeca.link.rdf4j.SPARQL.having;
-import static com.metreeca.link.rdf4j.SPARQL.in;
-import static com.metreeca.link.rdf4j.SPARQL.iri;
-import static com.metreeca.link.rdf4j.SPARQL.limit;
-import static com.metreeca.link.rdf4j.SPARQL.not;
-import static com.metreeca.link.rdf4j.SPARQL.offset;
-import static com.metreeca.link.rdf4j.SPARQL.optional;
-import static com.metreeca.link.rdf4j.SPARQL.or;
-import static com.metreeca.link.rdf4j.SPARQL.orderBy;
-import static com.metreeca.link.rdf4j.SPARQL.regex;
-import static com.metreeca.link.rdf4j.SPARQL.select;
-import static com.metreeca.link.rdf4j.SPARQL.star;
-import static com.metreeca.link.rdf4j.SPARQL.str;
-import static com.metreeca.link.rdf4j.SPARQL.value;
-import static com.metreeca.link.rdf4j.SPARQL.var;
-import static com.metreeca.link.rdf4j.SPARQL.where;
+import static com.metreeca.link.specs.Constraint.pattern;
+import static com.metreeca.link.specs.Criterion.increasing;
+import static com.metreeca.link.specs.Transform.count;
 
 import static java.lang.String.format;
-import static java.util.function.Predicate.not;
+import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.function.UnaryOperator.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
-final class TypeFrameGenerator {
+final class SPARQLSelector extends SPARQL {
 
     private static final int DefaultLimit=100;
 
-    private static final Expression Root=Stash.expression("");
+    private static final Expression Root=Expression.expression("");
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private final Map<Object, String> scope=new HashMap<>();
+    private final Collection<Task<Object, List<Value>>> objects=new ArrayList<>();
+    private final Collection<Task<Table, List<Map<String, Value>>>> tables=new ArrayList<>();
 
 
-    String id() {
-        return id(List.of());
+    CompletableFuture<List<Value>> select(
+            final Resource resource,
+            final Optional<String> predicate,
+            final Shape shape,
+            final Specs specs,
+            final Object model
+    ) {
+
+        if ( resource == null ) {
+            throw new NullPointerException("null resource");
+        }
+
+        if ( predicate == null ) {
+            throw new NullPointerException("null predicate");
+        }
+
+        if ( shape == null ) {
+            throw new NullPointerException("null shape");
+        }
+
+        if ( specs == null ) {
+            throw new NullPointerException("null specs");
+        }
+
+        if ( model == null ) {
+            throw new NullPointerException("null model");
+        }
+
+        return new Task<Object, List<Value>>(resource, predicate, shape, specs, model).schedule(objects::add);
+
     }
 
-    String id(final String alias, final Column column) {
-        return id(alias, column.expression());
-    }
+    CompletableFuture<List<Map<String, Value>>> select(
+            final Resource resource,
+            final Optional<String> predicate,
+            final Shape shape,
+            final Specs specs,
+            final Table model
+    ) {
 
+        if ( resource == null ) {
+            throw new NullPointerException("null resource");
+        }
 
-    private String id(final String alias, final Expression expression) {
-        return expression.aggregate() ? id(alias) : id(expression);
-    }
+        if ( predicate == null ) {
+            throw new NullPointerException("null predicate");
+        }
 
-    private String id(final Expression expression) {
-        return id(expression.computed() ? expression : expression.path());
-    }
+        if ( shape == null ) {
+            throw new NullPointerException("null shape");
+        }
 
+        if ( specs == null ) {
+            throw new NullPointerException("null specs");
+        }
 
-    private String id(final Object object) {
-        return scope.computeIfAbsent(object, o -> String.valueOf(scope.size()));
+        if ( model == null ) {
+            throw new NullPointerException("null model");
+        }
+
+        return new Task<Table, List<Map<String, Value>>>(resource, predicate, shape, specs, model).schedule(tables::add);
+
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    Coder members(
+    @Override Optional<CompletableFuture<Void>> run(final RepositoryConnection connection) { // !!! batch execution
+
+        final CompletableFuture<?>[] futures=Stream
+
+                .concat(
+
+                        snapshot(objects).stream().map(task -> CompletableFuture.runAsync(() -> {
+
+                            final Specs specs=task.specs;
+
+                            final String query=sparql(members(
+                                    task.resource, task.predicate, task.shape, specs, null
+                            ));
+
+                            try ( final Stream<BindingSet> results=connection.prepareTupleQuery(query).evaluate().stream() ) {
+
+                                task.complete(results
+                                        .map(bindings -> bindings.getValue(id()))
+                                        .collect(toList())
+                                );
+
+                            }
+
+                        })),
+
+                        snapshot(tables).stream().map(task -> CompletableFuture.runAsync(() -> {
+
+                            final Specs specs=task.specs;
+                            final Table table=task.model;
+
+                            final String query=sparql(members(
+                                    task.resource, task.predicate, task.shape, specs, table
+                            ));
+
+                            try ( final Stream<BindingSet> results=connection.prepareTupleQuery(query).evaluate().stream() ) {
+
+                                task.complete(results
+                                        .map((Function<BindingSet, Map<String, Value>>)bindings ->
+                                                table.entrySet().stream().collect(
+                                                        HashMap::new, // ;( handle null values
+                                                        (map, entry) -> map.put(
+                                                                entry.getKey(),
+                                                                bindings.getValue(id(entry.getKey(), entry.getValue()))
+                                                        ),
+                                                        Map::putAll
+                                                )
+                                        )
+                                        .collect(toList())
+                                );
+
+                            }
+
+                        }))
+
+                )
+
+                .toArray(CompletableFuture[]::new);
+
+        return futures.length == 0 ? Optional.empty() : Optional.of(allOf(futures));
+
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private Coder members(
             final Resource container,
             final Optional<String> predicate,
             final Shape shape,
-            final Query<?> query
+            final Specs specs,
+            final Map<String, Column> columns
     ) {
 
-        final URI base=URI.create(container.isIRI() ? container.stringValue() : Frame.DefaultBase);
-        final Object model=query.model();
+        final URI base=URI.create(container.isIRI() ? container.stringValue() : Shape.DefaultBase);
 
-        final boolean plain=!(model instanceof Table);
+        final boolean plain=columns == null;
 
-        final Map<String, Expression> projection=plain ? Map.of() : projection((Table<?>)model);
+        final Map<String, Expression> projection=plain ? Map.of() : expressions(columns);
 
-        final Map<Expression, Constraint> filter=resolve(projection, query.filter());
-        final Map<Expression, Set<Object>> focus=resolve(projection, query.focus());
-        final Map<Expression, Criterion> order=resolve(projection, query.order());
+        final Map<Expression, Constraint> filter=resolve(projection, specs.filter());
+        final Map<Expression, Set<Object>> focus=resolve(projection, specs.focus());
+        final Map<Expression, Criterion> order=resolve(projection, specs.order());
 
         final boolean grouping=(
 
                 projection.isEmpty()
-                        || projection.values().stream().anyMatch(not(Expression::aggregate))
+                        || projection.values().stream().anyMatch(Predicate.not(Expression::aggregate))
 
         ) && (
 
@@ -140,14 +226,17 @@ final class TypeFrameGenerator {
 
         return items(
 
-                select(plain, plain ? member : projection(projection)),
+                SPARQL.select(plain, plain ? member : projection(projection)),
 
                 space(where(space(
 
                         // collection membership
 
                         predicate
-                                .map(iri -> edge(value(container), iri, member))
+                                .map(iri -> direct(iri)
+                                        ? edge(value(container), iri(iri), member)
+                                        : edge(member, iri(forward(iri)), value(container))
+                                )
                                 .orElseGet(Coder::nothing),
 
                         // member type constraint
@@ -171,7 +260,7 @@ final class TypeFrameGenerator {
                                 .map(Expression::path)
                                 .distinct()
 
-                                .filter(not(List::isEmpty)) // not referring to the root value
+                                .filter(Predicate.not(List::isEmpty)) // not referring to the root value
 
                                 .map(path -> line(optional(edge(member,
 
@@ -201,7 +290,7 @@ final class TypeFrameGenerator {
 
                                 .flatMap(Collection::stream)
 
-                                .filter(not(Expression::aggregate))
+                                .filter(Predicate.not(Expression::aggregate))
                                 .filter(Expression::computed)
 
                                 .map(expression -> line(bind(expression(expression), id(expression))))
@@ -211,7 +300,7 @@ final class TypeFrameGenerator {
                         // non-aggregate filters
 
                         space(filter(filter.entrySet().stream()
-                                .filter(not(entry -> entry.getKey().aggregate()))
+                                .filter(Predicate.not(entry -> entry.getKey().aggregate()))
                                 .flatMap(entry -> constraint(var(id(entry.getKey())), entry.getValue(), base))
                                 .collect(toList()))
                         )
@@ -222,8 +311,8 @@ final class TypeFrameGenerator {
 
                 space(grouping ?
 
-                        SPARQL.groupBy(plain ? member : items(projection.values().stream()
-                                .filter(not(Expression::aggregate))
+                        groupBy(plain ? member : items(projection.values().stream()
+                                .filter(Predicate.not(Expression::aggregate))
                                 .map(expression -> var(id(expression)))
                                 .collect(toList())
                         ))
@@ -253,7 +342,7 @@ final class TypeFrameGenerator {
 
                         ))
 
-                        : projection.values().stream().anyMatch(not(Expression::aggregate)) ?
+                        : projection.values().stream().anyMatch(Predicate.not(Expression::aggregate)) ?
 
                         orderBy(items(
 
@@ -261,7 +350,7 @@ final class TypeFrameGenerator {
                                 order(order), // explicit criteria
 
                                 items(projection.entrySet().stream() // default criteria
-                                        .filter(not(entry -> order.containsKey(entry.getValue())))
+                                        .filter(Predicate.not(entry -> order.containsKey(entry.getValue())))
                                         .map(entry -> asc(var(id(entry.getKey(), entry.getValue()))))
                                         .collect(toList())
                                 )
@@ -277,8 +366,8 @@ final class TypeFrameGenerator {
                 // range
 
                 space(
-                        line(offset(query.offset())),
-                        line(limit(Optional.of(query.limit()).filter(v -> v > 0).orElse(DefaultLimit)))
+                        line(offset(specs.offset())),
+                        line(limit(Optional.of(specs.limit()).filter(v -> v > 0).orElse(DefaultLimit)))
                 )
 
         );
@@ -287,13 +376,33 @@ final class TypeFrameGenerator {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static Map<String, Expression> projection(final Table<?> model) {
+    private String id() {
+        return id(Root);
+    }
 
-        final Map<String, Expression> projection=new LinkedHashMap<>();
+    private String id(final String alias, final Column column) {
+        return id(alias, column.expression());
+    }
 
-        model.columns().forEach((alias, column) -> projection.put(alias, column.expression()));
 
-        return projection;
+    private String id(final String alias, final Expression expression) {
+        return expression.aggregate() ? id(alias) : id(expression);
+    }
+
+    private String id(final Expression expression) {
+        return id(expression.computed() ? expression : expression.path());
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static Map<String, Expression> expressions(final Map<String, Column> columns) {
+
+        final Map<String, Expression> expressions=new LinkedHashMap<>();
+
+        columns.forEach((alias, column) -> expressions.put(alias, column.expression()));
+
+        return expressions;
     }
 
 
@@ -311,7 +420,7 @@ final class TypeFrameGenerator {
                 .filter(path -> path.size() == 1)
                 .map(path -> path.get(0))
                 .map(projection::get)
-                .map(projected -> Stash.expression(
+                .map(projected -> Expression.expression(
                         projected.path(),
                         Stream.of(expression.transforms(), projected.transforms())
                                 .flatMap(Collection::stream)
@@ -480,6 +589,48 @@ final class TypeFrameGenerator {
                 : positive ? values
                 : options.isEmpty() ? blank
                 : parens(or(blank, values));
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static final class Task<V, F> {
+
+        final Resource resource;
+        final Optional<String> predicate;
+        final Shape shape;
+        final Specs specs;
+        final V model;
+
+        private final CompletableFuture<F> future=new CompletableFuture<>();
+
+
+        private Task(
+                final Resource resource,
+                final Optional<String> predicate,
+                final Shape shape,
+                final Specs specs,
+                final V model
+        ) {
+            this.resource=resource;
+            this.predicate=predicate;
+            this.shape=shape;
+            this.specs=specs;
+            this.model=model;
+        }
+
+
+        private CompletableFuture<F> schedule(final Consumer<Task<V, F>> queue) {
+
+            queue.accept(this);
+
+            return future;
+        }
+
+        private void complete(final F value) {
+            future.complete(value);
+        }
+
     }
 
 }

@@ -14,23 +14,14 @@
  * limitations under the License.
  */
 
-package com.metreeca.link.shacl;
+package com.metreeca.link.specs;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+/**
+ * Ordering criterion.
+ */
+public enum Criterion {
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-@Target({ FIELD, METHOD })
-@Retention(RUNTIME)
-public @interface MaxExclusive {
-
-    public long integer();
-
-    public double decimal();
-
-    public String string();
+    increasing,
+    decreasing
 
 }

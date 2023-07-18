@@ -23,6 +23,10 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * @see <a href="https://www.w3.org/TR/shacl/#MaxInclusiveConstraintComponent">Shapes Constraint Language (SHACL) -
+ * 4.3.4 sh:maxInclusive</a>
+ */
 @Target({ FIELD, METHOD })
 @Retention(RUNTIME)
 public @interface MaxInclusive {

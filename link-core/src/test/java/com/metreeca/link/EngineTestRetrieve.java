@@ -36,6 +36,7 @@ public abstract class EngineTestRetrieve {
         assertThat(testbed().retrieve(with(new Employee(), employee -> {
 
             employee.setId(id("/employees/1702"));
+            employee.setCode("");
             employee.setLabel("");
             employee.setSeniority(0);
 
@@ -43,6 +44,7 @@ public abstract class EngineTestRetrieve {
 
             // specified by model
 
+            assertThat(employee.getCode()).isEqualTo("1702");
             assertThat(employee.getLabel()).isEqualTo("Martin Gerard");
             assertThat(employee.getSeniority()).isEqualTo(2);
 

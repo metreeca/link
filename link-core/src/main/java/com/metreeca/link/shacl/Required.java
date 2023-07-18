@@ -24,6 +24,11 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Required item constraint.
+ *
+ * <p>Shorthand for {@link MinCount}{@code (1)}.</p>
+ */
 @Target({ FIELD, METHOD })
 @Retention(RUNTIME)
 public @interface Required {

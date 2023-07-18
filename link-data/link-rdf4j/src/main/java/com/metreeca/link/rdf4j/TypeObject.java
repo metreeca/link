@@ -17,9 +17,8 @@
 package com.metreeca.link.rdf4j;
 
 import com.metreeca.link.Frame;
-import com.metreeca.link.rdf4j.RDF4J.Decoder;
-import com.metreeca.link.rdf4j.RDF4J.Encoder;
 import com.metreeca.link.rdf4j.RDF4J.Type;
+import com.metreeca.link.rdf4j.RDF4J.Writer;
 
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -27,27 +26,42 @@ import org.eclipse.rdf4j.model.Value;
 
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Frame.frame;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 final class TypeObject implements Type<Object> {
 
-    @Override public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final Object value) {
-        return encoder.encode(frame(value));
-    }
-
-    @Override public Optional<Object> decode(final Decoder decoder, final Value value, final Object model) {
-        return Optional.of(value)
+    @Override public CompletableFuture<Optional<Object>> lookup(final RDF4J.Reader reader, final Set<Value> values, final Object model) {
+        return values.stream()
 
                 .filter(Value::isResource)
                 .map(Resource.class::cast)
 
-                .flatMap(resource -> Optional.of(frame(model))
-                        .map(frame -> frame.id() == null || resource.isBNode() ? frame : frame.id(resource.stringValue()))
-                        .flatMap(frame -> decoder.decode(resource, frame))
-                        .map(Frame::value)
-                );
+                .findFirst()
+
+                .map(resource -> {
+
+                    final Frame<Object> frame=frame(model);
+
+                    if ( !(frame.id() == null || resource.isBNode()) ) {
+                        frame.id(resource.stringValue());
+                    }
+
+                    return reader.lookup(Set.of(resource), frame)
+                            .thenApply(v -> v.map(Frame::value));
+
+                })
+
+                .orElse(completedFuture(Optional.empty()));
+    }
+
+    @Override public Entry<Stream<Value>, Stream<Statement>> _encode(final Writer writer, final Object value) {
+        return writer.encode(frame(value));
     }
 
 }

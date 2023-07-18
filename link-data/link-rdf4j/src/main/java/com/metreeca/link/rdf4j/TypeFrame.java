@@ -16,43 +16,154 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.*;
-import com.metreeca.link.Table.Column;
+import com.metreeca.link.Frame;
+import com.metreeca.link.Shape;
+import com.metreeca.link.specs.Query;
+import com.metreeca.link.specs.Specs;
+import com.metreeca.link.specs.Table;
 
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.Function;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import static com.metreeca.link.Frame.absolute;
-import static com.metreeca.link.Local.local;
-import static com.metreeca.link.Query.query;
-import static com.metreeca.link.Shape.forward;
-import static com.metreeca.link.Shape.reverse;
-import static com.metreeca.link.Table.table;
+import static com.metreeca.link.Shape.*;
 import static com.metreeca.link.rdf4j.RDF4J.*;
-import static com.metreeca.link.rdf4j.SPARQL.query;
+import static com.metreeca.link.specs.Report.report;
+import static com.metreeca.link.specs.Specs.specs;
 
 import static java.lang.String.format;
 import static java.util.Map.entry;
-import static java.util.stream.Collectors.*;
+import static java.util.concurrent.CompletableFuture.allOf;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.toList;
 import static org.eclipse.rdf4j.model.util.Values.iri;
 
 final class TypeFrame implements Type<Frame<?>> {
 
-    @Override public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final Frame<?> value) {
+    @Override public CompletableFuture<Optional<Frame<?>>> lookup(
+            final Reader reader, final Set<Value> values, final Frame<?> model
+    ) {
+
+        final Shape shape=model.shape();
+
+        return values.stream()
+
+                .filter(Value::isResource)
+                .map(Resource.class::cast)
+
+                .findFirst()
+
+                .map(resource -> {
+
+                    final Frame<?> frame=model.copy().id(resource.isIRI() && model.id() != null
+                            ? reader.relativize(resource.stringValue())
+                            : null
+                    );
+
+                    final CompletableFuture<?>[] entries=frame.entries(false)
+
+                            .filter(e -> e.getValue() != null)
+
+                            .map(e -> {
+
+                                final String field=e.getKey();
+                                final Object object=e.getValue();
+
+                                final String property=shape.property(field).orElseThrow(() ->
+                                        new NoSuchElementException(format("unknown field <%s>", field))
+                                );
+
+                                final Shape subshape=shape.shape(field).orElseThrow(() ->
+                                        new NoSuchElementException(format("unknown field <%s>", field))
+                                );
+
+                                final Optional<String> predicate=shape.virtual()
+                                        ? Optional.empty()
+                                        : Optional.of(property);
+
+
+                                if ( object instanceof Query ) {
+
+                                    final Query<?> query=(Query<?>)object;
+
+                                    final Specs _specs=query.specs();
+                                    final Object _model=query.model();
+
+                                    if ( _model instanceof Table ) {
+
+                                        return lookup(reader, resource, predicate, subshape, _specs, ((Table)_model))
+                                                .thenAccept(v -> frame.set(field, report(v)));
+
+                                    } else {
+
+                                        return lookup(reader, resource, predicate, subshape, _specs, _model)
+                                                .thenAccept(v -> frame.set(field, v));
+
+                                    }
+
+                                } else if ( object instanceof Collection ) { // !!! Set/List/…?
+
+                                    final Collection<?> collection=(Collection<?>)object;
+
+                                    if ( collection.size() == 1 ) { // !!! review / handle missing/multiple models
+
+                                        final Specs _specs=specs();
+                                        final Object _model=collection.iterator().next();
+
+                                        if ( _model instanceof Table ) { // !!! factor
+
+                                            return lookup(reader, resource, predicate, subshape, _specs, ((Table)_model))
+                                                    .thenAccept(v -> frame.set(field, report(v)));
+
+                                        } else {
+
+                                            return lookup(reader, resource, predicate, subshape, _specs, _model)
+                                                    .thenAccept(v -> frame.set(field, v));
+
+                                        }
+
+                                    } else {
+
+                                        return completedFuture(List.of()); // !!! report? see JSONLD.TypeObject
+
+                                    }
+
+                                } else {
+
+                                    return reader.fetcher().fetch(resource, iri(forward(property)), direct(property))
+                                            .thenCompose(vs -> reader.lookup(vs, object))
+                                            .thenAccept(o -> frame.set(field, o.orElse(null)));
+
+                                }
+
+                            })
+
+                            .toArray(CompletableFuture[]::new);
+
+                    return allOf(entries).<Optional<Frame<?>>>thenApply(v ->
+                            Optional.of(frame)
+                    );
+
+                })
+
+                .orElse(completedFuture(Optional.empty()));
+    }
+
+    @Override public Entry<Stream<Value>, Stream<Statement>> _encode(final Writer writer, final Frame<?> value) {
 
         final Shape shape=value.shape();
-        final ValueFactory factory=encoder.factory();
+        final ValueFactory factory=writer.factory();
 
         final Resource focus=Optional.ofNullable(value.id())
 
-                .map(id -> absolute(encoder.resolve(id))
+                .map(id -> absolute(writer.resolve(id))
 
                         .map(factory::createIRI)
                         .map(Resource.class::cast)
@@ -96,12 +207,12 @@ final class TypeFrame implements Type<Frame<?>> {
                                 "unknown frame field <%s>", field
                         )));
 
-                final Entry<Stream<Value>, Stream<Statement>> encoded=encoder.encode(object);
+                final Entry<Stream<Value>, Stream<Statement>> encoded=writer.encode(object);
 
                 final Stream<Value> values=encoded.getKey();
                 final Stream<Statement> statements=encoded.getValue();
 
-                if ( forward(property) ) {
+                if ( direct(property) ) {
 
                     return Stream.concat(
                             values.map(v -> factory.createStatement(focus, iri(property), v)),
@@ -126,7 +237,7 @@ final class TypeFrame implements Type<Frame<?>> {
 
                                     })
 
-                                    .map(v -> factory.createStatement((Resource)v, iri(reverse(property)), focus)),
+                                    .map(v -> factory.createStatement((Resource)v, iri(forward(property)), focus)),
 
                             statements
                     );
@@ -141,291 +252,87 @@ final class TypeFrame implements Type<Frame<?>> {
 
     }
 
-    @Override public Optional<Frame<?>> decode(final Decoder decoder, final Value value, final Frame<?> model) {
-
-        final Shape shape=model.shape();
-        final boolean virtual=shape.virtual();
-
-        final RepositoryConnection connection=decoder.connection();
-
-        return Optional.of(value)
-
-                .filter(Value::isResource)
-                .map(Resource.class::cast)
-
-                .filter(resource -> virtual
-                        || connection.hasStatement(resource, null, null, true)
-                        || connection.hasStatement(null, null, resource, true)
-                )
-
-                .map(resource -> {
-
-                    final Frame<?> frame=model.copy().id(resource.isIRI() && model.id() != null
-                            ? decoder.relativize(resource.stringValue())
-                            : null
-                    );
-
-                    frame.entries(false).forEach(e -> { // !!! batch retrieval
-
-                        final String field=e.getKey();
-                        final Object object=e.getValue();
-
-                        if ( object != null ) {
-
-                            final String property=shape.property(field).orElseThrow(() ->
-                                    new NoSuchElementException(format("unknown field <%s>", field))
-                            );
-
-                            final Shape subshape=shape.shape(field).orElseThrow(() ->
-                                    new NoSuchElementException(format("unknown field <%s>", field))
-                            );
-
-                            frame.set(field, decode(decoder, shape, resource, property, object, subshape));
-
-                        }
-
-                    });
-
-                    return frame;
-
-                });
-    }
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static Object decode(
-            final Decoder decoder, final Shape shape,
-            final Resource resource, final String property, final Object object, final Shape subshape
+    private CompletableFuture<List<Map<String, Object>>> lookup(
+            final Reader reader,
+            final Resource resource,
+            final Optional<String> predicate,
+            final Shape shape,
+            final Specs specs,
+            final Table model
     ) {
 
-        return object instanceof Query ? decode(decoder, shape, resource, property, (Query<?>)object, subshape)
-                : object instanceof List ? decode(decoder, resource, property, (List<?>)object)
-                : object instanceof Collection ? decode(decoder, shape, resource, property, (Collection<?>)object, subshape)
-                : object instanceof Local ? decode(decoder, shape, resource, property, (Local<?>)object)
-                : decode(decoder, shape, resource, property, object);
-    }
+        return reader.selector().select(resource, predicate, shape, specs, model).thenCompose(solutions -> {
 
-    private static Object decode(
-            final Decoder decoder, final Shape shape,
-            final Resource resource, final String property, final Query<?> query, final Shape subshape
-    ) {
-
-        final RepositoryConnection connection=decoder.connection();
-
-        final Object model=query.model();
-
-        final TypeFrameGenerator generator=new TypeFrameGenerator();
-
-        final String members=query(generator.members(
-                resource,
-                shape.virtual() ? Optional.empty() : Optional.of(property),
-                subshape,
-                query
-        ));
-
-
-        if ( model instanceof Table ) {
-
-            final Table<?> table=(Table<?>)model;
-            final Map<String, Column> columns=table.columns();
-
-            final List<Map<String, Value>> solutions=select(connection, members, bindings ->
-                    columns.entrySet().stream().collect(
-                            HashMap::new, // ;( handle null values
-                            (map, entry) -> map.put(
-                                    entry.getKey(),
-                                    bindings.getValue(generator.id(entry.getKey(), entry.getValue()))
-                            ),
-                            Map::putAll
-                    )
-            );
-
-            final List<Map<String, Object>> records=solutions.stream()
-
+            final List<Map<String, CompletableFuture<Optional<Object>>>> records=solutions.stream()
                     .map(solution -> solution.entrySet().stream().collect(
-                            () -> new LinkedHashMap<String, Object>(),
+                            () -> new LinkedHashMap<String, CompletableFuture<Optional<Object>>>(),
                             (map, entry) -> {
 
                                 final String alias=entry.getKey();
                                 final Value _value=entry.getValue();
-                                final Object _model=columns.get(alias).model();
+                                final Object _model=model.get(alias).model();
 
-                                map.put(alias, decoder
-                                        .decode(_value, _model) // !!! batch retrieval
-                                        .orElse(null)
+                                map.put(alias, _value == null
+                                        ? completedFuture(Optional.empty())
+                                        : reader.lookup(Set.of(_value), _model)
                                 );
 
                             },
                             Map::putAll
                     ))
-
                     .collect(toList());
 
-            return table(columns, records);
+            return allOf(records.stream()
+                    .flatMap(record -> record.values().stream())
+                    .toArray(s -> new CompletableFuture<?>[s])
+            )
 
-        } else {
+                    .thenApply(v -> records.stream()
+                            .map(record -> record.entrySet().stream().collect(
+                                    () -> new LinkedHashMap<String, Object>(),
+                                    (map, entry) -> {
 
-            final List<Value> values=select(connection, members, bindings ->
-                    bindings.getValue(generator.id())
-            );
+                                        final String alias=entry.getKey();
+                                        final Object _value=entry.getValue().join().orElse(null);
 
-            // !!! batch retrieval
+                                        map.put(alias, _value);
 
-            return values.stream()
-                    .flatMap(v -> decoder.decode(v, model).stream())
+                                    },
+                                    Map::putAll
+                            ))
+                            .collect(toList())
+                    );
+        });
+    }
+
+    private CompletableFuture<List<Object>> lookup(
+            final Reader reader,
+            final Resource resource,
+            final Optional<String> predicate,
+            final Shape shape,
+            final Specs specs,
+            final Object model
+    ) {
+
+        return reader.selector().select(resource, predicate, shape, specs, model).thenCompose(values -> {
+
+            final List<CompletableFuture<Optional<Object>>> objects=values.stream()
+                    .map(v -> reader.lookup(Set.of(v), model))
                     .collect(toList());
-        }
 
-    }
+            return allOf(objects.toArray(s -> new CompletableFuture<?>[s]))
 
-    private static List<?> decode(
-            final Decoder decoder, final Shape shape,
-            final Resource resource, final String property, final Collection<?> collection, final Shape subshape
-    ) {
-
-        // !!! migrate to TypeCollection?
-
-        final RepositoryConnection connection=decoder.connection();
-
-        final TypeFrameGenerator generator=new TypeFrameGenerator();
-
-        final String members=query(generator.members(
-                resource,
-                shape.virtual() ? Optional.empty() : Optional.of(property),
-                subshape,
-                query()
-        ));
-
-        final List<Value> values=select(connection, members, bindings ->
-                bindings.getValue(generator.id())
-        );
-
-        return values.stream() // !!! batch retrieval
-                .flatMap(v -> collection.stream()
-                        .flatMap(o -> decoder.decode(v, o).stream())
-                )
-                .collect(toList());
-    }
-
-    private static Object decode(
-            final Decoder decoder,
-            final Resource resource, final String property, final List<?> model
-    ) {
-        throw new UnsupportedOperationException(";( be implemented"); // !!!
-    }
-
-    private static Object decode(
-            final Decoder decoder, final Shape shape,
-            final Resource resource, final String property, final Local<?> local
-    ) {
-
-        // !!! migrate to TypeLocal?
-
-        final RepositoryConnection connection=decoder.connection();
-
-        final boolean empty=local.values().keySet().isEmpty();
-        final boolean wild=local.values().keySet().stream().anyMatch(Local.Wildcard::equals);
-        final boolean unique=local.values().values().stream().anyMatch(String.class::isInstance);
-
-        final Set<String> locales=local.values().keySet().stream()
-                .map(Locale::toLanguageTag)
-                .collect(toSet());
-
-        final Stream<Literal> literals=retrieve(
-                connection,
-                resource,
-                property,
-                vs -> vs.collect(toList())
-
-        ).stream()
-                .filter(Value::isLiteral)
-                .map(Literal.class::cast)
-                .filter(v -> v.getLanguage().isPresent())
-                .filter(v -> empty || wild || v.getLanguage().filter(locales::contains).isPresent());
-
-        return unique
-
-                ?
-                local(literals
-                        .map(v -> local(v.getLanguage().get(), v.stringValue()))
-                        .collect(toList())
-                )
-
-                :
-                local(literals
-                        .collect(groupingBy(v -> v.getLanguage().get(), mapping(Value::stringValue, toSet())))
-                        .entrySet()
-                        .stream()
-                        .map(entry -> local(entry.getKey(), entry.getValue()))
-                        .collect(toList())
-                );
-    }
-
-    private static Object decode(
-            final Decoder decoder, final Shape shape,
-            final Resource resource, final String property, final Object object
-    ) {
-
-        // !!! batch retrieval
-
-        final RepositoryConnection connection=decoder.connection();
-
-        return retrieve(connection, resource, property, Stream::findFirst)
-                .flatMap(v -> decoder.decode(v, object))
-                .orElse(shape.virtual() ? object : null);
-
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    private static <V> List<V> select(
-            final RepositoryConnection connection,
-            final String query,
-            final Function<BindingSet, V> mapper
-    ) {
-
-        try ( final Stream<BindingSet> results=connection.prepareTupleQuery(query).evaluate().stream() ) {
-
-            return results.map(mapper).collect(toList());
-
-        }
-
-    }
-
-
-    private static Collection<Statement> construct(final RepositoryConnection connection, final String query) {
-
-        try ( final Stream<Statement> results=connection.prepareGraphQuery(query).evaluate().stream() ) {
-
-            return results.collect(toList());
-
-        }
-
-    }
-
-
-    private static <V> V retrieve(
-            final RepositoryConnection connection,
-            final Resource anchor,
-            final String predicate,
-            final Function<Stream<Value>, V> mapper
-    ) {
-
-        final boolean forward=forward(predicate);
-
-        try ( final Stream<Statement> statements=forward
-                ? connection.getStatements(anchor, iri(predicate), null).stream()
-                : connection.getStatements(null, iri(reverse(predicate)), anchor).stream()
-        ) {
-
-            return mapper.apply(forward
-                    ? statements.map(Statement::getObject)
-                    : statements.map(Statement::getSubject)
-            );
-
-        }
+                    .thenApply(v -> objects.stream()
+                            .map(CompletableFuture::join)
+                            .map(o -> o.orElseThrow(() ->
+                                    new AssertionError(format("unable to look up item <%s>", v))
+                            ))
+                            .collect(toList())
+                    );
+        });
 
     }
 

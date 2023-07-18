@@ -16,23 +16,25 @@
 
 package com.metreeca.link;
 
+import com.metreeca.link.specs.Query;
+import com.metreeca.link.specs.Specs;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
 import java.util.stream.Stream;
 
-import static com.metreeca.link.Query.filter;
-import static com.metreeca.link.Query.query;
+import static com.metreeca.link.specs.Query.query;
+import static com.metreeca.link.specs.Specs.filter;
+import static com.metreeca.link.specs.Specs.specs;
 
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
 public abstract class Frame<T> {
-
-    public static final String DefaultBase="app:/";
-    public static final String DefaultSpace="app:/#";
-
 
     @SuppressWarnings("unchecked")
     public static <T> Frame<T> frame(final T object) {
@@ -56,7 +58,7 @@ public abstract class Frame<T> {
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Factory Helpers ///////////////////////////////////////////////////////////////////////////////////////////////
 
     public static <T> T with(final T value, final Consumer<T> consumer) {
 
@@ -74,16 +76,26 @@ public abstract class Frame<T> {
     }
 
 
-    public static Optional<String> absolute(final String iri) {
-        return Lingo.absolute(iri).map(Matcher::group);
+    public static BigInteger integer(final long value) {
+        return BigInteger.valueOf(value);
     }
 
-    public static Optional<String> root(final String iri) {
-        return Lingo.root(iri);
+    public static BigDecimal decimal(final double value) {
+        return BigDecimal.valueOf(value);
     }
 
-    public static Optional<String> path(final String iri) {
-        return Lingo.path(iri);
+
+    public static <T> T error(final String format, final Object... args) {
+
+        if ( format == null ) {
+            throw new NullPointerException("null format");
+        }
+
+        if ( args == null ) {
+            throw new NullPointerException("null args");
+        }
+
+        throw new IllegalArgumentException(format(format, args));
     }
 
 
@@ -116,26 +128,26 @@ public abstract class Frame<T> {
         return Optional.empty(); // !!!
     }
 
-    public Optional<Frame<T>> merge(final Frame<T> specs) {
+    public Optional<Frame<T>> merge(final Frame<T> frame) {
 
-        if ( specs == null ) {
-            throw new NullPointerException("null specs");
+        if ( frame == null ) {
+            throw new NullPointerException("null frame");
         }
 
         final Frame<T> copy=copy();
 
-        if ( copy.value().getClass().isAssignableFrom(specs.value().getClass()) ) {
+        if ( copy.value().getClass().isAssignableFrom(frame.value().getClass()) ) {
 
             copy.entries(true).forEach(entry -> {
 
                 final String field=entry.getKey();
 
                 final Object value=entry.getValue();
-                final Object model=specs.get(field);
+                final Object model=frame.get(field);
 
                 if ( model instanceof Query ) { // merge filters
 
-                    final Query<Object> filters=query(((Query<?>)model)
+                    final Specs filters=specs(((Query<?>)model).specs()
                             .filter().entrySet().stream()
                             .map(filter -> filter(filter.getKey(), filter.getValue()))
                             .collect(toList())
@@ -143,32 +155,32 @@ public abstract class Frame<T> {
 
                     if ( value instanceof Query ) {
 
-                        copy.set(field, query((Query<?>)value, filters));
+                        copy.set(field, query(((Query<?>)value).model(), specs(((Query<?>)value).specs(), filters)));
 
                     } else if ( value instanceof Collection ) {
 
-                        // !!! merge specs filters
+                        // !!! merge frame filters
                         // !!! handles 0/1/multiple items
 
                         throw new UnsupportedOperationException(";( be implemented"); // !!!
 
                     } else if ( value != null ) {
 
-                        // !!! merge specs filters
+                        // !!! merge frame filters
                         // !!! ignore? report?
 
                         throw new UnsupportedOperationException(";( be implemented"); // !!!
 
                     }
 
-                } else if ( model != null && !(value instanceof Query) ) { // merge specs to support virtual entities
+                } else if ( model != null ) { // merge default values from frame to support virtual entities
 
                     if (
 
-                            value instanceof Boolean && value.equals(false)
-                                    || value instanceof Number && ((Number)value).intValue() == 0
-                                    || value instanceof String && ((String)value).isBlank()
-                                    || value instanceof Collection && ((Collection<?>)value).isEmpty()
+                            isBooleanDefault(value)
+                                    || isNumberDefault(value)
+                                    || isStringDefault(value)
+                                    || isCollectionDefault(value)
 
                     ) {
 
@@ -187,6 +199,25 @@ public abstract class Frame<T> {
             return Optional.empty();
 
         }
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private boolean isBooleanDefault(final Object value) {
+        return value instanceof Boolean && value.equals(false);
+    }
+
+    private static boolean isNumberDefault(final Object value) {
+        return value instanceof Number && ((Number)value).intValue() == 0;
+    }
+
+    private static boolean isStringDefault(final Object value) {
+        return value instanceof String && ((String)value).isBlank();
+    }
+
+    private static boolean isCollectionDefault(final Object value) {
+        return value instanceof Collection && !(value instanceof Query) && ((Collection<?>)value).isEmpty();
     }
 
 }

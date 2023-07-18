@@ -27,10 +27,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static com.metreeca.link.EngineTest.id;
-import static com.metreeca.link.Frame.with;
+import static com.metreeca.link.Frame.*;
 import static com.metreeca.link.Local.local;
-import static com.metreeca.link.Stash.decimal;
-import static com.metreeca.link.Stash.integer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

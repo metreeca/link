@@ -16,9 +16,9 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.rdf4j.RDF4J.Decoder;
-import com.metreeca.link.rdf4j.RDF4J.Encoder;
+import com.metreeca.link.rdf4j.RDF4J.Reader;
 import com.metreeca.link.rdf4j.RDF4J.Type;
+import com.metreeca.link.rdf4j.RDF4J.Writer;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
@@ -27,23 +27,30 @@ import org.eclipse.rdf4j.model.Value;
 import java.net.URI;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static java.util.Map.entry;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 final class TypeURI implements Type<URI> {
 
-    @Override public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final URI value) {
-        return entry(Stream.of(encoder.factory().createIRI(value.toString())), Stream.empty());
-    }
-
-    @Override public Optional<URI> decode(final Decoder decoder, final Value value, final URI model) {
-        return Optional.of(value)
+    @Override public CompletableFuture<Optional<URI>> lookup(final Reader reader, final Set<Value> values, final URI model) {
+        return completedFuture(values.stream()
 
                 .filter(Value::isIRI)
                 .map(IRI.class::cast)
 
-                .map(iri -> URI.create((decoder.relativize(iri.stringValue()))));
+                .findFirst()
+
+                .map(iri -> URI.create((reader.relativize(iri.stringValue()))))
+
+        );
+    }
+
+    @Override public Entry<Stream<Value>, Stream<Statement>> _encode(final Writer writer, final URI value) {
+        return entry(Stream.of(writer.factory().createIRI(value.toString())), Stream.empty());
     }
 
 }

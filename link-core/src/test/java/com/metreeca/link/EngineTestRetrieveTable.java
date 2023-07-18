@@ -16,6 +16,8 @@
 
 package com.metreeca.link;
 
+import com.metreeca.link.specs.Report;
+
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -26,12 +28,16 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.metreeca.link.EngineTest.*;
-import static com.metreeca.link.Frame.with;
-import static com.metreeca.link.Query.Criterion.decreasing;
-import static com.metreeca.link.Query.Criterion.increasing;
-import static com.metreeca.link.Query.*;
-import static com.metreeca.link.Table.column;
-import static com.metreeca.link.Table.table;
+import static com.metreeca.link.Frame.*;
+import static com.metreeca.link.specs.Column.column;
+import static com.metreeca.link.specs.Constraint.*;
+import static com.metreeca.link.specs.Criterion.decreasing;
+import static com.metreeca.link.specs.Criterion.increasing;
+import static com.metreeca.link.specs.Expression.expression;
+import static com.metreeca.link.specs.Query.query;
+import static com.metreeca.link.specs.Specs.filter;
+import static com.metreeca.link.specs.Specs.order;
+import static com.metreeca.link.specs.Table.table;
 
 import static java.math.RoundingMode.HALF_UP;
 import static java.util.Comparator.comparing;
@@ -46,6 +52,19 @@ public abstract class EngineTestRetrieveTable {
 
     protected abstract Engine testbed();
 
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> members(final Employees employees) {
+        return Optional.ofNullable(employees.getMembers())
+
+                .filter(Report.class::isInstance)
+                .map(v -> ((Report<?>)v))
+                .map(v -> (List<Map<String, Object>>)v.value())
+
+                .orElseThrow();
+    }
+
+
     @Nested
     final class Projecting {
 
@@ -54,11 +73,9 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table())
-                ));
+                employees.setMembers(query(table(map())));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -76,14 +93,12 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("employee", column(expression("label"), "")),
-                                entry("supervisor", column(expression("supervisor.label"), ""))
-                        ))
-                ));
+                employees.setMembers(query(table(map(
+                        entry("employee", column(expression("label"), "")),
+                        entry("supervisor", column(expression("supervisor.label"), ""))
+                ))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -116,13 +131,11 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("employees", column(expression("count:"), integer(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(
+                        entry("employees", column(expression("count:"), integer(0)))
+                ))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -146,14 +159,12 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("seniority", column("seniority", integer(0))),
-                                entry("employees", column("count:", integer(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(
+                        entry("seniority", column("seniority", integer(0))),
+                        entry("employees", column("count:", integer(0)))
+                ))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -179,13 +190,13 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
+                        table(map(
                                 entry("employee", column(expression("label"), ""))
                         )),
                         filter("label", like("none"))
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
                     .isEmpty()
             );
 
@@ -196,17 +207,15 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("employee", column("", with(new Employee(), employee -> {
-                                    employee.setLabel("");
-                                    employee.setOffice(with(new Reference(), office -> office.setLabel("")));
-                                }))),
-                                entry("reports", column("count:reports", integer(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(
+                        entry("employee", column("", with(new Employee(), employee -> {
+                            employee.setLabel("");
+                            employee.setOffice(with(new Reference(), office -> office.setLabel("")));
+                        }))),
+                        entry("reports", column("count:reports", integer(0)))
+                ))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .map(record -> map(
                             entry("employee", ((Resource)record.get("employee")).getLabel()),
@@ -241,13 +250,9 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column("abs:delta", decimal(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(entry("value", column("abs:delta", decimal(0)))))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -273,13 +278,9 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column("round:delta", decimal(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(entry("value", column("round:delta", decimal(0)))))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -305,13 +306,9 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column("year:birthdate", integer(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(entry("value", column("year:birthdate", integer(0)))))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -333,11 +330,7 @@ public abstract class EngineTestRetrieveTable {
             assertThatIllegalArgumentException().isThrownBy(() -> testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column("unknown:code", ""))
-                        ))
-                ));
+                employees.setMembers(query(table(map(entry("value", column("unknown:code", ""))))));
 
             })));
         }
@@ -352,13 +345,9 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column("count:code", integer(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(entry("value", column("count:code", integer(0)))))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(List.of(map(
                             entry("value", integer(Employees.size()))
@@ -373,13 +362,9 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column("sum:ytd", decimal(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(entry("value", column("sum:ytd", decimal(0)))))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(List.of(map(
                             entry("value", decimal(Employees.stream()
@@ -399,13 +384,9 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column("avg:ytd", decimal(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(entry("value", column("avg:ytd", decimal(0)))))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
                     .allSatisfy(record -> assertThat(((BigDecimal)record.get("value")).setScale(3, HALF_UP))
                             .isEqualByComparingTo(decimal(Employees.stream()
                                     .map(Employee::getYtd)
@@ -425,13 +406,9 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column("min:ytd", decimal(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(entry("value", column("min:ytd", decimal(0)))))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
                     .allSatisfy(record -> assertThat((BigDecimal)record.get("value"))
                             .isEqualByComparingTo(decimal(Employees.stream()
                                     .map(Employee::getYtd)
@@ -450,13 +427,9 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column("max:ytd", decimal(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(entry("value", column("max:ytd", decimal(0)))))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
                     .allSatisfy(record -> assertThat((BigDecimal)record.get("value"))
                             .isEqualByComparingTo(decimal(Employees.stream()
                                     .map(Employee::getYtd)
@@ -481,14 +454,12 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column(expression("seniority"), integer(0))),
-                                entry("count", column(expression("count:"), integer(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(
+                        entry("value", column(expression("seniority"), integer(0))),
+                        entry("count", column(expression("count:"), integer(0)))
+                ))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -513,14 +484,12 @@ public abstract class EngineTestRetrieveTable {
             assertThat(testbed().retrieve(with(new Employees(), employees -> {
 
                 employees.setId(id("/employees/"));
-                employees.setMembers(query(
-                        model(table(
-                                entry("value", column(expression("year:birthdate"), integer(0))),
-                                entry("count", column(expression("count:"), integer(0)))
-                        ))
-                ));
+                employees.setMembers(query(table(map(
+                        entry("value", column(expression("year:birthdate"), integer(0))),
+                        entry("count", column(expression("count:"), integer(0)))
+                ))));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -553,13 +522,11 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
-                                entry("value", column(expression("code"), ""))
-                        )),
+                        table(map(entry("value", column(expression("code"), "")))),
                         filter("avg:reports.delta", lte(integer(-100_000)))
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -595,13 +562,11 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
-                                entry("value", column(expression("code"), ""))
-                        )),
+                        table(map(entry("value", column(expression("code"), "")))),
                         filter("avg:year:reports.birthdate", gte(integer(1995)))
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -648,14 +613,14 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
+                        table(map(
                                 entry("entry", column("code", "")),
                                 entry("value", column("round:avg:reports.delta", decimal(0)))
                         )),
                         filter("value", lte(decimal(-100_000)))
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -686,14 +651,14 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
+                        table(map(
                                 entry("entry", column("code", "")),
                                 entry("value", column("max:reports.birthdate", LocalDate.now()))
                         )),
                         filter("year:value", gte(integer(2000)))
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -720,14 +685,14 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
+                        table(map(
                                 entry("entry", column("code", "")),
                                 entry("value", column("seniority", integer(0)))
                         )),
-                        filter("value", gte(integer(3)))
-                ));
+                        filter("value", gte(integer(3))))
+                );
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -766,13 +731,11 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
-                                entry("value", column(expression("code"), ""))
-                        )),
+                        table(map(entry("value", column(expression("code"), "")))),
                         order("avg:reports.delta", increasing)
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -804,13 +767,11 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
-                                entry("value", column(expression("code"), ""))
-                        )),
+                        table(map(entry("value", column(expression("code"), "")))),
                         order("avg:year:reports.birthdate", increasing)
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -845,14 +806,14 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
+                        table(map(
                                 entry("entry", column("code", "")),
                                 entry("value", column("round:avg:reports.delta", decimal(0)))
                         )),
                         order("value", increasing)
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -884,14 +845,14 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
+                        table(map(
                                 entry("entry", column("code", "")),
                                 entry("value", column("max:reports.birthdate", LocalDate.now()))
                         )),
                         order("year:value", increasing)
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -913,6 +874,7 @@ public abstract class EngineTestRetrieveTable {
 
     }
 
+
     @Nested
     final class Analyzing {
 
@@ -922,12 +884,10 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
-                                entry("count", column("count:", integer(0)))
-                        ))
+                        table(map(entry("count", column("count:", integer(0)))))
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(List.of(map(
                             entry("count", integer(Employees.size()))
@@ -944,7 +904,7 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
+                        table(map(
                                 entry("value", column("office.label", "")),
                                 entry("count", column("count:", integer(0)))
                         )),
@@ -952,7 +912,7 @@ public abstract class EngineTestRetrieveTable {
                         order("value", increasing)
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(Employees.stream()
 
@@ -980,13 +940,13 @@ public abstract class EngineTestRetrieveTable {
 
                 employees.setId(id("/employees/"));
                 employees.setMembers(query(
-                        model(table(
+                        table(map(
                                 entry("min", column("min:seniority", integer(0))),
                                 entry("max", column("max:seniority", integer(0)))
                         ))
                 ));
 
-            }))).hasValueSatisfying(employees -> assertThat(((Table<?>)employees.getMembers()).records())
+            }))).hasValueSatisfying(employees -> assertThat(members(employees))
 
                     .isEqualTo(List.of(map(
                             entry("min", integer(Employees.stream().mapToInt(Employee::getSeniority).min().orElse(0))),

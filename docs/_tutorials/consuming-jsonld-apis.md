@@ -395,8 +395,8 @@ Note that container descriptions are omitted from faceted search results.
 ## Sorting and Pagination
 
 Faceted search results may be sorted and paginated
-including [sorting criteria](_reference/faceted-search.md#items-query)
-and [pagination limits](_reference/faceted-search.md#items-query) in the JSON query object.
+including [sorting criteria](_reference/faceted-search.md#items-specs)
+and [pagination limits](_reference/faceted-search.md#items-specs) in the JSON query object.
 
 ```json
 {
@@ -411,10 +411,11 @@ and [pagination limits](_reference/faceted-search.md#items-query) in the JSON qu
 ## Facet Stats and Options
 
 The faceted search engine supports also introspection queries for
-retrieving [facet stats](_reference/faceted-search.md#stats-query)  and
-available [facet options](_reference/faceted-search.md#items-query).
+retrieving [facet stats](_reference/faceted-search.md#stats-specs)  and
+available [facet options](_reference/faceted-search.md#items-specs).
 
-To retrieve datatype, count and range stats for a facet, taking into account applied filters, specify the target property
+To retrieve datatype, count and range stats for a facet, taking into account applied filters, specify the target
+property
 path in the faceted search query object.
 
 ```json

@@ -72,13 +72,6 @@ final class Glass<T> {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    static <T> T error(final String format, final Object... args) {
-        throw new IllegalArgumentException(format(format, args));
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     private final Class<?> clazz;
 
     private final Map<String, Property> properties;
@@ -487,10 +480,6 @@ final class Glass<T> {
 
             final Class<?> expected=setter.getParameterTypes()[0];
             final Class<?> actual=value != null ? value.getClass() : Object.class;
-
-            if ( Stash.class.isAssignableFrom(actual) && !Collection.class.isAssignableFrom(expected) ) {
-                throw new IllegalArgumentException("unexpected query outside collection");
-            }
 
             try {
 

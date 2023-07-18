@@ -16,9 +16,8 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.rdf4j.RDF4J.Decoder;
-import com.metreeca.link.rdf4j.RDF4J.Encoder;
 import com.metreeca.link.rdf4j.RDF4J.Type;
+import com.metreeca.link.rdf4j.RDF4J.Writer;
 
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
@@ -27,24 +26,31 @@ import org.eclipse.rdf4j.model.Value;
 import java.time.Year;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static java.util.Map.entry;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 final class TypeYear implements Type<Year> {
 
-    @Override public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final Year value) {
-        return entry(Stream.of(encoder.factory().createLiteral(value)), Stream.empty());
-    }
-
-    @Override public Optional<Year> decode(final Decoder decoder, final Value value, final Year model) {
-        return Optional.of(value)
+    @Override public CompletableFuture<Optional<Year>> lookup(final RDF4J.Reader reader, final Set<Value> values, final Year model) {
+        return completedFuture(values.stream()
 
                 .filter(Value::isLiteral)
                 .map(Literal.class::cast)
 
+                .findFirst()
+
                 .map(Literal::temporalAccessorValue)
-                .map(Year::from);
+                .map(Year::from)
+
+        );
+    }
+
+    @Override public Entry<Stream<Value>, Stream<Statement>> _encode(final Writer writer, final Year value) {
+        return entry(Stream.of(writer.factory().createLiteral(value)), Stream.empty());
     }
 
 }

@@ -16,10 +16,16 @@
 
 package com.metreeca.link.json;
 
-import com.metreeca.link.json.JSON.*;
+import com.metreeca.link.json.JSON.Decoder;
+import com.metreeca.link.json.JSON.Encoder;
+import com.metreeca.link.json.JSON.Type;
+import com.metreeca.link.specs.Report;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import static com.metreeca.link.json.JSON.Tokens.*;
 
@@ -27,24 +33,32 @@ final class TypeCollection implements Type<Collection<?>> {
 
     @Override public void encode(final Encoder encoder, final Collection<?> value) throws IOException {
 
-        encoder.open("[");
+        if ( value instanceof Report ) {
 
-        boolean tail=false;
+            encoder.encode(((Report<?>)value).value());
 
-        for (final Object item : value) { // regular items
+        } else {
 
-            if ( tail ) {
-                encoder.comma();
+            encoder.open("[");
+
+            boolean tail=false;
+
+            for (final Object item : value) { // regular items
+
+                if ( tail ) {
+                    encoder.comma();
+                }
+
+                encoder.indent();
+                encoder.encode(item);
+
+                tail=true;
+
             }
 
-            encoder.indent();
-            encoder.encode(item);
-
-            tail=true;
+            encoder.close("]", tail);
 
         }
-
-        encoder.close("]", tail);
     }
 
     @Override public Collection<?> decode(final Decoder decoder, final Class<Collection<?>> clazz) throws IOException {

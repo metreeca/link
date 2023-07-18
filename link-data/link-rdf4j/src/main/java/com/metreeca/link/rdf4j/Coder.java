@@ -27,7 +27,23 @@ import static java.util.Arrays.asList;
  */
 abstract class Coder {
 
+    private static final Coder nothing=new Coder() {
+
+        @Override public void generate(final Code code) { }
+
+    };
+
+
     static Coder block(final Coder... coders) {
+
+        if ( coders == null ) {
+            throw new NullPointerException("null coders");
+        }
+
+        return block(asList(coders));
+    }
+
+    static Coder block(final Iterable<Coder> coders) {
 
         if ( coders == null ) {
             throw new NullPointerException("null coders");
@@ -36,7 +52,17 @@ abstract class Coder {
         return items(text("\r{\t"), items(coders), text("\b }"));
     }
 
+
     static Coder parens(final Coder... coders) {
+
+        if ( coders == null ) {
+            throw new NullPointerException("null coders");
+        }
+
+        return parens(asList(coders));
+    }
+
+    static Coder parens(final Iterable<Coder> coders) {
 
         if ( coders == null ) {
             throw new NullPointerException("null coders");
@@ -247,11 +273,7 @@ abstract class Coder {
 
 
     static Coder nothing() {
-        return new Coder() {
-
-            @Override public void generate(final Code code) { }
-
-        };
+        return nothing;
     }
 
 

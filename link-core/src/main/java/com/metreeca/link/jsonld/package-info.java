@@ -15,7 +15,7 @@
  */
 
 /**
- * JSON-LD context annotation.
+ * JSON-LD context annotations.
  *
  * @see <a href="https://www.w3.org/TR/json-ld11/">JSON-LD 1.1 - A JSON-based Serialization for Linked Data</a>
  */

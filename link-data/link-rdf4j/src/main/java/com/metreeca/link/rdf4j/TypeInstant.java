@@ -16,9 +16,9 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.rdf4j.RDF4J.Decoder;
-import com.metreeca.link.rdf4j.RDF4J.Encoder;
+import com.metreeca.link.rdf4j.RDF4J.Reader;
 import com.metreeca.link.rdf4j.RDF4J.Type;
+import com.metreeca.link.rdf4j.RDF4J.Writer;
 
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
@@ -29,27 +29,34 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static java.util.Map.entry;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 final class TypeInstant implements Type<Instant> {
 
-    @Override public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final Instant value) {
-        return entry(
-                Stream.of(encoder.factory().createLiteral(ZonedDateTime.ofInstant(value, ZoneId.of("UTC")))),
-                Stream.empty()
-        );
-    }
-
-    @Override public Optional<Instant> decode(final Decoder decoder, final Value value, final Instant model) {
-        return Optional.of(value)
+    @Override public CompletableFuture<Optional<Instant>> lookup(final Reader reader, final Set<Value> values, final Instant model) {
+        return completedFuture(values.stream()
 
                 .filter(Value::isLiteral)
                 .map(Literal.class::cast)
 
+                .findFirst()
+
                 .map(Literal::temporalAccessorValue)
-                .map(Instant::from);
+                .map(Instant::from)
+
+        );
+    }
+
+    @Override public Entry<Stream<Value>, Stream<Statement>> _encode(final Writer writer, final Instant value) {
+        return entry(
+                Stream.of(writer.factory().createLiteral(ZonedDateTime.ofInstant(value, ZoneId.of("UTC")))),
+                Stream.empty()
+        );
     }
 
 }

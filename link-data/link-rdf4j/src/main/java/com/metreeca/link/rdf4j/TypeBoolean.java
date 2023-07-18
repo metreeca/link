@@ -16,9 +16,9 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.rdf4j.RDF4J.Decoder;
-import com.metreeca.link.rdf4j.RDF4J.Encoder;
+import com.metreeca.link.rdf4j.RDF4J.Reader;
 import com.metreeca.link.rdf4j.RDF4J.Type;
+import com.metreeca.link.rdf4j.RDF4J.Writer;
 
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Statement;
@@ -26,23 +26,30 @@ import org.eclipse.rdf4j.model.Value;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static java.util.Map.entry;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 final class TypeBoolean implements Type<Boolean> {
 
-    @Override public Map.Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final Boolean value) {
-        return entry(Stream.of(encoder.factory().createLiteral(value)), Stream.empty());
-    }
-
-    @Override public Optional<Boolean> decode(final Decoder decoder, final Value value, final Boolean model) {
-        return Optional.of(value)
+    @Override public CompletableFuture<Optional<Boolean>> lookup(final Reader reader, final Set<Value> values, final Boolean model) {
+        return completedFuture(values.stream()
 
                 .filter(Value::isLiteral)
                 .map(Literal.class::cast)
 
-                .map(Literal::booleanValue);
+                .findFirst()
+
+                .map(Literal::booleanValue)
+
+        );
+    }
+
+    @Override public Map.Entry<Stream<Value>, Stream<Statement>> _encode(final Writer writer, final Boolean value) {
+        return entry(Stream.of(writer.factory().createLiteral(value)), Stream.empty());
     }
 
 }

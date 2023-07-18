@@ -16,9 +16,8 @@
 
 package com.metreeca.link.rdf4j;
 
-import com.metreeca.link.rdf4j.RDF4J.Decoder;
-import com.metreeca.link.rdf4j.RDF4J.Encoder;
 import com.metreeca.link.rdf4j.RDF4J.Type;
+import com.metreeca.link.rdf4j.RDF4J.Writer;
 
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
@@ -26,15 +25,21 @@ import org.eclipse.rdf4j.model.Value;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 final class TypeList implements Type<List<?>> {
 
-    @Override public Entry<Stream<Value>, Stream<Statement>> encode(final Encoder encoder, final List<?> value) {
+    @Override public CompletableFuture<Optional<List<?>>> lookup(
+            final RDF4J.Reader reader, final Set<Value> values, final List<?> model
+    ) {
         throw new UnsupportedOperationException(";( be implemented"); // !!!
     }
 
-    @Override public Optional<List<?>> decode(final Decoder decoder, final Value value, final List<?> model) {
+    @Override public Entry<Stream<Value>, Stream<Statement>> _encode(
+            final Writer writer, final List<?> value
+    ) {
         throw new UnsupportedOperationException(";( be implemented"); // !!!
     }
 

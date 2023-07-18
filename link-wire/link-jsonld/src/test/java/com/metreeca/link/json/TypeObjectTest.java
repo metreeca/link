@@ -16,9 +16,9 @@
 
 package com.metreeca.link.json;
 
-import com.metreeca.link.Query;
-import com.metreeca.link.Table;
 import com.metreeca.link.jsonld.Id;
+import com.metreeca.link.specs.Query;
+import com.metreeca.link.specs.Table;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,13 +26,13 @@ import org.junit.jupiter.api.Test;
 import java.math.BigInteger;
 import java.util.*;
 
-import static com.metreeca.link.Query.Criterion.decreasing;
-import static com.metreeca.link.Query.Criterion.increasing;
-import static com.metreeca.link.Query.*;
-import static com.metreeca.link.Stash.expression;
-import static com.metreeca.link.Table.column;
 import static com.metreeca.link.json.JSONTest.decode;
 import static com.metreeca.link.json.JSONTest.encode;
+import static com.metreeca.link.specs.Column.column;
+import static com.metreeca.link.specs.Constraint.*;
+import static com.metreeca.link.specs.Criterion.decreasing;
+import static com.metreeca.link.specs.Criterion.increasing;
+import static com.metreeca.link.specs.Expression.expression;
 
 import static java.util.Arrays.asList;
 import static java.util.Map.entry;
@@ -142,11 +142,11 @@ final class TypeObjectTest {
             return Optional.of(decode("{ \"members\" :  ["+query+"] }", Items.class).getMembers())
                     .filter(Query.class::isInstance)
                     .map(Query.class::cast)
-                    .orElseGet(Query::query);
+                    .orElseThrow();
         }
 
 
-        @Test void testDecodeFrameModel() {
+        @Test void testDecodeIndexModel() {
             assertThat(query("{ \"label\": \"value\", \"~label\": \"keywords\" }").model())
                     .isInstanceOf(Item.class)
                     .extracting(Item.class::cast)
@@ -158,8 +158,8 @@ final class TypeObjectTest {
         @Test void testDecodeTableModel() {
             assertThat(query("{ \"alias=label\": \"\" }").model())
                     .isInstanceOf(Table.class)
-                    .extracting(v -> (Table<?>)v)
-                    .satisfies(table -> assertThat(table.columns())
+                    .extracting(Table.class::cast)
+                    .satisfies(columns -> assertThat(columns)
                             .containsExactly(
                                     entry("alias", column(expression("label"), ""))
                             )
@@ -169,8 +169,8 @@ final class TypeObjectTest {
         @Test void testDecodeMixedModel() {
             assertThat(query("{ \"label\": \"\", \"alias=label\": \"\" }").model())
                     .isInstanceOf(Table.class)
-                    .extracting(v -> (Table<?>)v)
-                    .satisfies(table -> assertThat(table.columns())
+                    .extracting(Table.class::cast)
+                    .satisfies(columns -> assertThat(columns)
                             .containsExactlyInAnyOrderEntriesOf(Map.ofEntries(
                                     entry("label", column(expression("label"), "")),
                                     entry("alias", column(expression("label"), ""))
@@ -182,8 +182,8 @@ final class TypeObjectTest {
         @Test void testHandleEqualInAliases() {
             assertThat(query("{ \"'alias=value'=label\": \"\" }").model())
                     .isInstanceOf(Table.class)
-                    .extracting(v -> (Table<?>)v)
-                    .satisfies(table -> assertThat(table.columns())
+                    .extracting(Table.class::cast)
+                    .satisfies(columns -> assertThat(columns)
                             .containsExactly(
                                     entry("alias=value", column(expression("label"), ""))
                             )
@@ -194,8 +194,8 @@ final class TypeObjectTest {
         @Test void testLookupTableShapes() {
             assertThat(query("{ \"alias=item\": { \"label\":  \"\"} }").model())
                     .isInstanceOf(Table.class)
-                    .extracting(v -> (Table<?>)v)
-                    .satisfies(table -> assertThat(table.columns().get("alias").model())
+                    .extracting(Table.class::cast)
+                    .satisfies(columns -> assertThat(columns.get("alias").model())
                             .isInstanceOf(Item.class)
                             .extracting(Item.class::cast)
                             .satisfies(item -> assertThat(item.getLabel())
@@ -207,8 +207,8 @@ final class TypeObjectTest {
         @Test void testLookupTableNestedShapes() {
             assertThat(query("{ \"alias=item.item\": { \"label\":  \"\"} }").model())
                     .isInstanceOf(Table.class)
-                    .extracting(v -> (Table<?>)v)
-                    .satisfies(table -> assertThat(table.columns().get("alias").model())
+                    .extracting(Table.class::cast)
+                    .satisfies(columns -> assertThat(columns.get("alias").model())
                             .isInstanceOf(Item.class)
                             .extracting(Item.class::cast)
                             .satisfies(item -> assertThat(item.getLabel())
@@ -220,8 +220,8 @@ final class TypeObjectTest {
         @Test void testIgnoreTableComputedShapes() {
             assertThat(query("{ \"alias=max:items\": { \"label\":  \"\"} }").model())
                     .isInstanceOf(Table.class)
-                    .extracting(v -> (Table<?>)v)
-                    .satisfies(table -> assertThat(table.columns().get("alias").model())
+                    .extracting(Table.class::cast)
+                    .satisfies(columns -> assertThat(columns.get("alias").model())
                             .isInstanceOf(Map.class)
                             .extracting(v -> (Map<?, ?>)v)
                             .satisfies(map -> assertThat(map)
@@ -232,27 +232,27 @@ final class TypeObjectTest {
 
 
         @Test void testDecodeLtConstraint() {
-            assertThat(query("{ \"<field\": \"value\" }").filter())
+            assertThat(query("{ \"<field\": \"value\" }").specs().filter())
                     .containsExactly(entry(expression("field"), lt("value")));
         }
 
         @Test void testDecodeGtConstraint() {
-            assertThat(query("{ \">field\": \"value\" }").filter())
+            assertThat(query("{ \">field\": \"value\" }").specs().filter())
                     .containsExactly(entry(expression("field"), gt("value")));
         }
 
         @Test void testDecodeLteConstraint() {
-            assertThat(query("{ \"<=field\": \"value\" }").filter())
+            assertThat(query("{ \"<=field\": \"value\" }").specs().filter())
                     .containsExactly(entry(expression("field"), lte("value")));
         }
 
         @Test void testDecodeGteConstraint() {
-            assertThat(query("{ \">=field\": \"value\" }").filter())
+            assertThat(query("{ \">=field\": \"value\" }").specs().filter())
                     .containsExactly(entry(expression("field"), gte("value")));
         }
 
         @Test void testDecodeLikeConstraint() {
-            assertThat(query("{ \"~field\": \"value\" }").filter())
+            assertThat(query("{ \"~field\": \"value\" }").specs().filter())
                     .containsExactly(entry(expression("field"), like("value")));
         }
 
@@ -263,13 +263,13 @@ final class TypeObjectTest {
 
         @Test void testDecodeAnyConstraint() {
 
-            assertThat(query("{ \"?field\": [] }").filter())
+            assertThat(query("{ \"?field\": [] }").specs().filter())
                     .containsExactly(entry(expression("field"), any()));
 
-            assertThat(query("{ \"?field\": [null, true, 1, \"value\"] }").filter())
+            assertThat(query("{ \"?field\": [null, true, 1, \"value\"] }").specs().filter())
                     .containsExactly(entry(expression("field"), any(null, true, BigInteger.ONE, "value")));
 
-            assertThat(query("{ \"?label\": [null] }").filter()) // typed
+            assertThat(query("{ \"?label\": [null] }").specs().filter()) // typed
                     .containsExactly(entry(expression("label"), any((Object)null)));
 
         }
@@ -281,7 +281,7 @@ final class TypeObjectTest {
 
 
         @Test void testDecodeOrder() {
-            assertThat(query("{ \"^\": { \"y\": \"increasing\", \"x\": \"decreasing\" } }").order().entrySet())
+            assertThat(query("{ \"^\": { \"y\": \"increasing\", \"x\": \"decreasing\" } }").specs().order().entrySet())
                     .containsExactly(
                             entry(expression("y"), increasing),
                             entry(expression("x"), decreasing)
@@ -300,7 +300,7 @@ final class TypeObjectTest {
 
 
         @Test void testDecodeFocus() {
-            assertThat(query("{ \"$\": { \"x\": [null, \"value\"] } }").focus().entrySet())
+            assertThat(query("{ \"$\": { \"x\": [null, \"value\"] } }").specs().focus().entrySet())
                     .containsExactly(
                             entry(expression("x"), new HashSet<>(asList(null, "value")))
                     );
@@ -308,7 +308,7 @@ final class TypeObjectTest {
 
 
         @Test void testDecodeOffset() {
-            assertThat(query("{ \"@\": 100  }").offset())
+            assertThat(query("{ \"@\": 100  }").specs().offset())
                     .isEqualTo(100);
         }
 
@@ -319,7 +319,7 @@ final class TypeObjectTest {
 
 
         @Test void testDecodeLimit() {
-            assertThat(query("{ \"#\": 100  }").limit())
+            assertThat(query("{ \"#\": 100  }").specs().limit())
                     .isEqualTo(100);
         }
 

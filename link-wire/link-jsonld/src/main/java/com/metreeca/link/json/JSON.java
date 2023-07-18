@@ -16,7 +16,10 @@
 
 package com.metreeca.link.json;
 
-import com.metreeca.link.*;
+import com.metreeca.link.Codec;
+import com.metreeca.link.Frame;
+import com.metreeca.link.Local;
+import com.metreeca.link.Trace;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -108,8 +111,9 @@ public final class JSON implements Codec {
             entry(boolean.class, new TypeBoolean()),
 
             entry(Number.class, new TypeNumber()),
+            entry(String.class, new TypeString()),
 
-            entry(Number.class, new TypeNumber()),
+            entry(URI.class, new TypeURI()),
 
             entry(Year.class, new TypeYear()),
             entry(LocalDate.class, new TypeLocalDate()),
@@ -121,12 +125,7 @@ public final class JSON implements Codec {
             entry(Period.class, new TypePeriod()),
             entry(Duration.class, new TypeDuration()),
 
-            entry(URI.class, new TypeURI()),
-
-            entry(String.class, new TypeString()),
             entry(Local.class, new TypeLocal()),
-
-            entry(Table.class, new TypeTable()),
             entry(Trace.class, new TypeTrace()),
 
             entry(Collection.class, new TypeCollection()),

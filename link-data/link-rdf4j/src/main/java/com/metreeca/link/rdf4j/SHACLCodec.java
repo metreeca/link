@@ -23,7 +23,7 @@ import org.eclipse.rdf4j.model.Statement;
 
 import java.util.stream.Stream;
 
-final class ShapeCodec {
+final class SHACLCodec {
 
     Stream<Statement> encode(final Shape shape) {
 
