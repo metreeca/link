@@ -19,20 +19,19 @@ package com.metreeca.link.json;
 import com.metreeca.link.*;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.time.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.json.JSON.Tokens.EOF;
 
 import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Map.entry;
 import static java.util.stream.Collectors.toList;
 
@@ -192,54 +191,6 @@ public final class JSON implements Codec {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public String encode(final Object value) {
-        try ( final StringWriter writer=new StringWriter() ) {
-
-            return encode(writer, value).toString();
-
-        } catch ( final IOException e ) {
-
-            throw new UncheckedIOException(e);
-
-        }
-    }
-
-    public <T> T decode(final String json, final Class<T> clazz) {
-
-        if ( json == null ) {
-            throw new NullPointerException("null json");
-        }
-
-        if ( clazz == null ) {
-            throw new NullPointerException("null clazz");
-        }
-
-        if ( json.startsWith("%7B") ) { // URLEncoded JSON
-
-            return decode(URLDecoder.decode(json, UTF_8), clazz);
-
-        } else if ( json.startsWith("e3") ) { // Base64 JSON
-
-            return decode(new String(Base64.getDecoder().decode(json), UTF_8), clazz);
-
-            // !!! } else if ( ??? ) { // search parameters
-
-        } else {
-
-            try ( final StringReader reader=new StringReader(json) ) {
-
-                return decode(reader, clazz);
-
-            } catch ( final IOException e ) {
-
-                throw new UncheckedIOException(e);
-
-            }
-        }
-
-    }
-
 
     @Override public <A extends Appendable> A encode(final A target, final Object value) throws IOException {
 
