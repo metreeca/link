@@ -245,69 +245,6 @@ public final class JSON implements Codec {
     }
 
 
-    public static final class Decoder {
-
-        private final JSON json;
-        private final Lexer lexer;
-
-
-        private Decoder(final JSON json, final Readable source) {
-            this.json=json;
-            this.lexer=new Lexer(source);
-        }
-
-
-        // !!! may silently return a stashed value (Query/Table): see TypeObject
-
-        public <T> T decode(final Class<T> clazz) throws JSONException, IOException {
-
-            if ( clazz == null ) {
-                throw new NullPointerException("null clazz");
-            }
-
-            try {
-
-                return json.type(clazz).decode(this, clazz);
-
-            } catch ( final JSONException e ) {
-
-                throw e;
-
-            } catch ( final UncheckedIOException e ) {
-
-                throw e.getCause();
-
-            } catch ( final RuntimeException e ) {
-
-                throw new JSONException(e.getMessage(), lexer.line(), lexer.col(), e);
-
-            }
-        }
-
-
-        public Tokens type() throws IOException {
-            return lexer.type();
-        }
-
-        public String token() {
-            return lexer.token();
-        }
-
-        public String token(final Tokens expected) throws IOException {
-
-            final Tokens actual=type();
-
-            if ( actual != expected ) {
-                throw new JSONException(
-                        format("expected %s, found %s", expected.description(), actual.description()),
-                        lexer.line(), lexer.col()
-                );
-            }
-
-            return token();
-        }
-    }
-
     public static final class Encoder {
 
         private final JSON json;
@@ -516,6 +453,70 @@ public final class JSON implements Codec {
             }
 
             write('"');
+        }
+
+    }
+
+    public static final class Decoder {
+
+        private final JSON json;
+        private final Lexer lexer;
+
+
+        private Decoder(final JSON json, final Readable source) {
+            this.json=json;
+            this.lexer=new Lexer(source);
+        }
+
+
+        // !!! may silently return a stashed value (Query/Table): see TypeObject
+
+        public <T> T decode(final Class<T> clazz) throws JSONException, IOException {
+
+            if ( clazz == null ) {
+                throw new NullPointerException("null clazz");
+            }
+
+            try {
+
+                return json.type(clazz).decode(this, clazz);
+
+            } catch ( final JSONException e ) {
+
+                throw e;
+
+            } catch ( final UncheckedIOException e ) {
+
+                throw e.getCause();
+
+            } catch ( final RuntimeException e ) {
+
+                throw new JSONException(e.getMessage(), lexer.line(), lexer.col(), e);
+
+            }
+        }
+
+
+        public Tokens type() throws IOException {
+            return lexer.type();
+        }
+
+        public String token() {
+            return lexer.token();
+        }
+
+        public String token(final Tokens expected) throws IOException {
+
+            final Tokens actual=type();
+
+            if ( actual != expected ) {
+                throw new JSONException(
+                        format("expected %s, found %s", expected.description(), actual.description()),
+                        lexer.line(), lexer.col()
+                );
+            }
+
+            return token();
         }
 
     }
