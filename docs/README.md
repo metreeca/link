@@ -1,14 +1,21 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.metreeca/link.svg)](https://central.sonatype.com/artifact/com.metreeca/link/0.52.0/versions)
 
+> ⚠️
+>
+> **Work in progress / Watch this repo or follow [@metreeeca](https://twitter.com/metreeca) to stay updated…**
+
 # Metreeca/Link
 
 Metreeca/Link is a model‑driven Java framework for rapid REST/JSON‑LD backend development.
 
-Its engines automatically convert annotated JavaBean classes and high-level declarative JSON-LD models into extended REST
+Its engines automatically convert annotated JavaBean classes and high-level declarative JSON-LD models into extended
+REST
 engines supporting data validation, CRUD operations, faceted search and analytical queries, relieving backend developers
 from low-level chores and completely shielding frontend developers from linked data technicalities.
 
-> ❗client-driven models on a par with GraphQL
+<!--
+
+&gt; ❗client-driven models on a par with GraphQL
 
 > ❗️NoSQL storage adapters (annotation/schema-driven)
 
@@ -63,6 +70,7 @@ from low-level chores and completely shielding frontend developers from linked d
    to [publish](http://metreeca.github.io/link/tutorials/publishing-jsonld-apis)
    and [consume](https://metreeca.github.io/link/tutorials/consuming-jsonld-apis) your data as model-driven REST/JSON‑LD
    APIs…
+-->
 
 # Support
 
