@@ -1,4 +1,4 @@
-[![Maven Central](https://img.shields.io/maven-central/v/com.metreeca/link.svg)](https://central.sonatype.com/artifact/com.metreeca/link/0.52.0/versions)
+[![Maven Central](https://img.shields.io/maven-central/v/com.metreeca/link.svg)](https://central.sonatype.com/artifact/com.metreeca/link/)
 
 > ⚠️
 >
@@ -6,12 +6,11 @@
 
 # Metreeca/Link
 
-Metreeca/Link is a model‑driven Java framework for rapid REST/JSON‑LD backend development.
+Metreeca/Link is a model‑driven Java framework for rapid REST/JSON‑LD API development.
 
-Its engines automatically convert annotated JavaBean classes and high-level declarative JSON-LD models into extended
-REST
-engines supporting data validation, CRUD operations, faceted search and analytical queries, relieving backend developers
-from low-level chores and completely shielding frontend developers from linked data technicalities.
+Its engine automatically convert annotated JavaBean classes and high-level declarative JSON-LD models into extended
+REST APIs supporting data validation, CRUD operations and faceted search, relieving backend developers from low-level
+chores and completely shielding frontend developers from linked data technicalities.
 
 <!--
 
