@@ -22,7 +22,6 @@ import com.metreeca.link.Local;
 import com.metreeca.link.Shape;
 
 import org.eclipse.rdf4j.model.*;
-import org.eclipse.rdf4j.model.vocabulary.SHACL;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
@@ -45,8 +44,6 @@ import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.eclipse.rdf4j.model.util.Values.iri;
-import static org.eclipse.rdf4j.model.vocabulary.RDF4J.NIL;
-import static org.eclipse.rdf4j.model.vocabulary.RDF4J.SHACL_SHAPE_GRAPH;
 
 /**
  * RDF4J graph storage driver.
@@ -68,8 +65,6 @@ public final class RDF4J implements Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private final Repository repository;
-
-    private IRI context;
 
     private List<Entry<Class<?>, Type<?>>> types=List.of(
 
@@ -112,18 +107,7 @@ public final class RDF4J implements Engine {
 
     private RDF4J(final RDF4J rdf4j) {
         this.repository=rdf4j.repository;
-        this.context=rdf4j.context;
         this.types=rdf4j.types;
-    }
-
-
-    public RDF4J context(final IRI context) {
-
-        final RDF4J rdf4J=new RDF4J(this);
-
-        rdf4J.context=context;
-
-        return rdf4J;
     }
 
     public <T> RDF4J type(final Class<T> clazz, final Type<T> codec) {
@@ -158,13 +142,13 @@ public final class RDF4J implements Engine {
 
         try ( final RepositoryConnection connection=repository.getConnection() ) {
 
-            try {
+            try { // !!! review ontotext-specific assumptions
 
                 connection.begin();
 
                 connection.clear(context);
                 connection.add(model, context);
-                connection.add(this.context != null ? this.context : NIL, SHACL.SHAPES_GRAPH, context, SHACL_SHAPE_GRAPH);
+                // !!! connection.add(this.context != null ? this.context : NIL, SHACL.SHAPES_GRAPH, context, SHACL_SHAPE_GRAPH);
                 connection.commit();
 
             } catch ( final Throwable t ) {
@@ -237,7 +221,7 @@ public final class RDF4J implements Engine {
 
                 // !!! batch?
 
-                final boolean present=connection.hasStatement(id, null, null, true, context);
+                final boolean present=connection.hasStatement(id, null, null, true); // !!! context
 
                 if ( present ) {
 
@@ -248,7 +232,7 @@ public final class RDF4J implements Engine {
                     try {
 
                         connection.begin();
-                        connection.add(description::iterator, context);
+                        connection.add(description::iterator); // !!! context
                         connection.commit();
 
                         return Optional.of(frame);
@@ -289,16 +273,16 @@ public final class RDF4J implements Engine {
 
                 // !!! batch?
 
-                final boolean present=connection.hasStatement(id, null, null, true, context)
-                        || connection.hasStatement(null, null, id, true, context);
+                final boolean present=connection.hasStatement(id, null, null, true) // !!! context
+                        || connection.hasStatement(null, null, id, true); // !!! context
 
                 if ( present ) {
 
                     try {
 
                         connection.begin();
-                        connection.remove(id, null, null, context);
-                        connection.add(description::iterator, context);
+                        connection.remove(id, null, null); // !!! context
+                        connection.add(description::iterator); // !!! context
                         connection.commit();
 
                         return Optional.of(frame);
@@ -336,16 +320,16 @@ public final class RDF4J implements Engine {
 
                 // !!! batch?
 
-                final boolean present=connection.hasStatement(id, null, null, true, context)
-                        || connection.hasStatement(null, null, id, true, context);
+                final boolean present=connection.hasStatement(id, null, null, true) // !!! context
+                        || connection.hasStatement(null, null, id, true); // !!! context
 
                 if ( present ) {
 
                     try {
 
                         connection.begin();
-                        connection.remove(id, null, null, context);
-                        connection.remove((Resource)null, null, id, context);
+                        connection.remove(id, null, null); // !!! context
+                        connection.remove((Resource)null, null, id); // !!! context
                         connection.commit();
 
                         return Optional.of(frame);

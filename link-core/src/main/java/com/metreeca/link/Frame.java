@@ -124,10 +124,6 @@ public abstract class Frame<T> {
     public abstract Frame<T> set(final String field, final Object value);
 
 
-    public Optional<Trace> validate() {
-        return Optional.empty(); // !!!
-    }
-
     public Optional<Frame<T>> merge(final Frame<T> frame) {
 
         if ( frame == null ) {
@@ -199,6 +195,13 @@ public abstract class Frame<T> {
             return Optional.empty();
 
         }
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public Optional<Trace> validate() {
+        return Optional.empty(); // !!!
     }
 
 

@@ -44,6 +44,7 @@ public abstract class Shape {
 
     private static final Map<Class<?>, Shape> cache=new ConcurrentHashMap<>();
 
+
     private static <T> Supplier<T> memoize(final Supplier<T> supplier) {
 
         final class Memo implements Supplier<T> {
