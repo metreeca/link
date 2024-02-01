@@ -18,21 +18,27 @@ package com.metreeca.link;
 
 import java.util.*;
 
-import static java.lang.String.format;
+import static com.metreeca.link.Frame.error;
+
 import static java.util.Collections.unmodifiableMap;
 import static java.util.stream.Collectors.toMap;
 
 /**
  * Localized textual content.
  */
-public final class Local<T> {
+public final class Local<T> implements Map<Locale, T> {
 
     /**
-     * A variant of the {@linkplain Locale#ROOT root locale} used in models to match any locale.
+     * A wildcard language tag used in models to match any locale.
      */
-    public static final Locale Wildcard=new Locale.Builder()
+    public static final String Any="*";
+
+    /**
+     * A wildcard variant of the {@linkplain Locale#ROOT root locale} used in models to match any locale.
+     */
+    public static final Locale AnyLocale=new Locale.Builder()
             .setLocale(Locale.ROOT)
-            .setExtension(Locale.PRIVATE_USE_EXTENSION, "wildcard")
+            .setExtension(Locale.PRIVATE_USE_EXTENSION, "any")
             .build();
 
 
@@ -133,24 +139,15 @@ public final class Local<T> {
         }
 
         return new Local<>(locals.stream()
-                .flatMap(local -> local.values.entrySet().stream())
+                .flatMap(local -> local.delegate.entrySet().stream())
                 .collect(toMap(
 
                         Map.Entry::getKey,
                         Map.Entry::getValue,
 
-                        (x, y) -> {
-
-                            if ( x.equals(y) ) {
-                                return x;
-                            } else {
-
-                                throw new IllegalArgumentException(format(
-                                        "conflicting localized values <%s> / <%s>", x, y
-                                ));
-                            }
-
-                        },
+                        (x, y) -> x.equals(y) ? x : error(
+                                "conflicting localized values <%s> / <%s>", x, y
+                        ),
 
                         LinkedHashMap::new
 
@@ -160,53 +157,88 @@ public final class Local<T> {
 
 
     private static Locale locale(final String locale) {
-        return locale.equals("*") ? Wildcard : Locale.forLanguageTag(locale);
+        return locale.equals(Any) ? AnyLocale : Locale.forLanguageTag(locale);
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private final Map<Locale, T> values;
+    private final Map<Locale, T> delegate;
 
 
-    private Local(final Map<Locale, T> values) { this.values=unmodifiableMap(values); }
+    private Local(final Map<Locale, T> delegate) { this.delegate=unmodifiableMap(delegate); }
 
 
-    public Map<Locale, T> values() {
-        return values;
-    }
-
-
-    public Optional<T> value(final String locale) {
+    public Optional<T> get(final String locale) {
 
         if ( locale == null ) {
             throw new NullPointerException("null locale");
         }
 
-        return value(locale(locale));
+        return get(locale(locale));
     }
 
-    public Optional<T> value(final Locale locale) {
+    public Optional<T> get(final Locale locale) {
 
         if ( locale == null ) {
             throw new NullPointerException("null locale");
         }
 
-        return Optional.ofNullable(values.get(locale));
+        return Optional.ofNullable(delegate.get(locale));
     }
 
 
-    @Override public boolean equals(final Object object) {
-        return this == object || object instanceof Local
-                && values.equals(((Local<?>) object).values);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override public boolean isEmpty() {
+        return delegate.isEmpty();
     }
 
-    @Override public int hashCode() {
-        return values.hashCode();
+    @Override public boolean containsKey(final Object key) {
+        return delegate.containsKey(key);
     }
 
-    @Override public String toString() {
-        return values.toString();
+    @Override public boolean containsValue(final Object value) {
+        return delegate.containsValue(value);
+    }
+
+
+    @Override public int size() {
+        return delegate.size();
+    }
+
+    @Override public T get(final Object key) {
+        return delegate.get(key);
+    }
+
+
+    @Override public T put(final Locale key, final T value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override public T remove(final Object key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override public void putAll(final Map<? extends Locale, ? extends T> m) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+
+    @Override public Set<Locale> keySet() {
+        return delegate.keySet();
+    }
+
+    @Override public Collection<T> values() {
+        return delegate.values();
+    }
+
+    @Override public Set<Entry<Locale, T>> entrySet() {
+        return delegate.entrySet();
     }
 
 }

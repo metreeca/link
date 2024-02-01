@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Metreeca srl
+ * Copyright © 2023-2024 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,11 @@ final class TypeLocal implements Type<Local<?>> {
 
     @Override public CompletableFuture<Optional<Local<?>>> lookup(final RDF4J.Reader reader, final Set<Value> values, final Local<?> model) {
 
-        final Map<Locale, ?> entries=model.values();
+        final boolean empty=((Map<Locale, ?>)model).keySet().isEmpty();
+        final boolean wild=((Map<Locale, ?>)model).keySet().stream().anyMatch(Local.AnyLocale::equals);
+        final boolean unique=((Map<Locale, ?>)model).values().stream().anyMatch(String.class::isInstance);
 
-        final boolean empty=entries.keySet().isEmpty();
-        final boolean wild=entries.keySet().stream().anyMatch(Local.Wildcard::equals);
-        final boolean unique=entries.values().stream().anyMatch(String.class::isInstance);
-
-        final Set<String> locales=entries.keySet().stream()
+        final Set<String> locales=((Map<Locale, ?>)model).keySet().stream()
                 .map(Locale::toLanguageTag)
                 .collect(toSet());
 
@@ -79,7 +77,7 @@ final class TypeLocal implements Type<Local<?>> {
     @Override public Entry<Stream<Value>, Stream<Statement>> _encode(final Writer writer, final Local<?> value) {
         return entry(
 
-                value.values().entrySet().stream().flatMap(entry -> {
+                value.entrySet().stream().flatMap(entry -> {
 
                     final String locale=entry.getKey().toLanguageTag();
                     final Object values=entry.getValue();

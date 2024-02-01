@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Metreeca srl
+ * Copyright © 2023-2024 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ final class TypeLocal implements Type<Local<?>> {
 
         boolean tail=false;
 
-        for (final Entry<Locale, ?> entry : value.values().entrySet()) {
+        for (final Entry<Locale, ?> entry : value.entrySet()) {
 
             final Locale locale=entry.getKey();
             final Object object=entry.getValue();
@@ -46,7 +46,7 @@ final class TypeLocal implements Type<Local<?>> {
             }
 
             encoder.indent();
-            encoder.encode(locale.equals(Locale.ROOT) || locale.equals(Local.Wildcard) ? "" : locale.toLanguageTag());
+            encoder.encode(locale.equals(Locale.ROOT) || locale.equals(Local.AnyLocale) ? "" : locale.toLanguageTag());
             encoder.colon();
             encoder.encode(object);
 
@@ -71,7 +71,7 @@ final class TypeLocal implements Type<Local<?>> {
             }
 
             final String target=decoder.decode(String.class);
-            final Locale locale=target.equals("*") ? Local.Wildcard : Locale.forLanguageTag(target);
+            final Locale locale=target.equals("*") ? Local.AnyLocale : Locale.forLanguageTag(target);
 
             decoder.token(COLON);
 

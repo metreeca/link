@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Metreeca srl
+ * Copyright © 2023-2024 Metreeca srl
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ final class TypeLocalTest {
         }
 
         @Test void testEncodeWildcardLocal() {
-            assertThat(encode(local(Local.Wildcard, "value")))
+            assertThat(encode(local(Local.AnyLocale, "value")))
                     .isEqualTo("{\"\":\"value\"}");
         }
 
@@ -88,7 +88,7 @@ final class TypeLocalTest {
 
         @Test void testDecodeWildcardLocal() {
             assertThat(decode("{\"*\":\"value\"}", Local.class))
-                    .isEqualTo(local(Local.Wildcard, "value"));
+                    .isEqualTo(local(Local.AnyLocale, "value"));
         }
 
         @Test void testReportMixedLocal() {
