@@ -344,7 +344,7 @@ final class _ExpressionTest {
         }
 
         @Test void testReportMalformedOrder() {
-            assertThatIllegalArgumentException().isThrownBy(() -> _query("^x=", property(x)));
+            assertThatIllegalArgumentException().isThrownBy(() -> _query("^x=1.23", property(x)));
             assertThatIllegalArgumentException().isThrownBy(() -> _query("^x=value", property(x)));
         }
 

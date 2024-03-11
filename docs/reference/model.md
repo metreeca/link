@@ -82,6 +82,7 @@ uchar = %x20-26 / %x28-10FFFF ; all non-control Unicode chars minus "'" (single 
 {expression}=null // non-existential any option
 {expression} // existential any option
 
+^{expression} // order
 ^{expression}=increasing // order
 ^{expression}=decreasing // order
 ^{expression}={number} // order

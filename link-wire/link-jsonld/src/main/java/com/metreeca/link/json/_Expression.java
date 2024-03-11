@@ -229,6 +229,7 @@ public final class _Expression {
     //// !!! Factor w/ JSONDecoder /////////////////////////////////////////////////////////////////////////////////////
 
     private static final Map<String, Integer> ORDER=Map.of(
+            "", +1,
             "increasing", +1,
             "decreasing", -1
     );

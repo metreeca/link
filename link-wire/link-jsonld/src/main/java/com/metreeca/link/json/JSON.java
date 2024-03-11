@@ -111,19 +111,27 @@ public final class JSON implements Codec {
 
                     .map(e -> entry(e.getKey(), e.getValue().getValue().get()))
 
-                    .filter(e -> e.getValue().maxCount().filter(limit -> limit > 1).isPresent())
+                    .filter(e -> e.getValue().maxCount().orElse(Integer.MAX_VALUE) > 1)
                     .filter(e -> !e.getValue().predicates().isEmpty())
 
                     .collect(toList());
 
             if ( collections.size() == 1 ) {
 
-                final Entry<IRI, Shape> collection=collections.iterator().next();
+                try {
 
-                final IRI predicate=collection.getKey();
-                final Query query=_query(string, collection.getValue());
+                    final Entry<IRI, Shape> collection=collections.iterator().next();
 
-                return frame(field(predicate, query));
+                    final IRI predicate=collection.getKey();
+                    final Query query=_query(string, collection.getValue());
+
+                    return frame(field(predicate, query));
+
+                } catch ( final RuntimeException e ) { // !!! review
+
+                    throw new JSONException(e.getMessage(), 1, 1);
+
+                }
 
             } else if ( collections.isEmpty() ) {
 

@@ -304,7 +304,7 @@ final class JSONDecoder {
 
             } catch ( final IllegalArgumentException e ) {
 
-                return reader.error(e.getLocalizedMessage());
+                return reader.error(e.getMessage());
 
             }
 
