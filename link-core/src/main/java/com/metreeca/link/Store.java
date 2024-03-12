@@ -18,6 +18,9 @@ package com.metreeca.link;
 
 import org.eclipse.rdf4j.model.IRI;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -37,13 +40,52 @@ public interface Store {
      * @param id    the identifier of the resource to be retrieved
      * @param shape the shape of the resource to be retrieved
      * @param model the model for resource to be retrieved, possibly containing collection {@linkplain Query queries}
+     * @param langs preferred languages for retrieval and sorting operations, in order of priority
      *
      * @return an optional containing a description of the retrieved resource modelled after {@code model}, if
      * {@code id} was present in the storage backend; an empty optional, otherwise
      *
-     * @throws NullPointerException if any parameter is null
+     * @throws NullPointerException if any parameter is null or contains null values
      */
-    public Optional<Frame> retrieve(final IRI id, final Shape shape, final Frame model);
+    public default Optional<Frame> retrieve(final IRI id, final Shape shape, final Frame model, final String... langs) {
+
+        if ( id == null ) {
+            throw new NullPointerException("null id");
+        }
+
+        if ( shape == null ) {
+            throw new NullPointerException("null shape");
+        }
+
+        if ( model == null ) {
+            throw new NullPointerException("null model");
+        }
+
+        if ( langs == null || Arrays.stream(langs).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null langs");
+        }
+
+        return retrieve(id, shape, model, List.of(langs));
+    }
+
+    /**
+     * Handles retrieval requests.
+     *
+     * <p><strong>Warning</strong> / Storage engines are not required to perform {@linkplain Shape#validate(Frame)
+     * validation}: {@code model} is expected to be consistent with the provided {@code shape}; detected inconsistencies
+     * may cause the operation to silently fail.</p>
+     *
+     * @param id    the identifier of the resource to be retrieved
+     * @param shape the shape of the resource to be retrieved
+     * @param model the model for resource to be retrieved, possibly containing collection {@linkplain Query queries}
+     * @param langs preferred languages for retrieval and sorting operations, in order of priority
+     *
+     * @return an optional containing a description of the retrieved resource modelled after {@code model}, if
+     * {@code id} was present in the storage backend; an empty optional, otherwise
+     *
+     * @throws NullPointerException if any parameter is null or contains null values
+     */
+    public Optional<Frame> retrieve(final IRI id, final Shape shape, final Frame model, final List<String> langs);
 
 
     /**

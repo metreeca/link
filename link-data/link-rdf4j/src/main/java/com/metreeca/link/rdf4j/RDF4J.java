@@ -25,10 +25,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -101,7 +98,8 @@ public final class RDF4J implements Store {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override public Optional<Frame> retrieve(final IRI id, final Shape shape, final Frame model) {
+
+    @Override public Optional<Frame> retrieve(final IRI id, final Shape shape, final Frame model, final List<String> langs) {
 
         if ( id == null ) {
             throw new NullPointerException("null id");
@@ -113,6 +111,10 @@ public final class RDF4J implements Store {
 
         if ( model == null ) {
             throw new NullPointerException("null model");
+        }
+
+        if ( langs == null || langs.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null langs");
         }
 
         try ( final RepositoryConnection connection=repository.getConnection() ) { // !!! pool
