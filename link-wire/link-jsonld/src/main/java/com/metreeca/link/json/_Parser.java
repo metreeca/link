@@ -26,7 +26,6 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -143,17 +142,17 @@ final class _Parser {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    static Value value(final String value, final Shape shape) {
+    static Value value(final String value, final Shape shape, final URI base) {
         return shape.datatype()
                 .map(iri -> iri.equals(RESOURCE) ?
 
                         value(value.startsWith("_:")
                                 ? bnode(value.substring(2))
-                                : iri(value), shape
+                                : iri(value, base), shape
                         )
 
                         : iri.equals(BNODE) ? value(bnode(value), shape)
-                        : iri.equals(IRI) ? value(iri(value), shape)
+                        : iri.equals(IRI) ? value(iri(value, base), shape)
 
                         : literal(value, iri)
 
@@ -165,10 +164,10 @@ final class _Parser {
         return shape.labels().isEmpty() ? resource : frame(field(ID, resource));
     }
 
-    private static IRI iri(final String iri) {
+    private static IRI iri(final String iri, final URI base) {
         try {
 
-            final URI uri=new URI(iri); // !!! resolve
+            final URI uri=base.resolve(iri); // !!! resolve
 
             if ( !uri.isAbsolute() ) {
                 throw new IllegalArgumentException(format("relative iri <%s>", uri.toASCIIString()));
@@ -176,7 +175,7 @@ final class _Parser {
 
             return Frame.iri(uri);
 
-        } catch ( final URISyntaxException e ) {
+        } catch ( final IllegalArgumentException e ) {
 
             throw new IllegalArgumentException(format("malformed iri <%s>: %s", iri, e.getMessage()));
 

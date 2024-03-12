@@ -26,6 +26,7 @@ import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,6 +40,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 final class JSONDecoderTest {
+
+    private static final URI base=URI.create("https://example.org/base/");
 
     private static final IRI t=iri("test:t");
 
@@ -54,7 +57,7 @@ final class JSONDecoderTest {
     private static Map<IRI, Set<Value>> decode(final String json) { return decode(json, shape()); }
 
     private static Map<IRI, Set<Value>> decode(final String json, final Shape shape) {
-        return json().decode(json.replace('\'', '"'), shape).fields();
+        return json().decode(base, json.replace('\'', '"'), shape).fields();
     }
 
 
@@ -321,7 +324,9 @@ final class JSONDecoderTest {
         }
 
 
-        // @Test void testResolveRelativeIRIs() { }
+        @Test void testResolveRelativeIRIs() {
+            assertThat(value("'path'", datatype(IRI))).isEqualTo(value(iri(base.resolve("path"))));
+        }
 
 
         @Test void testDecodeEmptyLocals() {

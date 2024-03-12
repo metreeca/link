@@ -20,16 +20,13 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 
-import java.net.URI;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
 import static com.metreeca.link.Frame.*;
 
-import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Objects.requireNonNull;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.*;
 
@@ -82,36 +79,6 @@ public abstract class Shape {
 
         };
 
-    }
-
-
-    public static Shape base(final String base) {
-
-        if ( base == null ) {
-            throw new NullPointerException("null base");
-        }
-
-        return base(URI.create(base));
-
-    }
-
-    private static Shape base(final URI base) {
-
-        if ( base == null ) {
-            throw new NullPointerException("null base");
-        }
-
-        if ( !base.isAbsolute() ) {
-            throw new IllegalArgumentException(format("relative base <%s>", base));
-        }
-
-        final Optional<URI> value=Optional.of(base);
-
-        return new Shape() {
-
-            @Override public Optional<URI> base() { return value; }
-
-        };
     }
 
 
@@ -468,7 +435,7 @@ public abstract class Shape {
                 ? Optional.of(RESOURCE)
                 : Optional.empty();
 
-        final Supplier<Shape> supplier=new Memo<>(() -> {
+        final Supplier<Shape> supplier=new Cache<>(() -> {
 
             if ( predicate.equals(ID) ) {
 
@@ -522,11 +489,6 @@ public abstract class Shape {
 
         final boolean virtual=shapes.stream().anyMatch(Shape::virtual);
         final boolean composite=shapes.stream().anyMatch(Shape::composite);
-
-
-        final Optional<URI> base=shapes.stream()
-                .flatMap(s -> s.base().stream())
-                .reduce((x, y) -> x.equals(y) ? x : error("conflicting <base> definition <%s> / <%s>", x, y));
 
 
         final Optional<IRI> clazz=shapes.stream()
@@ -620,9 +582,6 @@ public abstract class Shape {
             }
 
 
-            @Override public Optional<URI> base() { return base; }
-
-
             @Override public Optional<IRI> clazz() { return clazz; }
 
             @Override public Optional<IRI> datatype() { return datatype; }
@@ -672,9 +631,6 @@ public abstract class Shape {
     public boolean virtual() { return false; }
 
     public boolean composite() { return false; }
-
-
-    public Optional<URI> base() { return Optional.empty(); }
 
 
     public Optional<IRI> clazz() { return Optional.empty(); }
@@ -738,54 +694,6 @@ public abstract class Shape {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public String resolve(final String uri) {
-
-        if ( uri == null ) {
-            throw new NullPointerException("null uri");
-        }
-
-        return resolve(URI.create(uri)).toASCIIString();
-    }
-
-    public URI resolve(final URI uri) {
-
-        if ( uri == null ) {
-            throw new NullPointerException("null uri");
-        }
-
-        return base()
-                .map(base -> base.resolve(uri))
-                .orElseGet(() -> uri.isAbsolute() ? uri : error("relative uri <%s>", uri));
-    }
-
-
-    public String relativize(final String uri) {
-
-        if ( uri == null ) {
-            throw new NullPointerException("null uri");
-        }
-
-        return relativize(URI.create(uri)).toASCIIString();
-    }
-
-    public URI relativize(final URI uri) {
-
-        if ( uri == null ) {
-            throw new NullPointerException("null uri");
-        }
-
-        return base()
-                .filter(base
-                        -> Objects.equals(base.getScheme(), uri.getScheme())
-                        && Objects.equals(base.getRawAuthority(), uri.getRawAuthority())
-                )
-                .map(base -> URI.create(uri.getRawSchemeSpecificPart()
-                        .substring(uri.getRawAuthority().length()+2)
-                ))
-                .orElse(uri);
-    }
-
-
     public Optional<Trace> validate(final Frame frame) {
 
         if ( frame == null ) {
@@ -795,27 +703,5 @@ public abstract class Shape {
         return Optional.empty(); // !!!
     }
 
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    private static final class Memo<T> implements Supplier<T> {
-
-        private final Supplier<? extends T> factory;
-
-        private T value;
-
-
-        private Memo(final Supplier<? extends T> factory) {
-            this.factory=factory;
-        }
-
-
-        @Override public T get() {
-            return (value != null) ? value : (value=requireNonNull(
-                    factory.get(), "null factory return value"
-            ));
-        }
-
-    }
 
 }

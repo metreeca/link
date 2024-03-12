@@ -25,9 +25,11 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 
+import java.net.URI;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.metreeca.link.Frame.*;
@@ -47,11 +49,13 @@ final class JSONEncoder {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private final URI base;
     private final JSONWriter writer;
 
 
-    JSONEncoder(final JSON json, final Appendable target) {
-        writer=new JSONWriter(json, target);
+    JSONEncoder(final JSON json, final URI base, final Appendable target) {
+        this.base=base;
+        this.writer=new JSONWriter(json, target);
     }
 
 
@@ -184,7 +188,6 @@ final class JSONEncoder {
 
     }
 
-
     private void resource(final Shape shape, final Resource resource) {
 
         if ( resource.equals(NIL) ) {
@@ -195,7 +198,7 @@ final class JSONEncoder {
 
             final String id=resource.isBNode()
                     ? format("_:%s", resource.stringValue())
-                    : shape.relativize(resource.stringValue());
+                    : relativize(resource.stringValue());
 
             if ( shape.datatype().filter(RESOURCES::contains).isPresent() ) {
 
@@ -362,6 +365,29 @@ final class JSONEncoder {
                 });
 
         writer.object(false);
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private String relativize(final String uri) {
+        return relativize(URI.create(uri)).toASCIIString();
+    }
+
+    private URI relativize(final URI uri) {
+        if ( Objects.equals(base.getScheme(), uri.getScheme())
+                && Objects.equals(base.getRawAuthority(), uri.getRawAuthority())
+        ) {
+
+            return URI.create(uri.getRawSchemeSpecificPart()
+                    .substring(uri.getRawAuthority().length()+2)
+            );
+
+        } else {
+
+            return uri;
+
+        }
     }
 
 }

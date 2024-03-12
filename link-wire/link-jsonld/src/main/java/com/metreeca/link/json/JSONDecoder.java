@@ -25,6 +25,7 @@ import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -49,10 +50,12 @@ final class JSONDecoder {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private final URI base;
     private final JSONReader reader;
 
 
-    JSONDecoder(final JSON json, final Readable source) {
+    JSONDecoder(final JSON json, final URI base, final Readable source) {
+        this.base=base;
         this.reader=new JSONReader(source);
     }
 
@@ -417,7 +420,7 @@ final class JSONDecoder {
 
         final String token=reader.token(STRING);
 
-        return _Parser.value(token, shape);
+        return _Parser.value(token, shape, base);
     }
 
 }

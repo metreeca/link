@@ -16,28 +16,26 @@
 
 package com.metreeca.link;
 
-import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.junit.jupiter.api.Test;
-
-import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-import static com.metreeca.link.Shape.property;
+import static java.util.Objects.requireNonNull;
 
-import static org.assertj.core.api.Assertions.assertThat;
+final class Cache<T> implements Supplier<T> {
 
-final class ShapeTest {
+    private final Supplier<? extends T> factory;
 
-    private static final Shape recursive=property(RDF.VALUE, new Supplier<>() {
-
-        @Override public Shape get() { return recursive; }
-
-    });
+    private T value;
 
 
-    @Test void testHandleRecursiveDefinitions() {
-        assertThat(recursive.entry(RDF.VALUE).map(Entry::getValue))
-                .contains(recursive);
+    Cache(final Supplier<? extends T> factory) {
+        this.factory=factory;
+    }
+
+
+    @Override public T get() {
+        return (value != null) ? value : (value=requireNonNull(
+                factory.get(), "null factory return value"
+        ));
     }
 
 }

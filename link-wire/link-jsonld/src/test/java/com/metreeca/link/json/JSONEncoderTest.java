@@ -26,7 +26,10 @@ import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import java.net.URI;
 
 import static com.metreeca.link.Expression.expression;
 import static com.metreeca.link.Frame.*;
@@ -39,19 +42,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 final class JSONEncoderTest {
 
+    private static final URI base=URI.create("https://example.org/base/");
+
     private static final IRI t=iri("test:t");
     private static final IRI x=iri("test:x");
     private static final IRI y=iri("test:y");
 
 
     private static String encode(final Shape shape, final Frame frame) {
+        try {
 
-        final StringWriter writer=new StringWriter();
+            final StringWriter writer=new StringWriter();
 
-        new JSONEncoder(json(), writer).encode(shape, frame);
+            json().encode(base, writer, shape, frame);
 
-        return writer.toString();
+            return writer.toString();
 
+        } catch ( final IOException e ) {
+
+            throw new UncheckedIOException(e);
+
+        }
     }
 
     private static String encode(final String string) {
@@ -311,10 +322,7 @@ final class JSONEncoderTest {
         }
 
         @Test void testUseRootRelativeIRIs() {
-            assertThat(value(
-                    shape(base("https://example.org/path/"), datatype(IRI)),
-                    iri("https://example.org/path/name")
-            )).isEqualTo(value("['/path/name']"));
+            assertThat(value(datatype(IRI), iri(base.resolve("/path/name")))).isEqualTo(value("['/path/name']"));
         }
 
         @Test void testCompactKnownTaggedLiterals() {

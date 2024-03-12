@@ -17,30 +17,35 @@
 package com.metreeca.link;
 
 import java.io.IOException;
+import java.net.URI;
 
 /**
  * Wire format codec.
  */
 public interface Codec {
 
-    public Frame decode(final Readable source, final Shape shape) throws IOException, CodecException;
+    public Frame decode(final URI base, final Readable source, final Shape shape)
+            throws IOException, CodecException;
 
 
     /**
      * <p><strong>Warning</strong> / Codecs are not required to perform {@linkplain Shape#validate(Frame) validation}:
      * {@code frame} is expected to be consistent with the provided {@code shape}.</p>
      *
+     * @param <A>
+     * @param base
      * @param target
      * @param shape
      * @param frame
-     * @param <A>
      *
      * @return
      *
      * @throws IOException
      */
-    public <A extends Appendable> A encode(final A target, final Shape shape, final Frame frame) throws IOException;
+    public <A extends Appendable> A encode(final URI base, final A target, final Shape shape, final Frame frame)
+            throws IOException;
 
-    public <A extends Appendable> A encode(final A target, final Shape shape, final Trace trace) throws IOException;
+    public <A extends Appendable> A encode(final URI base, final A target, final Shape shape, final Trace trace)
+            throws IOException;
 
 }

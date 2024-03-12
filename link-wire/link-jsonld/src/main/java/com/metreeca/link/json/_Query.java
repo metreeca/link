@@ -24,6 +24,7 @@ import com.metreeca.link.Shape;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Value;
 
+import java.net.URI;
 import java.net.URLDecoder;
 import java.util.*;
 import java.util.Map.Entry;
@@ -34,6 +35,7 @@ import static com.metreeca.link.Constraint.*;
 import static com.metreeca.link.Frame.*;
 import static com.metreeca.link.Query.*;
 import static com.metreeca.link.json._Parser.priority;
+import static com.metreeca.link.json._Parser.value;
 
 import static java.lang.Integer.parseInt;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -48,7 +50,7 @@ final class _Query {
     private static final Pattern PAIR_PATTERN=compile("&?(?<label>[^=&]*)(?:=(?<value>[^&]*))?");
 
 
-    static Frame decode(final String string, final Shape shape) {
+    static Frame decode(final URI base, final String string, final Shape shape) {
 
         final List<Entry<IRI, Shape>> collections=shape.predicates().entrySet().stream()
 
@@ -64,7 +66,7 @@ final class _Query {
             final Entry<IRI, Shape> collection=collections.iterator().next();
 
             final IRI predicate=collection.getKey();
-            final Query query=_query(string, collection.getValue());
+            final Query query=_query(base, string, collection.getValue());
 
             return frame(field(predicate, query));
 
@@ -79,7 +81,7 @@ final class _Query {
         }
     }
 
-    static Query _query(final String query, final Shape shape) {
+    static Query _query(final URI base, final String query, final Shape shape) {
 
         final Collection<Query> queries=new ArrayList<>();
         final Map<Expression, Set<Value>> options=new HashMap<>();
@@ -97,25 +99,25 @@ final class _Query {
 
                 final Expression expression=_Parser._expression(label.substring(2), shape);
 
-                queries.add(filter(expression, lte(_Parser.value(value, expression.apply(shape)))));
+                queries.add(filter(expression, lte(value(value, expression.apply(shape), base))));
 
             } else if ( label.startsWith(">=") || label.startsWith(">>") ) {
 
                 final Expression expression=_Parser._expression(label.substring(2), shape);
 
-                queries.add(filter(expression, gte(_Parser.value(value, expression.apply(shape)))));
+                queries.add(filter(expression, gte(value(value, expression.apply(shape), base))));
 
             } else if ( label.startsWith("<") ) {
 
                 final Expression expression=_Parser._expression(label.substring(1), shape);
 
-                queries.add(filter(expression, lt(_Parser.value(value, expression.apply(shape)))));
+                queries.add(filter(expression, lt(value(value, expression.apply(shape), base))));
 
             } else if ( label.startsWith(">") ) {
 
                 final Expression expression=_Parser._expression(label.substring(1), shape);
 
-                queries.add(filter(expression, gt(_Parser.value(value, expression.apply(shape)))));
+                queries.add(filter(expression, gt(value(value, expression.apply(shape), base))));
 
             } else if ( label.startsWith("~") ) {
 
@@ -147,7 +149,7 @@ final class _Query {
                     final Set<Value> set=values == null ? new LinkedHashSet<>() : values;
 
                     if ( !value.isBlank() ) {
-                        set.add(value.equals(NULL) ? NIL : _Parser.value(value, expression.apply(shape)));
+                        set.add(value.equals(NULL) ? NIL : value(value, expression.apply(shape), base));
                     }
 
                     return set;

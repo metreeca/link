@@ -40,7 +40,8 @@ public interface Store {
      * @param id    the identifier of the resource to be retrieved
      * @param shape the shape of the resource to be retrieved
      * @param model the model for resource to be retrieved, possibly containing collection {@linkplain Query queries}
-     * @param langs preferred languages for retrieval and sorting operations, in order of priority
+     * @param langs preferred languages for retrieval and sorting operations, in order of priority; may include a
+     *              wildcard tag ({@code *})
      *
      * @return an optional containing a description of the retrieved resource modelled after {@code model}, if
      * {@code id} was present in the storage backend; an empty optional, otherwise
@@ -78,7 +79,8 @@ public interface Store {
      * @param id    the identifier of the resource to be retrieved
      * @param shape the shape of the resource to be retrieved
      * @param model the model for resource to be retrieved, possibly containing collection {@linkplain Query queries}
-     * @param langs preferred languages for retrieval and sorting operations, in order of priority
+     * @param langs preferred languages for retrieval and sorting operations, in order of priority; may include a
+     *              wildcard tag ({@code *})
      *
      * @return an optional containing a description of the retrieved resource modelled after {@code model}, if
      * {@code id} was present in the storage backend; an empty optional, otherwise

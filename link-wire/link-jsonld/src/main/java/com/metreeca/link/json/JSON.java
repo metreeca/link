@@ -24,10 +24,12 @@ import com.metreeca.link.Trace;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.util.Base64;
 import java.util.function.Supplier;
 
+import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -68,7 +70,15 @@ public final class JSON implements Codec {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Frame decode(final String string, final Shape shape) {
+    public Frame decode(final URI base, final String string, final Shape shape) {
+
+        if ( base == null ) {
+            throw new NullPointerException("null base");
+        }
+
+        if ( !base.isAbsolute() ) {
+            throw new IllegalArgumentException(format("relative base URI <%s>", base));
+        }
 
         if ( string == null ) {
             throw new NullPointerException("null string");
@@ -82,7 +92,7 @@ public final class JSON implements Codec {
 
             try ( final StringReader reader=new StringReader(string) ) {
 
-                return decode(reader, shape);
+                return decode(base, reader, shape);
 
             } catch ( final IOException unexpected ) {
 
@@ -92,22 +102,31 @@ public final class JSON implements Codec {
 
         } else if ( string.startsWith("%7B") ) { // URLEncoded JSON
 
-            return decode(URLDecoder.decode(string, UTF_8), shape);
+            return decode(base, URLDecoder.decode(string, UTF_8), shape);
 
         } else if ( string.startsWith("e3") ) { // Base64 JSON
 
-            return decode(new String(Base64.getDecoder().decode(string), UTF_8), shape);
+            return decode(base, new String(Base64.getDecoder().decode(string), UTF_8), shape);
 
         } else { // search parameters
 
-            return _Query.decode(string, shape);
+            return _Query.decode(base, string, shape);
 
         }
 
     }
 
     @Override
-    public Frame decode(final Readable source, final Shape shape) throws IOException {
+    public Frame decode(final URI base, final Readable source, final Shape shape)
+            throws IOException {
+
+        if ( base == null ) {
+            throw new NullPointerException("null base");
+        }
+
+        if ( !base.isAbsolute() ) {
+            throw new IllegalArgumentException(format("relative base URI <%s>", base));
+        }
 
         if ( source == null ) {
             throw new NullPointerException("null source");
@@ -117,12 +136,21 @@ public final class JSON implements Codec {
             throw new NullPointerException("null shape");
         }
 
-        return execute(() -> new JSONDecoder(this, source).decode(shape));
+        return execute(() -> new JSONDecoder(this, base, source).decode(shape));
     }
 
 
     @Override
-    public <A extends Appendable> A encode(final A target, final Shape shape, final Frame frame) throws IOException {
+    public <A extends Appendable> A encode(final URI base, final A target, final Shape shape, final Frame frame)
+            throws IOException {
+
+        if ( base == null ) {
+            throw new NullPointerException("null base");
+        }
+
+        if ( !base.isAbsolute() ) {
+            throw new IllegalArgumentException(format("relative base URI <%s>", base));
+        }
 
         if ( target == null ) {
             throw new NullPointerException("null target");
@@ -138,7 +166,7 @@ public final class JSON implements Codec {
 
         return execute(() -> {
 
-            final JSONEncoder encoder=new JSONEncoder(this, target);
+            final JSONEncoder encoder=new JSONEncoder(this, base, target);
 
             encoder.encode(shape, frame);
 
@@ -148,7 +176,16 @@ public final class JSON implements Codec {
     }
 
     @Override
-    public <A extends Appendable> A encode(final A target, final Shape shape, final Trace trace) throws IOException {
+    public <A extends Appendable> A encode(final URI base, final A target, final Shape shape, final Trace trace)
+            throws IOException {
+
+        if ( base == null ) {
+            throw new NullPointerException("null base");
+        }
+
+        if ( !base.isAbsolute() ) {
+            throw new IllegalArgumentException(format("relative base URI <%s>", base));
+        }
 
         if ( target == null ) {
             throw new NullPointerException("null target");
@@ -164,7 +201,7 @@ public final class JSON implements Codec {
 
         return execute(() -> {
 
-            final JSONEncoder encoder=new JSONEncoder(this, target);
+            final JSONEncoder encoder=new JSONEncoder(this, base, target);
 
             encoder.encode(shape, trace);
 
