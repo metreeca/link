@@ -72,6 +72,7 @@ final class JSONEncoderTest {
     }
 
 
+
     @Nested
     final class Frames {
 
@@ -195,6 +196,23 @@ final class JSONEncoderTest {
             ));
 
         }
+
+        @Test void testHandleNestedFrames() {
+            assertThat(encode(shape(
+
+                    property(x)
+
+            ), frame(
+
+                    field(x, frame(), frame())
+
+            ))).isEqualTo(encode(
+
+                    "{'x':[{},{}]}"
+
+            ));
+        }
+
     }
 
     @Nested

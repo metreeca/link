@@ -182,6 +182,7 @@ final class JSONWriter {
 
     private void open(final char c) {
 
+        stack.set(0, true);
         stack.add(0, false);
 
         write(c);
