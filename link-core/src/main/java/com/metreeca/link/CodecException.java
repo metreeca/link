@@ -14,35 +14,21 @@
  * limitations under the License.
  */
 
-package com.metreeca.link.json;
+package com.metreeca.link;
 
 import static java.lang.String.format;
 
-public final class JSONException extends RuntimeException {
+public final class CodecException extends RuntimeException {
 
     private static final long serialVersionUID=-1267685327499864471L;
 
 
-    private final int line;
-    private final int col;
+    public CodecException(final String message) {
+        super(message);
+    }
 
-
-    JSONException(final String message, final int line, final int col) {
-
+    public CodecException(final String message, final int line, final int col) {
         super(format("(%d,%d) %s", line, col, message));
-
-        this.line=line;
-        this.col=col;
-
-    }
-
-
-    public int getLine() {
-        return line;
-    }
-
-    public int getCol() {
-        return col;
     }
 
 }

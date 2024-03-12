@@ -16,6 +16,8 @@
 
 package com.metreeca.link.json;
 
+import com.metreeca.link.CodecException;
+
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -143,28 +145,28 @@ final class JSONReaderTest {
 
             final JSONReader reader=reader("\"\\\"");
 
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() -> next(reader));
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() -> next(reader));
         }
 
         @Test void testReportMalformedEscapeSequence() {
 
             final JSONReader reader=reader("\"\\x\"");
 
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() -> next(reader));
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() -> next(reader));
         }
 
         @Test void testReportIncompleteUnicodeEscapeSequence() {
 
             final JSONReader reader=reader("\"\\u00\"");
 
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() -> next(reader));
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() -> next(reader));
         }
 
         @Test void testReportMalformedUnicodeEscapeSequence() {
 
             final JSONReader reader=reader("\"\\u00Z0\"");
 
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() -> next(reader));
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() -> next(reader));
         }
 
     }

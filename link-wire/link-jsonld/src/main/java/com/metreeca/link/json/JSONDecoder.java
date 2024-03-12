@@ -16,10 +16,7 @@
 
 package com.metreeca.link.json;
 
-import com.metreeca.link.Expression;
-import com.metreeca.link.Frame;
-import com.metreeca.link.Query;
-import com.metreeca.link.Shape;
+import com.metreeca.link.*;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -81,7 +78,7 @@ final class JSONDecoder {
 
         } else {
 
-            throw new JSONException("expected frame value", 1, 1);
+            throw new CodecException("expected frame value", 1, 1);
 
         }
     }

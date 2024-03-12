@@ -16,6 +16,8 @@
 
 package com.metreeca.link.json;
 
+import com.metreeca.link.CodecException;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.CharBuffer;
@@ -241,7 +243,7 @@ final class JSONReader {
 
 
     <T> T error(final String format, final Object... args) {
-        throw new JSONException(format(format, args), line+1, type == EOF ? col+1 : col);
+        throw new CodecException(format(format, args), line+1, type == EOF ? col+1 : col);
     }
 
 

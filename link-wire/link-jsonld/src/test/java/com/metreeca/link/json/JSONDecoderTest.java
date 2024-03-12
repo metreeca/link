@@ -16,10 +16,7 @@
 
 package com.metreeca.link.json;
 
-import com.metreeca.link.Frame;
-import com.metreeca.link.Probe;
-import com.metreeca.link.Query;
-import com.metreeca.link.Shape;
+import com.metreeca.link.*;
 
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
@@ -80,36 +77,28 @@ final class JSONDecoderTest {
     final class Syntax {
 
         @Test void testReportLocation() {
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> decode("{ "))
-                    .withMessageStartingWith("(1,3)")
-                    .satisfies(e -> assertThat(e.getLine()).isEqualTo(1))
-                    .satisfies(e -> assertThat(e.getCol()).isEqualTo(3));
+                    .withMessageStartingWith("(1,3)");
         }
 
         @Test void testReportUnexpectedEOF() {
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> decode("{"))
-                    .withMessageStartingWith("(1,2)")
-                    .satisfies(e -> assertThat(e.getLine()).isEqualTo(1))
-                    .satisfies(e -> assertThat(e.getCol()).isEqualTo(2));
+                    .withMessageStartingWith("(1,2)");
 
         }
 
         @Test void testReportTrailingGarbage() {
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> decode("{} {}"))
-                    .withMessageStartingWith("(1,4)")
-                    .satisfies(e -> assertThat(e.getLine()).isEqualTo(1))
-                    .satisfies(e -> assertThat(e.getCol()).isEqualTo(4));
+                    .withMessageStartingWith("(1,4)");
         }
 
         @Test void testReportUnexpectedValue() {
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> decode("{ '@': 1 }"))
-                    .withMessageStartingWith("(1,1)")
-                    .satisfies(e -> assertThat(e.getLine()).isEqualTo(1))
-                    .satisfies(e -> assertThat(e.getCol()).isEqualTo(1));
+                    .withMessageStartingWith("(1,1)");
         }
 
     }
@@ -164,7 +153,7 @@ final class JSONDecoderTest {
 
 
         @Test void testReportUnknownLabels() {
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() ->
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() ->
                     decode("{'x':1}")
             );
         }
@@ -284,31 +273,31 @@ final class JSONDecoderTest {
 
 
         @Test void testReportMalformedLiteral() {
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() -> value("{'@value':'value'}"));
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() -> value("{'@type':'test:t'}"));
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() -> value("{'@language':'en'}"));
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() -> value("{'@value':'value'}"));
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() -> value("{'@type':'test:t'}"));
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() -> value("{'@language':'en'}"));
         }
 
         @Test void testReportUnexpectedLiteralFields() {
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() ->
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() ->
                     value("{'@value':'value','@type':'test:t','x':1}", property(x))
             );
         }
 
         @Test void testReportDuplicatedLiteralSpecialFields() {
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() ->
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() ->
                     value("{'@value':'value','@type':'test:t','@value':''}")
             );
         }
 
         @Test void testReportMalformedLiteralSpecialFields() {
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() ->
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() ->
                     value("{'@value':1,'@type':'test:t'}")
             );
         }
 
         @Test void testReportUnexpectedLiteralSpecialFields() {
-            assertThatExceptionOfType(JSONException.class).isThrownBy(() ->
+            assertThatExceptionOfType(CodecException.class).isThrownBy(() ->
                     value("{'@value':'value','@type':'test:t','@id':1}")
             );
         }
@@ -370,10 +359,10 @@ final class JSONDecoderTest {
 
         @Test void testReportMalformedLocals() {
 
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> value("{'en':0}", datatype(RDF.LANGSTRING)));
 
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> value("{'a tag':''}", datatype(RDF.LANGSTRING)));
 
         }
@@ -445,7 +434,7 @@ final class JSONDecoderTest {
         }
 
         @Test void testReportMalformedLikeConstraint() {
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> query("{ '~x': 0 }"));
         }
 
@@ -462,7 +451,7 @@ final class JSONDecoderTest {
 
 
         @Test void testReportUnknownConstraints() {
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> query("{ '±field': 0 }"));
         }
 
@@ -484,10 +473,10 @@ final class JSONDecoderTest {
 
         @Test void testReportMalformedOrder() {
 
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> query("{ '^x': 'x' }"));
 
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> query("{ '^x': 1.2 }"));
 
         }
@@ -505,7 +494,7 @@ final class JSONDecoderTest {
         }
 
         @Test void testReportMalformedOffset() {
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> query("{ '@': true  }"));
         }
 
@@ -516,7 +505,7 @@ final class JSONDecoderTest {
         }
 
         @Test void testReportMalformedLimit() {
-            assertThatExceptionOfType(JSONException.class)
+            assertThatExceptionOfType(CodecException.class)
                     .isThrownBy(() -> query("{ '#': true  }"));
         }
 

@@ -23,7 +23,7 @@ import java.io.IOException;
  */
 public interface Codec {
 
-    public Frame decode(final Readable source, final Shape shape) throws IOException;
+    public Frame decode(final Readable source, final Shape shape) throws IOException, CodecException;
 
 
     /**

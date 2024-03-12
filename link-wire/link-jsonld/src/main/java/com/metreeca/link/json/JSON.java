@@ -91,9 +91,9 @@ public final class JSON implements Codec {
 
                 return decode(reader, shape);
 
-            } catch ( final IOException e ) {
+            } catch ( final IOException unexpected ) {
 
-                throw new UncheckedIOException(e);
+                throw new UncheckedIOException(unexpected);
 
             }
 
@@ -118,20 +118,12 @@ public final class JSON implements Codec {
 
             if ( collections.size() == 1 ) {
 
-                try {
+                final Entry<IRI, Shape> collection=collections.iterator().next();
 
-                    final Entry<IRI, Shape> collection=collections.iterator().next();
+                final IRI predicate=collection.getKey();
+                final Query query=_query(string, collection.getValue());
 
-                    final IRI predicate=collection.getKey();
-                    final Query query=_query(string, collection.getValue());
-
-                    return frame(field(predicate, query));
-
-                } catch ( final RuntimeException e ) { // !!! review
-
-                    throw new JSONException(e.getMessage(), 1, 1);
-
-                }
+                return frame(field(predicate, query));
 
             } else if ( collections.isEmpty() ) {
 

@@ -97,7 +97,7 @@ public final class _Expression {
 
             } catch ( final IllegalArgumentException ignored ) {
 
-                throw new IllegalArgumentException(format("unknown transform <%s>", label));
+                throw new CodecException(format("unknown transform <%s>", label));
 
             }
 
@@ -125,7 +125,7 @@ public final class _Expression {
         }
 
         if ( next < length ) {
-            throw new IllegalArgumentException(format("malformed expression <%s>", expression));
+            throw new CodecException(format("malformed expression <%s>", expression));
         }
 
         return expression(pipe, path);
@@ -255,14 +255,14 @@ public final class _Expression {
             final URI uri=new URI(iri); // !!! resolve
 
             if ( !uri.isAbsolute() ) {
-                throw new IllegalArgumentException(format("relative iri <%s>", uri.toASCIIString()));
+                throw new CodecException(format("relative iri <%s>", uri.toASCIIString()));
             }
 
             return Frame.iri(uri);
 
         } catch ( final URISyntaxException e ) {
 
-            throw new IllegalArgumentException(format("malformed iri <%s>", iri), e);
+            throw new CodecException(format("malformed iri <%s>", iri));
 
         }
     }
@@ -285,7 +285,7 @@ public final class _Expression {
 
                     } catch ( final NumberFormatException e ) {
 
-                        throw new IllegalArgumentException(format("malformed priority value <%s>", priority), e);
+                        throw new CodecException(format("malformed priority value <%s>", priority));
 
                     }
 
