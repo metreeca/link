@@ -34,7 +34,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.metreeca.link.Expression.expression;
 import static com.metreeca.link.Frame.*;
 import static com.metreeca.link.Probe.probe;
 
@@ -53,14 +52,14 @@ final class _Parser {
     private static final Pattern ESCAPED_PATTERN=compile("''");
 
 
-    static Entry<IRI, Shape> _predicate(final String predicate, final Shape shape) {
+    static Entry<IRI, Shape> predicate(final String predicate, final Shape shape) {
 
         final Matcher matcher=PROBE_PATTERN.matcher(predicate);
 
         if ( matcher.lookingAt() ) {
 
             final String label=label(matcher);
-            final Expression expression=_expression(predicate.substring(matcher.end()), shape);
+            final Expression expression=expression(predicate.substring(matcher.end()), shape);
 
             return entry(probe(label, expression), expression.apply(shape));
 
@@ -73,7 +72,7 @@ final class _Parser {
         }
     }
 
-    static Expression _expression(final String expression, final Shape shape) {
+    static Expression expression(final String expression, final Shape shape) {
 
         final List<Transform> pipe=new ArrayList<>();
         final List<IRI> path=new ArrayList<>();
@@ -127,7 +126,7 @@ final class _Parser {
             throw new IllegalArgumentException(format("malformed expression <%s>", expression));
         }
 
-        return expression(pipe, path);
+        return Expression.expression(pipe, path);
     }
 
 

@@ -33,8 +33,7 @@ import static com.metreeca.link.Constraint.*;
 import static com.metreeca.link.Frame.*;
 import static com.metreeca.link.Query.*;
 import static com.metreeca.link.json.JSONReader.Type.*;
-import static com.metreeca.link.json._Parser._expression;
-import static com.metreeca.link.json._Parser._predicate;
+import static com.metreeca.link.json._Parser.*;
 
 import static java.lang.Double.parseDouble;
 import static java.lang.Integer.parseInt;
@@ -217,57 +216,57 @@ final class JSONDecoder {
 
                 if ( label.startsWith("<=") ) {
 
-                    final Expression expression=_expression(label.substring(2), shape);
+                    final Expression expression=expression(label.substring(2), shape);
                     final Value value=value(expression.apply(shape));
 
                     queries.add(filter(expression, lte(value)));
 
                 } else if ( label.startsWith(">=") ) {
 
-                    final Expression expression=_expression(label.substring(2), shape);
+                    final Expression expression=expression(label.substring(2), shape);
                     final Value value=value(expression.apply(shape));
 
                     queries.add(filter(expression, gte(value)));
 
                 } else if ( label.startsWith("<") ) {
 
-                    final Expression expression=_expression(label.substring(1), shape);
+                    final Expression expression=expression(label.substring(1), shape);
                     final Value value=value(expression.apply(shape));
 
                     queries.add(filter(expression, lt(value)));
 
                 } else if ( label.startsWith(">") ) {
 
-                    final Expression expression=_expression(label.substring(1), shape);
+                    final Expression expression=expression(label.substring(1), shape);
                     final Value value=value(expression.apply(shape));
 
                     queries.add(filter(expression, gt(value)));
 
                 } else if ( label.startsWith("~") ) {
 
-                    final Expression expression=_expression(label.substring(1), shape);
+                    final Expression expression=expression(label.substring(1), shape);
                     final String value=reader.token(STRING);
 
                     queries.add(filter(expression, like(value)));
 
                 } else if ( label.startsWith("?") ) {
 
-                    final Expression expression=_expression(label.substring(1), shape);
+                    final Expression expression=expression(label.substring(1), shape);
                     final Collection<Value> values=values(expression.apply(shape));
 
                     queries.add(filter(expression, any(values)));
 
                 } else if ( label.startsWith("^") ) {
 
-                    final Expression expression=_expression(label.substring(1), shape);
-                    final int priority=_Parser.priority(reader.token(STRING, NUMBER));
+                    final Expression expression=expression(label.substring(1), shape);
+                    final int priority=priority(reader.token(STRING, NUMBER));
 
                     queries.add(order(expression, priority));
 
                 } else if ( label.startsWith("$") ) {
 
-                    final Expression expression=_expression(label.substring(1), shape);
-                    final Set<Value> values=values(shape);
+                    final Expression expression=expression(label.substring(1), shape);
+                    final Set<Value> values=values(expression.apply(shape));
 
                     queries.add(focus(expression, values));
 
@@ -287,7 +286,7 @@ final class JSONDecoder {
 
                 } else {
 
-                    final Entry<IRI, Shape> entry=_predicate(label, shape);
+                    final Entry<IRI, Shape> entry=predicate(label, shape);
 
                     fields.add(field(entry.getKey(), values(entry.getValue())));
 

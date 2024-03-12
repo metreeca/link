@@ -34,8 +34,7 @@ import java.util.regex.Pattern;
 import static com.metreeca.link.Constraint.*;
 import static com.metreeca.link.Frame.*;
 import static com.metreeca.link.Query.*;
-import static com.metreeca.link.json._Parser.priority;
-import static com.metreeca.link.json._Parser.value;
+import static com.metreeca.link.json._Parser.*;
 
 import static java.lang.Integer.parseInt;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -97,37 +96,37 @@ final class _Query {
 
             if ( label.startsWith("<=") || label.startsWith("<<") ) {
 
-                final Expression expression=_Parser._expression(label.substring(2), shape);
+                final Expression expression=expression(label.substring(2), shape);
 
                 queries.add(filter(expression, lte(value(value, expression.apply(shape), base))));
 
             } else if ( label.startsWith(">=") || label.startsWith(">>") ) {
 
-                final Expression expression=_Parser._expression(label.substring(2), shape);
+                final Expression expression=expression(label.substring(2), shape);
 
                 queries.add(filter(expression, gte(value(value, expression.apply(shape), base))));
 
             } else if ( label.startsWith("<") ) {
 
-                final Expression expression=_Parser._expression(label.substring(1), shape);
+                final Expression expression=expression(label.substring(1), shape);
 
                 queries.add(filter(expression, lt(value(value, expression.apply(shape), base))));
 
             } else if ( label.startsWith(">") ) {
 
-                final Expression expression=_Parser._expression(label.substring(1), shape);
+                final Expression expression=expression(label.substring(1), shape);
 
                 queries.add(filter(expression, gt(value(value, expression.apply(shape), base))));
 
             } else if ( label.startsWith("~") ) {
 
-                final Expression expression=_Parser._expression(label.substring(1), shape);
+                final Expression expression=expression(label.substring(1), shape);
 
                 queries.add(filter(expression, like(value)));
 
             } else if ( label.startsWith("^") ) {
 
-                final Expression expression=_Parser._expression(label.substring(1), shape);
+                final Expression expression=expression(label.substring(1), shape);
                 final int priority=priority(value);
 
                 queries.add(order(expression, priority));
@@ -142,7 +141,7 @@ final class _Query {
 
             } else {
 
-                final Expression expression=_Parser._expression(label, shape);
+                final Expression expression=expression(label, shape);
 
                 options.compute(expression, (key, values) -> {
 
