@@ -83,22 +83,22 @@ public abstract class Query implements Value {
     }
 
 
-    public static Query order(final IRI predicate, final int criterion) {
+    public static Query order(final IRI predicate, final int priority) {
 
         if ( predicate == null ) {
             throw new NullPointerException("null predicate");
         }
 
-        return order(expression(predicate), criterion);
+        return order(expression(predicate), priority);
     }
 
-    public static Query order(final Expression expression, final int criterion) {
+    public static Query order(final Expression expression, final int priority) {
 
         if ( expression == null ) {
             throw new NullPointerException("null expression");
         }
 
-        final Map<Expression, Integer> value=(criterion == 0) ? Map.of() : Map.of(expression, criterion);
+        final Map<Expression, Integer> value=(priority == 0) ? Map.of() : Map.of(expression, priority);
 
         return new Query() {
 

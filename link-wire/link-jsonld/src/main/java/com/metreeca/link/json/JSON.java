@@ -16,26 +16,19 @@
 
 package com.metreeca.link.json;
 
-import com.metreeca.link.*;
-
-import org.eclipse.rdf4j.model.IRI;
+import com.metreeca.link.Codec;
+import com.metreeca.link.Frame;
+import com.metreeca.link.Shape;
+import com.metreeca.link.Trace;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.util.Base64;
-import java.util.List;
-import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-import static com.metreeca.link.Frame.field;
-import static com.metreeca.link.Frame.frame;
-import static com.metreeca.link.json._Expression._query;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Map.entry;
-import static java.util.stream.Collectors.toList;
 
 /**
  * JSON codec.
@@ -107,33 +100,7 @@ public final class JSON implements Codec {
 
         } else { // search parameters
 
-            final List<Entry<IRI, Shape>> collections=shape.predicates().entrySet().stream()
-
-                    .map(e -> entry(e.getKey(), e.getValue().getValue().get()))
-
-                    .filter(e -> e.getValue().maxCount().orElse(Integer.MAX_VALUE) > 1)
-                    .filter(e -> !e.getValue().predicates().isEmpty())
-
-                    .collect(toList());
-
-            if ( collections.size() == 1 ) {
-
-                final Entry<IRI, Shape> collection=collections.iterator().next();
-
-                final IRI predicate=collection.getKey();
-                final Query query=_query(string, collection.getValue());
-
-                return frame(field(predicate, query));
-
-            } else if ( collections.isEmpty() ) {
-
-                throw new IllegalArgumentException("no collection property found");
-
-            } else {
-
-                throw new IllegalArgumentException("multiple collection properties found");
-
-            }
+            return _Query.decode(string, shape);
 
         }
 

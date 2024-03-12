@@ -20,24 +20,22 @@ import com.metreeca.link.*;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
-import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URI;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.regex.Pattern;
 
 import static com.metreeca.link.Constraint.*;
 import static com.metreeca.link.Frame.*;
 import static com.metreeca.link.Query.*;
 import static com.metreeca.link.json.JSONReader.Type.*;
-import static com.metreeca.link.json._Expression._expression;
-import static com.metreeca.link.json._Expression._predicate;
+import static com.metreeca.link.json._Parser._expression;
+import static com.metreeca.link.json._Parser._predicate;
 
+import static java.lang.Double.parseDouble;
 import static java.lang.Integer.parseInt;
 
 final class JSONDecoder {
@@ -47,13 +45,6 @@ final class JSONDecoder {
 
     private static final Set<String> TYPED=Set.of(_VALUE, _TYPE);
     private static final Set<String> TAGGED=Set.of(_VALUE, _LANGUAGE);
-
-    private static final Map<String, Integer> ORDER=Map.of(
-            "increasing", +1,
-            "decreasing", -1
-    );
-
-    private static final Pattern LANGUAGE_PATTERN=Pattern.compile("\\w[-_\\w]+");
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,7 +257,7 @@ final class JSONDecoder {
                 } else if ( label.startsWith("^") ) {
 
                     final Expression expression=_expression(label.substring(1), shape);
-                    final int priority=priority(reader.token(STRING, NUMBER));
+                    final int priority=_Parser.priority(reader.token(STRING, NUMBER));
 
                     queries.add(order(expression, priority));
 
@@ -323,7 +314,7 @@ final class JSONDecoder {
             final String language=entries.get(_LANGUAGE);
 
             return entries.keySet().equals(TYPED) ? literal(value, iri(datatype))
-                    : entries.keySet().equals(TAGGED) ? literal(value, language(language))
+                    : entries.keySet().equals(TAGGED) ? literal(value, _Parser.language(language))
                     : reader.error("malformed literal object");
 
         } else {
@@ -347,7 +338,7 @@ final class JSONDecoder {
                 reader.token(COMMA, RBRACE);
             }
 
-            final String language=language(reader.token(STRING));
+            final String language=_Parser.language(reader.token(STRING));
 
             reader.token(COLON);
 
@@ -410,8 +401,8 @@ final class JSONDecoder {
 
         try {
 
-            return token.indexOf('e') >= 0 ? literal(Double.parseDouble(token))
-                    : token.indexOf('E') >= 0 ? literal(Double.parseDouble(token))
+            return token.indexOf('e') >= 0 ? literal(parseDouble(token))
+                    : token.indexOf('E') >= 0 ? literal(parseDouble(token))
                     : token.indexOf('.') >= 0 ? literal(new BigDecimal(token))
                     : literal(new BigInteger(token));
 
@@ -426,67 +417,7 @@ final class JSONDecoder {
 
         final String token=reader.token(STRING);
 
-        return shape.datatype()
-                .map(iri -> iri.equals(RESOURCE) ? wrap(shape, resource(token))
-                        : iri.equals(BNODE) ? wrap(shape, bnode(token))
-                        : iri.equals(IRI) ? wrap(shape, iri(token))
-                        : literal(token, iri)
-                )
-                .orElseGet(() -> literal(token));
-    }
-
-
-    private Resource resource(final String resource) {
-        return resource.startsWith("_:") ? bnode(resource.substring(2)) : iri(resource);
-    }
-
-    private IRI iri(final String iri) {
-        try {
-
-            final URI uri=URI.create(iri); // !!! resolve
-
-            if ( !uri.isAbsolute() ) {
-                reader.error("relative iri <%s>", uri.toASCIIString());
-            }
-
-            return Frame.iri(uri);
-
-        } catch ( final RuntimeException e ) {
-
-            return reader.error("malformed iri <%s>", iri);
-
-        }
-    }
-
-    private String language(final String language) {
-        return LANGUAGE_PATTERN.matcher(language).matches() ? language
-                : reader.error("malformed language tag <%s>", language);
-    }
-
-    private int priority(final String priority) {
-        return Optional.of(priority)
-
-                .map(s -> s.toLowerCase(Locale.ROOT))
-                .map(ORDER::get)
-
-                .orElseGet(() -> {
-
-                    try {
-
-                        return parseInt(priority);
-
-                    } catch ( final NumberFormatException e ) {
-
-                        return reader.error("malformed priority value <%s>", priority);
-
-                    }
-
-                });
-    }
-
-
-    private Value wrap(final Shape shape, final Resource resource) {
-        return shape.labels().isEmpty() ? resource : frame(field(ID, resource));
+        return _Parser.value(token, shape);
     }
 
 }
