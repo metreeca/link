@@ -245,6 +245,18 @@ public abstract class Constraint {
     private Constraint() { }
 
 
+    public boolean empty() {
+        return lt().isEmpty()
+                && gt().isEmpty()
+                && lte().isEmpty()
+                && gte().isEmpty()
+
+                && like().isEmpty()
+
+                && any().isEmpty();
+    }
+
+
     public Optional<Value> lt() {
         return Optional.empty();
     }

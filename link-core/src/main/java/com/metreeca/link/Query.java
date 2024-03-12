@@ -73,7 +73,7 @@ public abstract class Query implements Value {
             throw new NullPointerException("null constraint");
         }
 
-        final Map<Expression, Constraint> filter=Map.of(expression, constraint);
+        final Map<Expression, Constraint> filter=constraint.empty() ? Map.of() : Map.of(expression, constraint);
 
         return new Query() {
 

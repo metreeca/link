@@ -28,7 +28,7 @@ public interface Codec {
             throws IOException, CodecException;
 
 
-    /**
+    /*
      * <p><strong>Warning</strong> / Codecs are not required to perform {@linkplain Shape#validate(Frame) validation}:
      * {@code frame} is expected to be consistent with the provided {@code shape}.</p>
      *

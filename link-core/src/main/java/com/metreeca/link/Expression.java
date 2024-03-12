@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
+import static java.util.Locale.ROOT;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -129,7 +130,7 @@ public final class Expression implements Serializable {
                 .concat(
 
                         pipe.stream()
-                                .map(transform -> format("%s:", transform)),
+                                .map(transform -> format("%s:", transform.name().toLowerCase(ROOT))),
 
                         path.stream()
                                 .map(IRI::getLocalName)
