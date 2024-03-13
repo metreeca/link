@@ -27,10 +27,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 import static com.metreeca.link.Expression.expression;
+import static com.metreeca.link.Frame.decimal;
+import static com.metreeca.link.Frame.integer;
 import static com.metreeca.link.Frame.*;
 import static com.metreeca.link.Shape.*;
 import static com.metreeca.link.json.JSON.json;
@@ -265,13 +268,13 @@ final class JSONDecoderTest {
         }
 
         @Test void testDecodeTaggeds() {
-            assertThat(value(literal("value", "en")))
-                    .isEqualTo(value("{'@value':'value','@language':'en'}"));
+            assertThat(value("{'@value':'value','@language':'en'}"))
+                    .isEqualTo(value(literal("value", "en")));
         }
 
         @Test void testDecodeTypeds() {
-            assertThat(value("{'@value':'value','@type':'test:t'}"))
-                    .isEqualTo(value(literal("value", t)));
+            assertThat(value(literal("value", t)))
+                    .isEqualTo(value("{'@value':'value','@type':'test:t'}"));
         }
 
 
@@ -303,6 +306,12 @@ final class JSONDecoderTest {
             assertThatExceptionOfType(CodecException.class).isThrownBy(() ->
                     value("{'@value':'value','@type':'test:t','@id':1}")
             );
+        }
+
+
+        @Test void testReportMalformedLanguageTag() {
+            assertThatExceptionOfType(CodecException.class)
+                    .isThrownBy(() -> value("{'@value':'value','@language':'123'}"));
         }
 
     }
@@ -352,15 +361,20 @@ final class JSONDecoderTest {
                     );
         }
 
-        // @Test void testDecodeRootLocal() {
-        //     assertThat(value("{'':'value'}", datatype(RDF.LANGSTRING)))
-        //             .isEqualTo(literal(Locale.ROOT, "value"));
-        // }
+        @Test void testDecodeRootLocal() {
+            assertThat(value("{'':'value'}", datatype(RDF.LANGSTRING)))
+                    .isEqualTo(Set.of(literal("value", Locale.ROOT)));
+        }
 
-        // @Test void testDecodeWildcardLocal() {
-        //     assertThat(value("{'*':'value'}", datatype(RDF.LANGSTRING)))
-        //             .isEqualTo(literal(Local.Wildcard, "value"));
-        // }
+        @Test void testDecodeWildcardLocal() {
+            assertThat(value("{'*':'value'}", datatype(RDF.LANGSTRING)))
+                    .isEqualTo(Set.of(literal("value", WILDCARD)));
+        }
+
+        @Test void testDecodeInlinedLocals() {
+            assertThat(value("'value'", datatype(RDF.LANGSTRING)))
+                    .isEqualTo(Set.of(literal("value")));
+        }
 
         @Test void testReportMalformedLocals() {
 

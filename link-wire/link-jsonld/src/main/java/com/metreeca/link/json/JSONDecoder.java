@@ -316,7 +316,7 @@ final class JSONDecoder {
             final String language=entries.get(_LANGUAGE);
 
             return entries.keySet().equals(TYPED) ? literal(value, iri(datatype))
-                    : entries.keySet().equals(TAGGED) ? literal(value, _Parser.language(language))
+                    : entries.keySet().equals(TAGGED) ? literal(value, language)
                     : reader.error("malformed literal object");
 
         } else {
@@ -340,7 +340,7 @@ final class JSONDecoder {
                 reader.token(COMMA, RBRACE);
             }
 
-            final String language=_Parser.language(reader.token(STRING));
+            final String locale=reader.token(STRING);
 
             reader.token(COLON);
 
@@ -348,13 +348,13 @@ final class JSONDecoder {
 
                 case LBRACKET:
 
-                    values.addAll(locals(language));
+                    values.addAll(locals(locale));
 
                     break;
 
                 case STRING:
 
-                    values.add(local(language));
+                    values.add(literal(reader.token(STRING), locale));
 
                     break;
 
@@ -371,7 +371,7 @@ final class JSONDecoder {
         return values;
     }
 
-    private Set<Value> locals(final String language) {
+    private Set<Value> locals(final String locale) {
 
         final Set<Value> locals=new LinkedHashSet<>();
 
@@ -383,17 +383,13 @@ final class JSONDecoder {
                 reader.token(COMMA, RBRACKET);
             }
 
-            locals.add(local(language));
+            locals.add(literal(reader.token(STRING), locale));
 
         }
 
         reader.token(RBRACKET);
 
         return locals;
-    }
-
-    private Literal local(final String language) {
-        return literal(reader.token(STRING), language);
     }
 
 

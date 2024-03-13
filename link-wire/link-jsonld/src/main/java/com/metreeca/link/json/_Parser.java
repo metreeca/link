@@ -24,6 +24,7 @@ import com.metreeca.link.Transform;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -153,6 +154,8 @@ final class _Parser {
                         : iri.equals(BNODE) ? value(bnode(value), shape)
                         : iri.equals(IRI) ? value(iri(value, base), shape)
 
+                        : iri.equals(RDF.LANGSTRING) ? literal(value)
+
                         : literal(value, iri)
 
                 ).orElseGet(() -> literal(value));
@@ -210,24 +213,6 @@ final class _Parser {
                     }
 
                 });
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    private static final Pattern LANGUAGE_PATTERN=compile("\\w[-_\\w]+");
-
-
-    static String language(final String language) {
-        if ( LANGUAGE_PATTERN.matcher(language).matches() ) {
-
-            return language;
-
-        } else {
-
-            throw new IllegalArgumentException(format("malformed language tag <%s>", language));
-
-        }
     }
 
 }

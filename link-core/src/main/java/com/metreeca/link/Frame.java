@@ -30,6 +30,7 @@ import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalAmount;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.metreeca.link.Query.query;
@@ -38,6 +39,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.function.Predicate.not;
+import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.*;
 
 /**
@@ -50,6 +52,8 @@ public final class Frame implements Value {
 
     private static final ValueFactory FACTORY=new AbstractValueFactory() { };
     private static final Comparator<Value> COMPARATOR=new ValueComparator();
+
+    private static final Pattern LOCALE_PATTERN=compile("(?:x|[a-zA-Z]\\w+)(-\\w+)*");
 
 
     static int compare(final Value x, final Value y) {
@@ -69,6 +73,8 @@ public final class Frame implements Value {
     public static final String _ERRORS="@errors";
 
     public static final Value NIL=RDF.NIL;
+
+    public static final String WILDCARD="*";
 
 
     //// Generalized RDF Datatypes /////////////////////////////////////////////////////////////////////////////////////
@@ -411,19 +417,6 @@ public final class Frame implements Value {
         return FACTORY.createLiteral(value, datatype);
     }
 
-    public static Literal literal(final String value, final String language) {
-
-        if ( value == null ) {
-            throw new NullPointerException("null value");
-        }
-
-        if ( language == null ) {
-            throw new NullPointerException("null language");
-        }
-
-        return FACTORY.createLiteral(value, language);
-    }
-
     public static Literal literal(final String value, final Locale locale) {
 
         if ( value == null ) {
@@ -434,7 +427,36 @@ public final class Frame implements Value {
             throw new NullPointerException("null locale");
         }
 
-        return FACTORY.createLiteral(value, locale.getLanguage());
+        return literal(value, locale.getLanguage());
+    }
+
+    public static Literal literal(final String value, final String locale) {
+
+        if ( value == null ) {
+            throw new NullPointerException("null value");
+        }
+
+        if ( locale == null ) {
+            throw new NullPointerException("null locale");
+        }
+
+        if ( locale.isEmpty() ) {
+
+            return FACTORY.createLiteral(value);
+
+        } else if ( locale.equals(WILDCARD) ) {
+
+            return FACTORY.createLiteral(value, WILDCARD);
+
+        } else {
+
+            if ( !LOCALE_PATTERN.matcher(locale).matches() ) {
+                throw new IllegalArgumentException(format("malformed language tag <%s>", locale));
+            }
+
+            return FACTORY.createLiteral(value, locale);
+
+        }
     }
 
 
