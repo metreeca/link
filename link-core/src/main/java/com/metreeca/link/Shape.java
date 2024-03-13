@@ -18,7 +18,9 @@ package com.metreeca.link;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -113,6 +115,47 @@ public abstract class Shape {
             @Override public Optional<IRI> datatype() { return value; }
 
         };
+    }
+
+
+    public static Shape reference() {
+        return datatype(IRI);
+    }
+
+    public static Shape string() {
+        return datatype(XSD.STRING);
+    }
+
+    public static Shape integer() {
+        return datatype(XSD.INTEGER);
+    }
+
+    public static Shape decimal() {
+        return datatype(XSD.DECIMAL);
+    }
+
+    public static Shape year() {
+        return datatype(XSD.GYEAR);
+    }
+
+    public static Shape date() {
+        return datatype(XSD.DATE);
+    }
+
+    public static Shape time() {
+        return datatype(XSD.TIME);
+    }
+
+    public static Shape dateTime() {
+        return datatype(XSD.DATETIME);
+    }
+
+    public static Shape instant() {
+        return shape(datatype(XSD.DATETIME), pattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}.\\d{3}Z"));
+    }
+
+    public static Shape local() {
+        return datatype(RDF.LANGSTRING);
     }
 
 
@@ -234,23 +277,6 @@ public abstract class Shape {
     }
 
 
-    public static Shape required() {
-        return shape(minCount(1), maxCount(1));
-    }
-
-    public static Shape optional() {
-        return shape(maxCount(1));
-    }
-
-    public static Shape repeatable() {
-        return shape(minCount(1));
-    }
-
-    public static Shape multiple() {
-        return shape();
-    }
-
-
     public static Shape minCount(final int limit) {
 
         if ( limit < 0 ) {
@@ -281,6 +307,23 @@ public abstract class Shape {
             @Override public Optional<Integer> maxCount() { return value; }
 
         };
+    }
+
+
+    public static Shape required() {
+        return shape(minCount(1), maxCount(1));
+    }
+
+    public static Shape optional() {
+        return shape(maxCount(1));
+    }
+
+    public static Shape repeatable() {
+        return shape(minCount(1));
+    }
+
+    public static Shape multiple() {
+        return shape();
     }
 
 

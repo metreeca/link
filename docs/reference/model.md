@@ -29,7 +29,7 @@ type Frame = Partial<{
 
 }>
 
-type Local = Partial<{
+type Locals=Partial<{
   
 	"{locale}": string | string[]
   
