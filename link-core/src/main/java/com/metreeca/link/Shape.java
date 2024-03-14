@@ -25,14 +25,19 @@ import org.eclipse.rdf4j.model.vocabulary.XSD;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.metreeca.link.Frame.*;
 
 import static java.util.Arrays.asList;
 import static java.util.function.Predicate.not;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toUnmodifiableMap;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
+@SuppressWarnings("NonBooleanMethodNameMayNotStartWithQuestion")
 public abstract class Shape {
+
+    //// !!! ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private static boolean derives(final IRI upper, final IRI lower) {
         return upper.equals(VALUE)
@@ -50,15 +55,7 @@ public abstract class Shape {
     }
 
 
-    private static String label(final IRI predicate) {
-        return predicate.equals(ID) ? _ID
-                : predicate.equals(TYPE) ? _TYPE
-                : predicate.getLocalName();
-    }
-
-
-    //// !!! ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static Shape virtual(final Shape... shapes) {
 
@@ -142,6 +139,10 @@ public abstract class Shape {
 
     public static Shape reference() {
         return datatype(IRI);
+    }
+
+    public static Shape bool() {
+        return datatype(XSD.BOOLEAN);
     }
 
     public static Shape string() {
@@ -373,6 +374,35 @@ public abstract class Shape {
         return new Shape() {
 
             @Override public Optional<Set<Value>> in() { return value; }
+
+        };
+    }
+
+
+    public static Shape hasValue(final Value... values) {
+
+        if ( values == null || Arrays.stream(values).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null values");
+        }
+
+        return hasValue(List.of(values));
+    }
+
+    public static Shape hasValue(final Collection<Value> values) {
+
+        if ( values == null || values.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null values");
+        }
+
+        final Optional<Set<Value>> value=Optional.of(values.stream()
+                        .filter(not(NIL::equals))
+                        .collect(toUnmodifiableSet())
+                )
+                .filter(not(Set::isEmpty));
+
+        return new Shape() {
+
+            @Override public Optional<Set<Value>> hasValue() { return value; }
 
         };
     }
@@ -612,11 +642,15 @@ public abstract class Shape {
                 .flatMap(s -> s.in().stream())
                 .reduce((x, y) -> {
 
-                    final Set<Value> i=x.stream().filter(y::contains).collect(toSet());
+                    final Set<Value> i=x.stream().filter(y::contains).collect(toUnmodifiableSet());
 
                     return i.isEmpty() ? error("conflicting <in> constraints <%s> / <%s>", x, y) : i;
 
                 });
+
+        final Optional<Set<Value>> hasValue=shapes.stream()
+                .flatMap(s -> s.hasValue().stream())
+                .reduce((x, y) -> Stream.of(x, y).flatMap(Collection::stream).collect(toUnmodifiableSet()));
 
 
         final Map<String, Entry<IRI, Supplier<Shape>>> properties=shapes.stream()
@@ -675,6 +709,8 @@ public abstract class Shape {
 
             @Override public Optional<Set<Value>> in() { return in; }
 
+            @Override public Optional<Set<Value>> hasValue() { return hasValue; }
+
 
             @Override public Map<String, Entry<IRI, Supplier<Shape>>> labels() {
                 return properties;
@@ -685,6 +721,15 @@ public abstract class Shape {
             }
 
         };
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static String label(final IRI predicate) {
+        return predicate.equals(ID) ? _ID
+                : predicate.equals(TYPE) ? _TYPE
+                : predicate.getLocalName();
     }
 
 
@@ -725,6 +770,8 @@ public abstract class Shape {
 
 
     public Optional<Set<Value>> in() { return Optional.empty(); }
+
+    public Optional<Set<Value>> hasValue() { return Optional.empty(); }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
