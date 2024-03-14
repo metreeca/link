@@ -60,27 +60,49 @@ public abstract class Shape {
     //// !!! ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    private static final Shape EMPTY=shape(List.of());
+    public static Shape virtual(final Shape... shapes) {
 
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
 
-    public static Shape virtual(final boolean virtual) {
-
-        return new Shape() {
-
-            @Override public boolean virtual() { return virtual; }
-
-        };
-
+        return virtual(asList(shapes));
     }
 
-    public static Shape composite(final boolean composite) {
+    public static Shape virtual(final Collection<Shape> shapes) {
 
-        return new Shape() {
+        if ( shapes == null || shapes.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
 
-            @Override public boolean composite() { return composite; }
+        return shape(shape(shapes), new Shape() {
 
-        };
+            @Override public boolean virtual() { return true; }
 
+        });
+    }
+
+
+    public static Shape composite(final Shape... shapes) {
+
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return composite(asList(shapes));
+    }
+
+    public static Shape composite(final Collection<Shape> shapes) {
+
+        if ( shapes == null || shapes.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return shape(shape(shapes), new Shape() {
+
+            @Override public boolean composite() { return true; }
+
+        });
     }
 
 
@@ -512,7 +534,7 @@ public abstract class Shape {
 
 
     public static Shape shape() {
-        return EMPTY;
+        return new Shape() { };
     }
 
     public static Shape shape(final Shape... shapes) {
@@ -530,8 +552,8 @@ public abstract class Shape {
             throw new NullPointerException("null shapes");
         }
 
-        final boolean virtual=shapes.stream().anyMatch(Shape::virtual);
-        final boolean composite=shapes.stream().anyMatch(Shape::composite);
+        final boolean virtual=shapes.stream().anyMatch(s -> s.virtual());
+        final boolean composite=shapes.stream().anyMatch(s -> s.composite());
 
 
         final Optional<IRI> clazz=shapes.stream()

@@ -105,11 +105,7 @@ final class StoreRetriever {
     private CompletableFuture<Field> process(
             final Resource id, final IRI property, final boolean virtual, final Shape shape, final Value model
     ) {
-        if ( virtual ) {
-
-            return completedFuture(field(property, model));
-
-        } else if ( model instanceof Frame ) {
+        if ( model instanceof Frame ) {
 
             return fetcher.fetch(id, property)
 
@@ -118,15 +114,16 @@ final class StoreRetriever {
                             .map(value -> process((Resource)value, shape, (Frame)model)
                                     .thenApply(o -> o.orElseGet(() -> frame(field(ID, value))))
                             )
+                            .collect(toList())
                     ))
 
-                    .thenApply(frames -> field(property, frames));
+                    .thenApply(frames -> field(property, virtual && frames.isEmpty() ? Set.of(model) : frames));
 
         } else {
 
             return fetcher.fetch(id, property)
 
-                    .thenApply(values -> field(property, values));
+                    .thenApply(values -> field(property, virtual && values.isEmpty() ? Set.of(model) : values));
 
         }
     }

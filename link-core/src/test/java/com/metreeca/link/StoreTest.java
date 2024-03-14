@@ -36,6 +36,7 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.metreeca.link.Frame.integer;
 import static com.metreeca.link.Frame.*;
 import static com.metreeca.link.Shape.*;
 
@@ -128,9 +129,7 @@ public abstract class StoreTest {
     }
 
     public static Shape Resources() {
-        return shape(Resource(),
-
-                virtual(true),
+        return virtual(Resource(),
 
                 property(RDFS.MEMBER, multiple(), datatype(RESOURCE))
 
@@ -168,7 +167,7 @@ public abstract class StoreTest {
     }
 
     public static Shape Employees() {
-        return shape(virtual(true), Resource(),
+        return virtual(Resource(),
 
                 property(RDFS.MEMBER, StoreTest::Employee)
 
