@@ -67,7 +67,10 @@ final class _Parser {
         } else {
 
             return shape.entry(predicate).orElseThrow(() ->
-                    new IllegalArgumentException(format("unknown property label <%s>", predicate))
+                    new IllegalArgumentException(LABEL_PATTERN.matcher(predicate).matches()
+                            ? format("unknown property label <%s>", predicate)
+                            : format("malformed property label <%s>", predicate)
+                    )
             );
 
         }
@@ -214,5 +217,8 @@ final class _Parser {
 
                 });
     }
+
+
+    private _Parser() { }
 
 }
