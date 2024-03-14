@@ -140,9 +140,7 @@ final class StoreRetriever {
 
         final Frame model=query.model();
 
-        final boolean probing=model.fields().keySet().stream().anyMatch(Probe.class::isInstance);
-
-        if ( probing ) {
+        if ( model.tabular() ) {
 
             final Map<IRI, Expression> fields=new LinkedHashMap<>();
 

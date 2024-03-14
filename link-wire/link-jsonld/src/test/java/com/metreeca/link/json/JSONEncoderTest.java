@@ -30,11 +30,15 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.util.List;
 
 import static com.metreeca.link.Expression.expression;
+import static com.metreeca.link.Frame.decimal;
+import static com.metreeca.link.Frame.integer;
 import static com.metreeca.link.Frame.*;
 import static com.metreeca.link.Probe.probe;
 import static com.metreeca.link.Shape.*;
+import static com.metreeca.link.Transform.ABS;
 import static com.metreeca.link.json.JSON.json;
 
 import static java.lang.String.format;
@@ -70,7 +74,6 @@ final class JSONEncoderTest {
                 .replace('\'', '"')
                 .replace("\n", "");
     }
-
 
 
     @Nested
@@ -191,7 +194,7 @@ final class JSONEncoderTest {
 
             ))).isEqualTo(encode(
 
-                    "{'x':['one'],'y':['two']}"
+                    "{'x':'one','y':'two'}"
 
             ));
 
@@ -359,6 +362,24 @@ final class JSONEncoderTest {
                     literal("one", "en"),
                     literal("uno", "it")
             )).isEqualTo(value("{'en':'one','it':'uno'}"));
+        }
+
+
+        @Test void testOmitArrayOnTabularFrames() {
+            assertThat(encode(shape(
+
+                    property(x)
+
+            ), frame(
+
+                    field(probe("a", expression(List.of(ABS), List.of())), literal(integer(1))),
+                    field(probe("b", expression(x)), literal("v"))
+
+            ))).isEqualTo(encode(
+
+                    "{'a':1,'b':'v'}"
+
+            ));
         }
 
     }

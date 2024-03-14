@@ -135,6 +135,8 @@ final class JSONEncoder {
 
     private void frame(final Shape shape, final Frame frame) {
 
+        final boolean tabular=frame.tabular();
+
         writer.object(true);
 
         frame.fields().forEach((predicate, values) -> shape.entry(predicate).ifPresentOrElse(
@@ -143,7 +145,7 @@ final class JSONEncoder {
 
                     writer.comma();
 
-                    field(entry.getKey(), entry.getValue(), values);
+                    field(tabular, entry.getKey(), entry.getValue(), values);
 
                 },
 
@@ -156,7 +158,7 @@ final class JSONEncoder {
 
                         writer.comma();
 
-                        field(label, expression.apply(shape), values);
+                        field(tabular, label, expression.apply(shape), values);
 
                     }
 
@@ -167,7 +169,7 @@ final class JSONEncoder {
         writer.object(false);
     }
 
-    private void field(final String label, final Shape shape, final Collection<Value> values) {
+    private void field(final boolean tabular, final String label, final Shape shape, final Collection<Value> values) {
 
         writer.string(label);
         writer.colon();
@@ -176,7 +178,7 @@ final class JSONEncoder {
 
             locals(shape, values);
 
-        } else if ( shape.maxCount().filter(maxCount -> maxCount == 1).isPresent() ) {
+        } else if ( tabular || shape.maxCount().filter(maxCount -> maxCount == 1).isPresent() ) {
 
             values.stream().findFirst().ifPresent(value -> value(shape, value));
 

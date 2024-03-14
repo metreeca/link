@@ -555,6 +555,11 @@ public final class Frame implements Value {
     }
 
 
+    public boolean tabular() {
+        return fields.keySet().stream().anyMatch(Probe.class::isInstance);
+    }
+
+
     public Optional<IRI> id() {
         return value(ID).filter(Value::isIRI).map(IRI.class::cast);
     }
