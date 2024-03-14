@@ -16,8 +16,6 @@
 
 package com.metreeca.link;
 
-import org.eclipse.rdf4j.model.vocabulary.XSD;
-
 import static com.metreeca.link.Shape.*;
 
 /**
@@ -27,53 +25,57 @@ public enum Transform {
 
     COUNT(true) {
         @Override public Shape apply(final Shape shape) {
-            return (shape(minCount(1), maxCount(1), clazz(XSD.INTEGER)));
+            return (shape(required(), integer()));
         }
     },
 
     MIN(true) {
         @Override public Shape apply(final Shape shape) {
-            return shape(maxCount(1), shape.clazz().map(Shape::clazz).orElseGet(Shape::shape));
+            return shape(optional(), datatype(shape));
         }
     },
 
     MAX(true) {
         @Override public Shape apply(final Shape shape) {
-            return shape(maxCount(1), shape.clazz().map(Shape::clazz).orElseGet(Shape::shape));
+            return shape(optional(), datatype(shape));
         }
     },
 
     SUM(true) {
         @Override public Shape apply(final Shape shape) {
-            return shape(maxCount(1), shape.clazz().map(Shape::clazz).orElseGet(Shape::shape));
+            return shape(optional(), datatype(shape));
         }
     },
 
     AVG(true) {
-        @Override public Shape apply(final Shape shape) { // !!! integer -> decimal
-            return shape(maxCount(1), shape.clazz().map(Shape::clazz).orElseGet(Shape::shape));
+        @Override public Shape apply(final Shape shape) {
+            return shape(required(), decimal());
         }
     },
 
 
     ABS(false) {
         @Override public Shape apply(final Shape shape) {
-            return shape;
+            return shape(optional(), datatype(shape));
         }
     },
 
-    ROUND(false) { // !!! decimal -> integer?
-
+    ROUND(false) {
         @Override public Shape apply(final Shape shape) {
-            return shape;
+            return shape(optional(), integer());
         }
     },
 
     YEAR(false) {
         @Override public Shape apply(final Shape shape) {
-            return clazz(XSD.INTEGER);
+            return shape(optional(), integer());
         }
     };
+
+
+    private static Shape datatype(final Shape shape) {
+        return shape.datatype().map(Shape::datatype).orElseGet(Shape::shape);
+    }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

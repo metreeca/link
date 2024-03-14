@@ -30,7 +30,7 @@ import static java.util.Locale.ROOT;
 import static java.util.stream.Collectors.joining;
 
 /**
- * Value probe.
+ * Value expression.
  */
 public final class Expression implements Serializable {
 
