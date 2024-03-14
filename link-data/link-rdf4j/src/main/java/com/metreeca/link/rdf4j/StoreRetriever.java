@@ -169,7 +169,7 @@ final class StoreRetriever {
 
                                                     if ( m instanceof Frame ) {
 
-                                                        if ( v.isResource() ) {
+                                                        if ( v.isResource() && !v.equals(NIL) ) {
 
                                                             return process((Resource)v, shape, (Frame)m)
                                                                     .thenApply(o -> o.orElseGet(() -> frame(field(ID, v))));
