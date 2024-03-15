@@ -663,17 +663,17 @@ public final class Frame implements Value {
 
                                     return _value instanceof Query ? merge((Query)value, (Query)_value)
                                             : _value instanceof Frame ? merge((Query)value, (Frame)_value)
-                                            : _value;
+                                            : value;
 
                                 } else if ( value instanceof Frame ) {
 
                                     return _value instanceof Query ? merge((Frame)value, (Query)_value)
                                             : _value instanceof Frame ? merge((Frame)value, (Frame)_value)
-                                            : _value;
+                                            : value;
 
                                 } else {
 
-                                    return _value;
+                                    return _value; // replace plain model value to support virtual resources
 
                                 }
 
