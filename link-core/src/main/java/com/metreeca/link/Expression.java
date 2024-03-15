@@ -98,15 +98,14 @@ public final class Expression implements Serializable {
 
         Shape mapped=shape;
 
-        for (final IRI step : path()) {
+        for (final IRI step : path) {
             mapped=mapped.entry(step)
                     .orElseThrow(() -> new IllegalArgumentException(format("unknown property predicate <%s>", step)))
                     .getValue();
         }
 
-
-        for (final Transform transform : pipe()) {
-            mapped=transform.apply(mapped);
+        for (int i=pipe.size()-1; i >= 0; --i) {
+            mapped=pipe.get(i).apply(mapped);
         }
 
         return mapped;

@@ -28,7 +28,7 @@ import static com.metreeca.link.Expression.expression;
 import static com.metreeca.link.Frame.iri;
 import static com.metreeca.link.Shape.datatype;
 import static com.metreeca.link.Shape.property;
-import static com.metreeca.link.Transform.MIN;
+import static com.metreeca.link.Transform.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,7 +69,7 @@ final class ExpressionTest {
         }
 
 
-        @Test void testApplySingletonTransform() {
+        @Test void testApplySingletonTransformPipe() {
 
             final Expression expression=expression(List.of(MIN), List.of(RDF.VALUE));
             final Shape shape=property(RDF.VALUE, datatype(XSD.INTEGER));
@@ -79,7 +79,16 @@ final class ExpressionTest {
 
         }
 
-    }
+        @Test void testApplyTransformPipe() {
 
+            final Expression expression=expression(List.of(AVG, ROUND), List.of(RDF.VALUE));
+            final Shape shape=property(RDF.VALUE, datatype(XSD.INTEGER));
+
+            assertThat(expression.apply(shape).datatype())
+                    .contains(XSD.DECIMAL);
+
+        }
+
+    }
 
 }
