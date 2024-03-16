@@ -230,6 +230,10 @@ public final class Frame implements Value {
             throw new NullPointerException("null values");
         }
 
+        if ( !forward(predicate) && values.stream().anyMatch(not(Value::isResource)) ) {
+            throw new IllegalArgumentException("literal values for reverse predicate");
+        }
+
         return new Field(predicate, values);
     }
 
@@ -625,6 +629,61 @@ public final class Frame implements Value {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    public Stream<Statement> stream() {
+        return stream(id()
+                .map(Resource.class::cast)
+                .orElseGet(FACTORY::createBNode)
+        );
+    }
+
+
+    private Stream<Statement> stream(final Resource subject) {
+        return fields.entrySet().stream().flatMap(e -> {
+
+            final IRI iri=e.getKey();
+            final Set<Value> values=e.getValue();
+
+            final boolean forward=forward(iri);
+
+            final IRI predicate=forward ? iri : reverse(iri);
+
+            return values.stream().flatMap(value -> {
+
+                if ( value instanceof Frame ) {
+
+                    final Frame frame=(Frame)value;
+
+                    final Resource object=frame.id()
+                            .map(Resource.class::cast)
+                            .orElseGet(FACTORY::createBNode);
+
+                    return Stream.concat(
+
+                            Stream.of(forward
+                                    ? FACTORY.createStatement(subject, predicate, object)
+                                    : FACTORY.createStatement(object, predicate, subject)
+                            ),
+
+                            frame.stream(object)
+
+                    );
+
+                } else {
+
+                    return Stream.of(forward
+                            ? FACTORY.createStatement(subject, predicate, value)
+                            : FACTORY.createStatement((Resource)value, predicate, subject)
+                    );
+
+                }
+
+            });
+
+        });
+    }
+
 
     public Frame merge(final Frame frame) {
 
