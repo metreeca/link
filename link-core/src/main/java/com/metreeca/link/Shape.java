@@ -137,7 +137,7 @@ public abstract class Shape {
     }
 
 
-    public static Shape reference() {
+    public static Shape id() {
         return datatype(IRI);
     }
 
@@ -175,6 +175,10 @@ public abstract class Shape {
 
     public static Shape instant() {
         return shape(datatype(XSD.DATETIME), pattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}.\\d{3}Z"));
+    }
+
+    public static Shape duration() {
+        return shape(datatype(XSD.DURATION));
     }
 
     public static Shape local() {
