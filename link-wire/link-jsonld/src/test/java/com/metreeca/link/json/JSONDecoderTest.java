@@ -118,7 +118,7 @@ final class JSONDecoderTest {
 
         @Test void testDecodeSingletonObjects() {
             assertThat(decode("{'x':1}", shape(
-                    property(x)
+                    property(x, shape())
             ))).isEqualTo(Map.of(
                     x, Set.of(_1)
             ));
@@ -126,9 +126,9 @@ final class JSONDecoderTest {
 
         @Test void testDecodeFullObjects() {
             assertThat(decode("{'x':1,'y':2,'z':3}", shape(
-                    property(x),
-                    property(y),
-                    property(z)
+                    property(x, shape()),
+                    property(y, shape()),
+                    property(z, shape())
             ))).isEqualTo(Map.of(
                     x, Set.of(_1),
                     y, Set.of(_2),
@@ -138,12 +138,12 @@ final class JSONDecoderTest {
 
 
         @Test void testIgnoreEmptyArrays() {
-            assertThat(decode("{'x':[]}", shape(property(x)))).isEmpty();
+            assertThat(decode("{'x':[]}", shape(property(x, shape())))).isEmpty();
         }
 
         @Test void testDecodeSingletonArrays() {
             assertThat(decode("{'x':[1]}", shape(
-                    property(x)
+                    property(x, shape())
             ))).isEqualTo(Map.of(
                     x, Set.of(_1)
             ));
@@ -151,7 +151,7 @@ final class JSONDecoderTest {
 
         @Test void testDecodeNullArrayItems() {
             assertThat(decode("{'x':[null]}",
-                    shape(property(x))
+                    shape(property(x, shape()))
             )).isEqualTo(Map.of(
                     x, Set.of(NIL)
             ));
@@ -171,7 +171,7 @@ final class JSONDecoderTest {
 
         @Test void testDecodeFramedBNodes() {
             assertThat(decode("{'@id':'_:123'}", shape(
-                    property(ID)
+                    property(ID, shape())
             ))).isEqualTo(Map.of(
                     ID, Set.of(bnode("123"))
             ));
@@ -179,7 +179,7 @@ final class JSONDecoderTest {
 
         @Test void testDecodeFramedIRIs() {
             assertThat(decode("{'@id':'https://example.org/'}", shape(
-                    property(ID)
+                    property(ID, id())
             ))).isEqualTo(Map.of(
                     ID, Set.of(iri("https://example.org/"))
             ));
@@ -187,7 +187,7 @@ final class JSONDecoderTest {
 
         @Test void testDecodeInlinedBNodes() {
             assertThat(value("'_:123'", shape(
-                    property(x)
+                    property(x, shape())
             ))).satisfies(values -> assertThat(values).allSatisfy(value -> assertThat(value)
 
                     .asInstanceOf(type(Frame.class))
@@ -202,7 +202,7 @@ final class JSONDecoderTest {
 
         @Test void testDecodeInlinedIRIs() {
             assertThat(value("'https://example.org/'", shape(
-                    property(x)
+                    property(x, shape())
             ))).satisfies(values -> assertThat(values).allSatisfy(value -> assertThat(value)
 
                     .asInstanceOf(type(Frame.class))
@@ -286,7 +286,7 @@ final class JSONDecoderTest {
 
         @Test void testReportUnexpectedLiteralFields() {
             assertThatExceptionOfType(CodecException.class).isThrownBy(() ->
-                    value("{'@value':'value','@type':'test:t','x':1}", property(x))
+                    value("{'@value':'value','@type':'test:t','x':1}", property(x, shape()))
             );
         }
 
@@ -392,7 +392,7 @@ final class JSONDecoderTest {
     final class Queries {
 
         private Query query(final String query) {
-            return value(query, property(x)).stream()
+            return value(query, property(x, shape())).stream()
                     .filter(Query.class::isInstance)
                     .map(Query.class::cast)
                     .findFirst()

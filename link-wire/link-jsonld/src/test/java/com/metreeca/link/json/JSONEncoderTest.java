@@ -90,7 +90,7 @@ final class JSONEncoderTest {
         @Test void testHandleIds() {
             assertThat(encode(shape(
 
-                    property(ID)
+                    property(ID, id())
 
             ), frame(
 
@@ -106,7 +106,7 @@ final class JSONEncoderTest {
         @Test void testHandleAliasedIds() {
             assertThat(encode(shape(
 
-                    property("id", ID)
+                    property("id", ID, id())
 
             ), frame(
 
@@ -122,7 +122,7 @@ final class JSONEncoderTest {
         @Test void testHandleTypes() {
             assertThat(encode(shape(
 
-                    property(RDF.TYPE)
+                    property(RDF.TYPE, id())
 
             ), frame(
 
@@ -138,7 +138,7 @@ final class JSONEncoderTest {
         @Test void testHandleAliasedTypes() {
             assertThat(encode(shape(
 
-                    property("type", RDF.TYPE)
+                    property("type", RDF.TYPE, id())
 
             ), frame(
 
@@ -154,8 +154,8 @@ final class JSONEncoderTest {
         @Test void testHandlePredicates() {
             assertThat(encode(shape(
 
-                    property(x),
-                    property(y)
+                    property(x, shape()),
+                    property(y, shape())
 
             ), frame(
 
@@ -172,7 +172,7 @@ final class JSONEncoderTest {
         @Test void testIgnoreUnknownPredicates() {
             assertThat(encode(shape(
 
-                    property(x)
+                    property(x, shape())
 
             ), frame(
 
@@ -203,7 +203,7 @@ final class JSONEncoderTest {
         @Test void testHandleNestedFrames() {
             assertThat(encode(shape(
 
-                    property(x)
+                    property(x, shape())
 
             ), frame(
 
@@ -224,7 +224,7 @@ final class JSONEncoderTest {
         @Test void testHandleBNodesAsFrames() {
             assertThat(encode(
 
-                    shape(property(RDF.VALUE)),
+                    shape(property(RDF.VALUE, shape())),
                     frame(field(RDF.VALUE, bnode("x")))
 
             )).isEqualTo(encode(
@@ -237,7 +237,7 @@ final class JSONEncoderTest {
         @Test void testHandleIRIsAsFrames() {
             assertThat(encode(
 
-                    shape(property(RDF.VALUE)),
+                    shape(property(RDF.VALUE, shape())),
                     frame(field(RDF.VALUE, iri("test:x")))
 
             )).isEqualTo(encode(
@@ -253,7 +253,7 @@ final class JSONEncoderTest {
     final class Literals {
 
         private String value(final Value value) {
-            return encode(shape(property(RDF.VALUE)), frame(field(RDF.VALUE, value)));
+            return encode(shape(property(RDF.VALUE, shape())), frame(field(RDF.VALUE, value)));
         }
 
         private String value(final String string) {
@@ -368,7 +368,7 @@ final class JSONEncoderTest {
         @Test void testOmitArrayOnTabularFrames() {
             assertThat(encode(shape(
 
-                    property(x)
+                    property(x, shape())
 
             ), frame(
 

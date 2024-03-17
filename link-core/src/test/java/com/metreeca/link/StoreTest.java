@@ -119,11 +119,11 @@ public abstract class StoreTest {
     public static Shape Resource() {
         return shape(
 
-                property("id", ID),
-                property("type", TYPE),
+                property("id", ID, id()),
+                property("type", TYPE, id()),
 
-                property(RDFS.LABEL, required(), datatype(XSD.STRING)),
-                property(RDFS.COMMENT, optional(), datatype(XSD.STRING))
+                property(RDFS.LABEL, required(string())),
+                property(RDFS.COMMENT, optional(string()))
 
         );
     }
@@ -131,7 +131,7 @@ public abstract class StoreTest {
     public static Shape Resources() {
         return virtual(Resource(),
 
-                property(RDFS.MEMBER, multiple(), datatype(RESOURCE))
+                property(RDFS.MEMBER, multiple(datatype(RESOURCE)))
 
         );
     }

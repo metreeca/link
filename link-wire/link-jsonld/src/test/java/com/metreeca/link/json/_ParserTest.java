@@ -28,6 +28,7 @@ import java.util.List;
 import static com.metreeca.link.Expression.expression;
 import static com.metreeca.link.Frame.iri;
 import static com.metreeca.link.Shape.property;
+import static com.metreeca.link.Shape.shape;
 import static com.metreeca.link.Transform.*;
 import static com.metreeca.link.json._Parser.expression;
 import static com.metreeca.link.json._Parser.predicate;
@@ -44,7 +45,7 @@ final class _ParserTest {
 
 
     private static Shape test() {
-        return property(x, property(y, property(z)));
+        return property(x, property(y, property(z, shape())));
     }
 
 
@@ -186,7 +187,7 @@ final class _ParserTest {
 
         @Test void testDecodeQuotedPaths() {
             assertThat(expression(".'a property'.'let''s escape'.''",
-                    property("a property", x, property("let's escape", y, property(iri("test:"))))
+                    property("a property", x, property("let's escape", y, property(iri("test:"), shape())))
             ))
                     .isEqualTo(expression(x, y, iri("test:")));
         }

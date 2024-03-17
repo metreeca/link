@@ -24,6 +24,7 @@ import java.net.URI;
 import java.util.Set;
 
 import static com.metreeca.link.Expression.expression;
+import static com.metreeca.link.Frame.integer;
 import static com.metreeca.link.Frame.*;
 import static com.metreeca.link.Shape.*;
 import static com.metreeca.link.json._Query._query;
@@ -41,7 +42,7 @@ final class _QueryTest {
 
 
     @Test void testDecodeEmptyQueries() {
-        assertThat(_query(base, "", property(x))).satisfies(query -> {
+        assertThat(_query(base, "", property(x, shape()))).satisfies(query -> {
             assertThat(query.model().fields()).isEmpty();
             assertThat(query.filter()).isEmpty();
             assertThat(query.order()).isEmpty();
@@ -55,13 +56,13 @@ final class _QueryTest {
     }
 
     @Test void testDecodeSingletonPaths() {
-        assertThat(_query(base, "x=value", property(x)).filter().get(expression(x)).any())
+        assertThat(_query(base, "x=value", property(x, shape())).filter().get(expression(x)).any())
                 .contains(Set.of(literal("value")));
     }
 
     @Test void testDecodePaths() {
         assertThat(_query(base, "x.y.z=value",
-                property(x, property(y, property(z)))
+                property(x, property(y, property(z, shape())))
         ).filter().get(expression(x, y, z)).any())
                 .contains(Set.of(literal("value")));
     }
@@ -77,91 +78,91 @@ final class _QueryTest {
 
 
     @Test void testDecodeLtConstraints() {
-        assertThat(_query(base, "<x=value", property(x)).filter().get(expression(x)).lt())
+        assertThat(_query(base, "<x=value", property(x, shape())).filter().get(expression(x)).lt())
                 .contains(literal("value"));
     }
 
     @Test void testDecodeGtConstraints() {
-        assertThat(_query(base, ">x=value", property(x)).filter().get(expression(x)).gt())
+        assertThat(_query(base, ">x=value", property(x, shape())).filter().get(expression(x)).gt())
                 .contains(literal("value"));
     }
 
     @Test void testDecodeLteConstraints() {
-        assertThat(_query(base, "<%3Dx=value", property(x)).filter().get(expression(x)).lte())
+        assertThat(_query(base, "<%3Dx=value", property(x, shape())).filter().get(expression(x)).lte())
                 .contains(literal("value"));
     }
 
     @Test void testDecodeGteConstraints() {
-        assertThat(_query(base, ">%3Dx=value", property(x)).filter().get(expression(x)).gte())
+        assertThat(_query(base, ">%3Dx=value", property(x, shape())).filter().get(expression(x)).gte())
                 .contains(literal("value"));
     }
 
     @Test void testDecodeAlternateLteConstraints() {
-        assertThat(_query(base, "<<x=value", property(x)).filter().get(expression(x)).lte())
+        assertThat(_query(base, "<<x=value", property(x, shape())).filter().get(expression(x)).lte())
                 .contains(literal("value"));
     }
 
     @Test void testDecodeAlternateGteConstraints() {
-        assertThat(_query(base, ">>x=value", property(x)).filter().get(expression(x)).gte())
+        assertThat(_query(base, ">>x=value", property(x, shape())).filter().get(expression(x)).gte())
                 .contains(literal("value"));
     }
 
 
     @Test void testDecodeLikeConstraints() {
-        assertThat(_query(base, "~x=value", property(x)).filter().get(expression(x)).like())
+        assertThat(_query(base, "~x=value", property(x, shape())).filter().get(expression(x)).like())
                 .contains("value");
     }
 
 
     @Test void testDecodeSingletonAnyConstraints() {
-        assertThat(_query(base, "x=value", property(x)).filter().get(expression(x)).any())
+        assertThat(_query(base, "x=value", property(x, shape())).filter().get(expression(x)).any())
                 .contains(Set.of(literal("value")));
     }
 
     @Test void testDecodeMultipleAnyConstraints() {
-        assertThat(_query(base, "x=1&x=2", property(x)).filter().get(expression(x)).any())
+        assertThat(_query(base, "x=1&x=2", property(x, shape())).filter().get(expression(x)).any())
                 .contains(Set.of(literal("1"), literal("2")));
     }
 
     @Test void testDecodeNonExistentialAnyConstraints() {
-        assertThat(_query(base, "x=null", property(x)).filter().get(expression(x)).any())
+        assertThat(_query(base, "x=null", property(x, shape())).filter().get(expression(x)).any())
                 .contains(Set.of(NIL));
     }
 
     @Test void testDecodeExistentialAnyConstraints() {
-        assertThat(_query(base, "x", property(x)).filter().get(expression(x)).any())
+        assertThat(_query(base, "x", property(x, shape())).filter().get(expression(x)).any())
                 .contains(Set.of());
     }
 
 
     @Test void testDecodeAscendingOrder() {
-        assertThat(_query(base, "^x=1", property(x)).order().get(expression(x)))
+        assertThat(_query(base, "^x=1", property(x, shape())).order().get(expression(x)))
                 .isEqualTo(1);
     }
 
     @Test void testDecodeDescendingOrder() {
-        assertThat(_query(base, "^x=-123", property(x)).order().get(expression(x)))
+        assertThat(_query(base, "^x=-123", property(x, shape())).order().get(expression(x)))
                 .isEqualTo(-123);
     }
 
     @Test void testDecodeAlternateIncreasingOrder() {
-        assertThat(_query(base, "^x=increasing", property(x)).order().get(expression(x)))
+        assertThat(_query(base, "^x=increasing", property(x, shape())).order().get(expression(x)))
                 .isEqualTo(1);
     }
 
     @Test void testDecodeAlternateDecreasingOrder() {
-        assertThat(_query(base, "^x=decreasing", property(x)).order().get(expression(x)))
+        assertThat(_query(base, "^x=decreasing", property(x, shape())).order().get(expression(x)))
                 .isEqualTo(-1);
     }
 
     @Test void testReportMalformedOrder() {
-        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "^x=1.23", property(x)));
-        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "^x=value", property(x)));
+        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "^x=1.23", property(x, shape())));
+        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "^x=value", property(x, shape())));
     }
 
 
     @Test void testDecodeMergeMultipleConstraints() {
-        assertThat(_query(base, ">>x=lower&<<x=upper", property(x)).filter()).satisfies(filter -> {
+        assertThat(_query(base, ">>x=lower&<<x=upper", property(x, shape())).filter()).satisfies(filter -> {
             assertThat(filter.get(expression(x)).gte()).contains(literal("lower"));
             assertThat(filter.get(expression(x)).lte()).contains(literal("upper"));
         });
@@ -169,26 +170,26 @@ final class _QueryTest {
 
 
     @Test void testDecodeOffset() {
-        assertThat(_query(base, "@=123", property(x)).offset())
+        assertThat(_query(base, "@=123", property(x, shape())).offset())
                 .isEqualTo(123);
 
     }
 
     @Test void testReportMalformedOffset() {
-        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "@=", property(x)));
-        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "@=value", property(x)));
+        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "@=", property(x, shape())));
+        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "@=value", property(x, shape())));
     }
 
 
     @Test void testDecodeLimit() {
-        assertThat(_query(base, "#=123", property(x)).offset())
+        assertThat(_query(base, "#=123", property(x, shape())).offset())
                 .isEqualTo(123);
 
     }
 
     @Test void testReportMalformedLimit() {
-        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "#=", property(x)));
-        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "#=value", property(x)));
+        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "#=", property(x, shape())));
+        assertThatIllegalArgumentException().isThrownBy(() -> _query(base, "#=value", property(x, shape())));
     }
 
 

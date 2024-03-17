@@ -337,20 +337,40 @@ public abstract class Shape {
     }
 
 
-    public static Shape required() {
-        return shape(minCount(1), maxCount(1));
+    public static Shape required(final Shape... shapes) {
+
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return shape(minCount(1), maxCount(1), shape(shapes));
     }
 
-    public static Shape optional() {
-        return shape(maxCount(1));
+    public static Shape optional(final Shape... shapes) {
+
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return shape(maxCount(1), shape(shapes));
     }
 
-    public static Shape repeatable() {
-        return shape(minCount(1));
+    public static Shape repeatable(final Shape... shapes) {
+
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return shape(minCount(1), shape(shapes));
     }
 
-    public static Shape multiple() {
-        return shape();
+    public static Shape multiple(final Shape... shapes) {
+
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return shape(shapes);
     }
 
 
@@ -425,32 +445,6 @@ public abstract class Shape {
         return property(label(predicate), predicate, () -> shape);
     }
 
-    public static Shape property(final IRI predicate, final Shape... shapes) {
-
-        if ( predicate == null ) {
-            throw new NullPointerException("null predicate");
-        }
-
-        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
-            throw new NullPointerException("null shapes");
-        }
-
-        return property(label(predicate), predicate, () -> shape(shapes));
-    }
-
-    public static Shape property(final IRI predicate, final Collection<Shape> shapes) {
-
-        if ( predicate == null ) {
-            throw new NullPointerException("null predicate");
-        }
-
-        if ( shapes == null || shapes.stream().anyMatch(Objects::isNull) ) {
-            throw new NullPointerException("null shapes");
-        }
-
-        return property(label(predicate), predicate, () -> shape(shapes));
-    }
-
     public static Shape property(final IRI predicate, final Supplier<? extends Shape> shape) {
 
         if ( predicate == null ) {
@@ -479,40 +473,6 @@ public abstract class Shape {
         }
 
         return property(label, predicate, () -> shape);
-    }
-
-    public static Shape property(final String label, final IRI predicate, final Shape... shapes) {
-
-        if ( label == null ) {
-            throw new NullPointerException("null label");
-        }
-
-        if ( predicate == null ) {
-            throw new NullPointerException("null predicate");
-        }
-
-        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
-            throw new NullPointerException("null shapes");
-        }
-
-        return property(label, predicate, () -> shape(shapes));
-    }
-
-    public static Shape property(final String label, final IRI predicate, final Collection<Shape> shapes) {
-
-        if ( label == null ) {
-            throw new NullPointerException("null label");
-        }
-
-        if ( predicate == null ) {
-            throw new NullPointerException("null predicate");
-        }
-
-        if ( shapes == null || shapes.stream().anyMatch(Objects::isNull) ) {
-            throw new NullPointerException("null shapes");
-        }
-
-        return property(label, predicate, () -> shape(shapes));
     }
 
     public static Shape property(final String label, final IRI predicate, final Supplier<? extends Shape> shape) {
@@ -577,7 +537,9 @@ public abstract class Shape {
             throw new NullPointerException("null shapes");
         }
 
-        return shape(asList(shapes));
+        return shapes.length == 0 ? shape()
+                : shapes.length == 1 ? shapes[0]
+                : shape(asList(shapes));
     }
 
     public static Shape shape(final Collection<Shape> shapes) {
@@ -586,145 +548,156 @@ public abstract class Shape {
             throw new NullPointerException("null shapes");
         }
 
-        final boolean virtual=shapes.stream().anyMatch(s -> s.virtual());
-        final boolean composite=shapes.stream().anyMatch(s -> s.composite());
+        if ( shapes.isEmpty() ) {
+
+            return shape();
+
+        } else if ( shapes.size() == 1 ) {
+
+            return shapes.iterator().next();
+
+        } else {
+
+            final boolean virtual=shapes.stream().anyMatch(s -> s.virtual());
+            final boolean composite=shapes.stream().anyMatch(s -> s.composite());
 
 
-        final Optional<IRI> clazz=shapes.stream()
-                .flatMap(s -> s.clazz().stream())
-                .reduce((x, y) -> x.equals(y) ? x : error("conflicting <class> constraints <%s> / <%s>", x, y));
+            final Optional<IRI> clazz=shapes.stream()
+                    .flatMap(s -> s.clazz().stream())
+                    .reduce((x, y) -> x.equals(y) ? x : error("conflicting <class> constraints <%s> / <%s>", x, y));
 
-        final Optional<IRI> datatype=shapes.stream()
-                .flatMap(s -> s.datatype().stream())
-                .reduce((x, y) -> x.equals(y) ? x
-                        : derives(x, y) ? y
-                        : derives(y, x) ? x
-                        : error("conflicting <datatype> constraints <%s> / <%s>", x, y)
-                );
-
-
-        final Optional<Value> minExclusive=shapes.stream()
-                .flatMap(s -> s.minExclusive().stream())
-                .reduce((x, y) -> compare(x, y) <= 0 ? x : y);
-
-        final Optional<Value> maxExclusive=shapes.stream()
-                .flatMap(s -> s.maxExclusive().stream())
-                .reduce((x, y) -> compare(x, y) >= 0 ? x : y
-                );
-
-        final Optional<Value> minInclusive=shapes.stream()
-                .flatMap(s -> s.minInclusive().stream())
-                .reduce((x, y) -> compare(x, y) <= 0 ? x : y);
-
-        final Optional<Value> maxInclusive=shapes.stream()
-                .flatMap(s -> s.maxInclusive().stream())
-                .reduce((x, y) -> compare(x, y) >= 0 ? x : y);
+            final Optional<IRI> datatype=shapes.stream()
+                    .flatMap(s -> s.datatype().stream())
+                    .reduce((x, y) -> x.equals(y) ? x
+                            : derives(x, y) ? y
+                            : derives(y, x) ? x
+                            : error("conflicting <datatype> constraints <%s> / <%s>", x, y)
+                    );
 
 
-        final Optional<Integer> minLength=shapes.stream()
-                .flatMap(s -> s.minCount().stream())
-                .reduce((x, y) -> x >= y ? x : y);
+            final Optional<Value> minExclusive=shapes.stream()
+                    .flatMap(s -> s.minExclusive().stream())
+                    .reduce((x, y) -> compare(x, y) <= 0 ? x : y);
 
-        final Optional<Integer> maxLength=shapes.stream()
-                .flatMap(s -> s.maxCount().stream())
-                .reduce((x, y) -> x <= y ? x : y);
+            final Optional<Value> maxExclusive=shapes.stream()
+                    .flatMap(s -> s.maxExclusive().stream())
+                    .reduce((x, y) -> compare(x, y) >= 0 ? x : y
+                    );
 
-        final Optional<String> pattern=shapes.stream()
-                .flatMap(s -> s.pattern().stream())
-                .reduce((x, y) -> x.equals(y) ? x : error("conflicting <pattern> constraints <%s> / <%s>", x, y));
+            final Optional<Value> minInclusive=shapes.stream()
+                    .flatMap(s -> s.minInclusive().stream())
+                    .reduce((x, y) -> compare(x, y) <= 0 ? x : y);
 
-
-        final Optional<Integer> minCount=shapes.stream()
-                .flatMap(s -> s.minCount().stream())
-                .reduce((x, y) -> x >= y ? x : y);
-
-        final Optional<Integer> maxCount=shapes.stream()
-                .flatMap(s -> s.maxCount().stream())
-                .reduce((x, y) -> x <= y ? x : y);
-
-        final Optional<Set<Value>> in=shapes.stream()
-                .flatMap(s -> s.in().stream())
-                .reduce((x, y) -> {
-
-                    final Set<Value> i=x.stream().filter(y::contains).collect(toUnmodifiableSet());
-
-                    return i.isEmpty() ? error("conflicting <in> constraints <%s> / <%s>", x, y) : i;
-
-                });
-
-        final Optional<Set<Value>> hasValue=shapes.stream()
-                .flatMap(s -> s.hasValue().stream())
-                .reduce((x, y) -> Stream.of(x, y).flatMap(Collection::stream).collect(toUnmodifiableSet()));
+            final Optional<Value> maxInclusive=shapes.stream()
+                    .flatMap(s -> s.maxInclusive().stream())
+                    .reduce((x, y) -> compare(x, y) >= 0 ? x : y);
 
 
-        final Map<String, Entry<IRI, Supplier<Shape>>> properties=shapes.stream()
-                .flatMap(shape -> shape.labels().entrySet().stream())
-                .collect(toUnmodifiableMap(Entry::getKey, Entry::getValue, (x, y) ->
-                        x.getKey().equals(y.getKey())
-                                ? Map.entry(x.getKey(), () -> shape(x.getValue().get(), y.getValue().get()))
-                                : error("conflicting property predicate <%s> / <%s>", x.getKey(), y.getKey())
-                ));
+            final Optional<Integer> minLength=shapes.stream()
+                    .flatMap(s -> s.minCount().stream())
+                    .reduce((x, y) -> x >= y ? x : y);
 
-        final Map<IRI, Entry<String, Supplier<Shape>>> labels=shapes.stream()
-                .flatMap(shape -> shape.predicates().entrySet().stream())
-                .collect(toUnmodifiableMap(Entry::getKey, Entry::getValue, (x, y) ->
-                        x.getKey().equals(y.getKey())
-                                ? Map.entry(x.getKey(), () -> shape(x.getValue().get(), y.getValue().get()))
-                                : error("conflicting property label <%s> / <%s>", x.getKey(), y.getKey())
-                ));
+            final Optional<Integer> maxLength=shapes.stream()
+                    .flatMap(s -> s.maxCount().stream())
+                    .reduce((x, y) -> x <= y ? x : y);
+
+            final Optional<String> pattern=shapes.stream()
+                    .flatMap(s -> s.pattern().stream())
+                    .reduce((x, y) -> x.equals(y) ? x : error("conflicting <pattern> constraints <%s> / <%s>", x, y));
 
 
-        return new Shape() {
+            final Optional<Integer> minCount=shapes.stream()
+                    .flatMap(s -> s.minCount().stream())
+                    .reduce((x, y) -> x >= y ? x : y);
 
-            @Override public boolean virtual() {
-                return virtual;
-            }
+            final Optional<Integer> maxCount=shapes.stream()
+                    .flatMap(s -> s.maxCount().stream())
+                    .reduce((x, y) -> x <= y ? x : y);
 
-            @Override public boolean composite() {
-                return composite;
-            }
+            final Optional<Set<Value>> in=shapes.stream()
+                    .flatMap(s -> s.in().stream())
+                    .reduce((x, y) -> {
 
+                        final Set<Value> i=x.stream().filter(y::contains).collect(toUnmodifiableSet());
 
-            @Override public Optional<IRI> clazz() { return clazz; }
+                        return i.isEmpty() ? error("conflicting <in> constraints <%s> / <%s>", x, y) : i;
 
-            @Override public Optional<IRI> datatype() { return datatype; }
+                    });
 
-
-            @Override public Optional<Value> minExclusive() { return minExclusive; }
-
-            @Override public Optional<Value> maxExclusive() { return maxExclusive; }
-
-            @Override public Optional<Value> minInclusive() { return minInclusive; }
-
-            @Override public Optional<Value> maxInclusive() { return maxInclusive; }
+            final Optional<Set<Value>> hasValue=shapes.stream()
+                    .flatMap(s -> s.hasValue().stream())
+                    .reduce((x, y) -> Stream.of(x, y).flatMap(Collection::stream).collect(toUnmodifiableSet()));
 
 
-            @Override public Optional<Integer> minLength() { return minLength; }
+            final Map<String, Entry<IRI, Supplier<Shape>>> properties=shapes.stream()
+                    .flatMap(shape -> shape.labels().entrySet().stream())
+                    .collect(toUnmodifiableMap(Entry::getKey, Entry::getValue, (x, y) ->
+                            x.getKey().equals(y.getKey())
+                                    ? Map.entry(x.getKey(), () -> shape(x.getValue().get(), y.getValue().get()))
+                                    : error("conflicting property predicate <%s> / <%s>", x.getKey(), y.getKey())
+                    ));
 
-            @Override public Optional<Integer> maxLength() { return maxLength; }
-
-            @Override public Optional<String> pattern() { return pattern; }
-
-
-            @Override public Optional<Integer> minCount() { return minCount; }
-
-            @Override public Optional<Integer> maxCount() { return maxCount; }
-
-
-            @Override public Optional<Set<Value>> in() { return in; }
-
-            @Override public Optional<Set<Value>> hasValue() { return hasValue; }
+            final Map<IRI, Entry<String, Supplier<Shape>>> labels=shapes.stream()
+                    .flatMap(shape -> shape.predicates().entrySet().stream())
+                    .collect(toUnmodifiableMap(Entry::getKey, Entry::getValue, (x, y) ->
+                            x.getKey().equals(y.getKey())
+                                    ? Map.entry(x.getKey(), () -> shape(x.getValue().get(), y.getValue().get()))
+                                    : error("conflicting property label <%s> / <%s>", x.getKey(), y.getKey())
+                    ));
 
 
-            @Override public Map<String, Entry<IRI, Supplier<Shape>>> labels() {
-                return properties;
-            }
+            return new Shape() {
 
-            @Override public Map<IRI, Entry<String, Supplier<Shape>>> predicates() {
-                return labels;
-            }
+                @Override public boolean virtual() {
+                    return virtual;
+                }
 
-        };
+                @Override public boolean composite() {
+                    return composite;
+                }
+
+
+                @Override public Optional<IRI> clazz() { return clazz; }
+
+                @Override public Optional<IRI> datatype() { return datatype; }
+
+
+                @Override public Optional<Value> minExclusive() { return minExclusive; }
+
+                @Override public Optional<Value> maxExclusive() { return maxExclusive; }
+
+                @Override public Optional<Value> minInclusive() { return minInclusive; }
+
+                @Override public Optional<Value> maxInclusive() { return maxInclusive; }
+
+
+                @Override public Optional<Integer> minLength() { return minLength; }
+
+                @Override public Optional<Integer> maxLength() { return maxLength; }
+
+                @Override public Optional<String> pattern() { return pattern; }
+
+
+                @Override public Optional<Integer> minCount() { return minCount; }
+
+                @Override public Optional<Integer> maxCount() { return maxCount; }
+
+
+                @Override public Optional<Set<Value>> in() { return in; }
+
+                @Override public Optional<Set<Value>> hasValue() { return hasValue; }
+
+
+                @Override public Map<String, Entry<IRI, Supplier<Shape>>> labels() {
+                    return properties;
+                }
+
+                @Override public Map<IRI, Entry<String, Supplier<Shape>>> predicates() {
+                    return labels;
+                }
+
+            };
+        }
     }
 
 
