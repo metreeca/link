@@ -17,6 +17,7 @@
 package com.metreeca.link;
 
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 
 import java.util.*;
@@ -32,7 +33,7 @@ import static java.util.stream.Collectors.toMap;
 /**
  * Collection query.
  */
-public abstract class Query implements Value {
+public abstract class Query implements Resource {
 
     private static final Frame EMPTY=frame();
 

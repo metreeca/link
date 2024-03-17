@@ -45,7 +45,7 @@ import static java.util.stream.Collectors.*;
 /**
  * Resource description.
  */
-public final class Frame implements Value {
+public final class Frame implements Resource {
 
     private static final long serialVersionUID=-7503619785173166965L;
 
@@ -231,7 +231,7 @@ public final class Frame implements Value {
         }
 
         if ( !forward(predicate) && values.stream().anyMatch(not(Value::isResource)) ) {
-            throw new IllegalArgumentException("literal values for reverse predicate");
+            throw new IllegalArgumentException(format("literal values for reverse predicate <%s>", predicate));
         }
 
         return new Field(predicate, values);

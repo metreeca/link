@@ -107,7 +107,7 @@ final class StoreCreator {
     private Statement link(final Resource id, final IRI property, final Value value, final ValueFactory factory) {
         return Frame.forward(property) ? (factory.createStatement(id, property, value))
                 : value.isResource() ? (factory.createStatement((Resource)value, Frame.reverse(property), id))
-                : error("value <%s> for reverse property <%s> is not a resource", value, property);
+                : error("value <%s> for reverse predicate <%s> is not a resource", value, property);
     }
 
 }
