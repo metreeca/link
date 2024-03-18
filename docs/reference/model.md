@@ -4,32 +4,32 @@ excerpt: Lorem ipsum sit amet.
 ---
 
 ```typescript
-type Value = null | boolean | number | string | Frame | Local | Typed
+type Value = null | boolean | number | string | Frame | Tagged | Typed
 
 type Frame = Partial<{
 
-	"{label}": Value | Value[] | Locals
-	"{label}={expression}": Value | Value[] | Locals
+	"{label}": Value | Value[] | Local
+	"{label}={expression}": Value | Value[] | Local
 
 	"<{expression}": Value // less than
 	">{expression}": Value // greater than
 
-	"<={expression}": Value // less than or equal
-	">={expression}": Value // greater than or equal
+	"<={expression}": Value // less than or equal (also <<)
+	">={expression}": Value // greater than or equal (also >>)
 
 	"~{expression}": string // like (stemmed word search)
 
-	"?{expression}": Value | Value[] | Locals // any
+	"?{expression}": Value | Value[] | Local // any
 
 	"^{expression}": "increasing" | "decreasing" | number // order
-	"${expression}": Value | Value[] | Locals // focus
+	"${expression}": Value | Value[] | Local // focus
 
 	"@": number // offset
 	"#": number // limit
 
 }>
 
-type Locals=Partial<{
+type Local=Partial<{
   
 	"{locale}": string | string[]
 	"*": string | string[]
@@ -37,7 +37,7 @@ type Locals=Partial<{
 
 }>
 
-type Local = {
+type Tagged = {
 	"@value": string
 	"@language": "{locale}"
 }

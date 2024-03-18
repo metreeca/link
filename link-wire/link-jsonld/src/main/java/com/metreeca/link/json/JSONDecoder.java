@@ -214,14 +214,14 @@ final class JSONDecoder {
 
             try {
 
-                if ( label.startsWith("<=") ) {
+                if ( label.startsWith("<=") || label.startsWith("<<") ) {
 
                     final Expression expression=expression(label.substring(2), shape);
                     final Value value=value(expression.apply(shape));
 
                     queries.add(filter(expression, lte(value)));
 
-                } else if ( label.startsWith(">=") ) {
+                } else if ( label.startsWith(">=") || label.startsWith(">>") ) {
 
                     final Expression expression=expression(label.substring(2), shape);
                     final Value value=value(expression.apply(shape));
