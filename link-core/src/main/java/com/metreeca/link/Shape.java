@@ -149,12 +149,53 @@ public abstract class Shape {
         return datatype(XSD.STRING);
     }
 
+    public static Shape string(final int length) {
+
+        if ( length < 0 ) {
+            throw new IllegalArgumentException(String.format("negative length <%d>", length));
+        }
+
+        return shape(string(), maxLength(length));
+    }
+
     public static Shape integer() {
         return datatype(XSD.INTEGER);
     }
 
+    public static Shape integer(final int lower) {
+        return shape(integer(), minInclusive(Frame.literal(Frame.integer(lower))));
+    }
+
+    public static Shape integer(final int lower, final int upper) {
+
+        if ( lower > upper ) {
+            throw new IllegalArgumentException(String.format("inconsistent range [%d, %s]", lower, upper));
+        }
+
+        return shape(integer(),
+                minInclusive(Frame.literal(Frame.integer(lower))),
+                maxInclusive(Frame.literal(Frame.integer(upper)))
+        );
+    }
+
     public static Shape decimal() {
         return datatype(XSD.DECIMAL);
+    }
+
+    public static Shape decimal(final double lower) {
+        return shape(decimal(), minInclusive(Frame.literal(Frame.decimal(lower))));
+    }
+
+    public static Shape decimal(final double lower, final double upper) {
+
+        if ( lower > upper ) {
+            throw new IllegalArgumentException(String.format("inconsistent range [%d, %s]", lower, upper));
+        }
+
+        return shape(decimal(),
+                minInclusive(Frame.literal(Frame.decimal(lower))),
+                maxInclusive(Frame.literal(Frame.decimal(upper)))
+        );
     }
 
     public static Shape year() {
@@ -174,7 +215,7 @@ public abstract class Shape {
     }
 
     public static Shape instant() {
-        return shape(datatype(XSD.DATETIME), pattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}.\\d{3}Z"));
+        return shape(dateTime(), pattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}.\\d{3}Z"));
     }
 
     public static Shape duration() {
