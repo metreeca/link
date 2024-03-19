@@ -14,8 +14,8 @@ type Frame = Partial<{
 	"<{expression}": Value // less than
 	">{expression}": Value // greater than
 
-	"<={expression}": Value // less than or equal (also <<)
-	">={expression}": Value // greater than or equal (also >>)
+	"<={expression}": Value // less than or equal
+	">={expression}": Value // greater than or equal
 
 	"~{expression}": string // like (stemmed word search)
 
@@ -69,20 +69,14 @@ uchar = %x20-26 / %x28-10FFFF ; all non-control Unicode chars minus "'" (single 
 # Query
 
 ```
-<{expression}={value} // less than
->{expression}={value} // greater than
-
-<%3D{expression}={value} // less than or equal
->%3D{expression}={value} // greater than or equal
-
-<<{expression}={value} // less than or equal (alternate)
->>{expression}={value} // greater than or equal (alternate)
+{expression}<={value} // less than or equal
+{expression}>={value} // greater than or equal
 
 ~{expression}={string} // like (stemmed word search)
 
 {expression}={value} // any option
-{expression}=null // non-existential any option
-{expression} // existential any option
+{expression}=* // existential any option
+{expression}= // non-existential any option
 
 ^{expression} // order
 ^{expression}=increasing // order

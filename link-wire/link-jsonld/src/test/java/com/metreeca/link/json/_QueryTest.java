@@ -77,33 +77,13 @@ final class _QueryTest {
     }
 
 
-    @Test void testDecodeLtConstraints() {
-        assertThat(_query(base, "<x=value", property(x, shape())).filter().get(expression(x)).lt())
-                .contains(literal("value"));
-    }
-
-    @Test void testDecodeGtConstraints() {
-        assertThat(_query(base, ">x=value", property(x, shape())).filter().get(expression(x)).gt())
-                .contains(literal("value"));
-    }
-
     @Test void testDecodeLteConstraints() {
-        assertThat(_query(base, "<%3Dx=value", property(x, shape())).filter().get(expression(x)).lte())
+        assertThat(_query(base, "x<=value", property(x, shape())).filter().get(expression(x)).lte())
                 .contains(literal("value"));
     }
 
     @Test void testDecodeGteConstraints() {
-        assertThat(_query(base, ">%3Dx=value", property(x, shape())).filter().get(expression(x)).gte())
-                .contains(literal("value"));
-    }
-
-    @Test void testDecodeAlternateLteConstraints() {
-        assertThat(_query(base, "<<x=value", property(x, shape())).filter().get(expression(x)).lte())
-                .contains(literal("value"));
-    }
-
-    @Test void testDecodeAlternateGteConstraints() {
-        assertThat(_query(base, ">>x=value", property(x, shape())).filter().get(expression(x)).gte())
+        assertThat(_query(base, "x>=value", property(x, shape())).filter().get(expression(x)).gte())
                 .contains(literal("value"));
     }
 
@@ -125,12 +105,16 @@ final class _QueryTest {
     }
 
     @Test void testDecodeNonExistentialAnyConstraints() {
-        assertThat(_query(base, "x=null", property(x, shape())).filter().get(expression(x)).any())
+
+        assertThat(_query(base, "x", property(x, shape())).filter().get(expression(x)).any())
+                .contains(Set.of(NIL));
+
+        assertThat(_query(base, "x=", property(x, shape())).filter().get(expression(x)).any())
                 .contains(Set.of(NIL));
     }
 
     @Test void testDecodeExistentialAnyConstraints() {
-        assertThat(_query(base, "x", property(x, shape())).filter().get(expression(x)).any())
+        assertThat(_query(base, "x=*", property(x, shape())).filter().get(expression(x)).any())
                 .contains(Set.of());
     }
 
@@ -162,7 +146,7 @@ final class _QueryTest {
 
 
     @Test void testDecodeMergeMultipleConstraints() {
-        assertThat(_query(base, ">>x=lower&<<x=upper", property(x, shape())).filter()).satisfies(filter -> {
+        assertThat(_query(base, "x>=lower&x<=upper", property(x, shape())).filter()).satisfies(filter -> {
             assertThat(filter.get(expression(x)).gte()).contains(literal("lower"));
             assertThat(filter.get(expression(x)).lte()).contains(literal("upper"));
         });
@@ -194,7 +178,7 @@ final class _QueryTest {
 
 
     @Test void testAssignKnownDatatype() {
-        assertThat(_query(base, "<x=1", property(x, datatype(XSD.INTEGER))).filter().get(expression(x)).lt())
+        assertThat(_query(base, "x<=1", property(x, datatype(XSD.INTEGER))).filter().get(expression(x)).lte())
                 .contains(literal(integer(1)));
     }
 

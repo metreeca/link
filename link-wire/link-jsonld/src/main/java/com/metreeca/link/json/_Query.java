@@ -44,8 +44,6 @@ import static java.util.stream.Collectors.toList;
 
 final class _Query {
 
-    private static final String NULL="null";
-
     private static final Pattern PAIR_PATTERN=compile("&?(?<label>[^=&]*)(?:=(?<value>[^&]*))?");
 
 
@@ -94,29 +92,17 @@ final class _Query {
             final String label=URLDecoder.decode(matcher.group("label"), UTF_8);
             final String value=URLDecoder.decode(Optional.ofNullable(matcher.group("value")).orElse(""), UTF_8);
 
-            if ( label.startsWith("<=") || label.startsWith("<<") ) {
+            if ( label.endsWith("<") ) {
 
-                final Expression expression=expression(label.substring(2), shape);
+                final Expression expression=expression(label.substring(0, label.length()-1), shape);
 
                 queries.add(filter(expression, lte(value(value, expression.apply(shape), base))));
 
-            } else if ( label.startsWith(">=") || label.startsWith(">>") ) {
+            } else if ( label.endsWith(">") ) {
 
-                final Expression expression=expression(label.substring(2), shape);
+                final Expression expression=expression(label.substring(0, label.length()-1), shape);
 
                 queries.add(filter(expression, gte(value(value, expression.apply(shape), base))));
-
-            } else if ( label.startsWith("<") ) {
-
-                final Expression expression=expression(label.substring(1), shape);
-
-                queries.add(filter(expression, lt(value(value, expression.apply(shape), base))));
-
-            } else if ( label.startsWith(">") ) {
-
-                final Expression expression=expression(label.substring(1), shape);
-
-                queries.add(filter(expression, gt(value(value, expression.apply(shape), base))));
 
             } else if ( label.startsWith("~") ) {
 
@@ -147,11 +133,12 @@ final class _Query {
 
                     final Set<Value> set=values == null ? new LinkedHashSet<>() : values;
 
-                    if ( !value.isBlank() ) {
-                        set.add(value.equals(NULL) ? NIL : value(value, expression.apply(shape), base));
+                    if ( !value.equals("*") ) {
+                        set.add(value.isBlank() ? NIL : value(value, expression.apply(shape), base));
                     }
 
                     return set;
+
                 });
 
             }
