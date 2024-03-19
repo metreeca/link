@@ -72,7 +72,7 @@ public final class Frame implements Resource {
     public static final String _LANGUAGE="@language";
     public static final String _ERRORS="@errors";
 
-    public static final Value NIL=RDF.NIL;
+    public static final IRI NIL=RDF.NIL;
 
     public static final String WILDCARD="*";
 
@@ -598,6 +598,10 @@ public final class Frame implements Resource {
             throw new NullPointerException("null property");
         }
 
+        if ( converter == null ) {
+            throw new NullPointerException("null converter");
+        }
+
         return value(property).map(guard(converter));
     }
 
@@ -605,6 +609,10 @@ public final class Frame implements Resource {
 
         if ( property == null ) {
             throw new NullPointerException("null property");
+        }
+
+        if ( converter == null ) {
+            throw new NullPointerException("null converter");
         }
 
         return values(property).map(guard(converter)).filter(Objects::nonNull);
@@ -629,7 +637,6 @@ public final class Frame implements Resource {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
     public Stream<Statement> stream() {
         return stream(id()

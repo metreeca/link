@@ -16,12 +16,17 @@
 
 package com.metreeca.link;
 
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Supplier;
 
+import static com.metreeca.link.Frame.field;
+import static com.metreeca.link.Frame.frame;
 import static com.metreeca.link.Shape.property;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,6 +43,32 @@ final class ShapeTest {
     @Test void testHandleRecursiveDefinitions() {
         assertThat(recursive.entry(RDF.VALUE).map(Entry::getValue))
                 .contains(recursive);
+    }
+
+
+    @Nested
+    final class Validation {
+
+        private Set<String> errors(final Shape shape, final Value... values) {
+            return property(RDF.VALUE, shape)
+                    .validate(frame(field(RDF.VALUE, values)))
+                    .map(trace -> trace.entries().get(RDF.VALUE))
+                    .map(Trace::errors)
+                    .orElseGet(Set::of);
+        }
+
+
+        // @Test void test() {
+        //
+        //     final IRI x=iri("test:x");
+        //     final IRI y=iri("test:y");
+        //
+        //     assertThat(errors(clazz(x), frame(field(RDF.TYPE, y)))).isEmpty();
+        //     assertThat(errors(clazz(x), frame())).as("missing rdf:type").isNotEmpty();
+        //     assertThat(errors(clazz(x), literal(0))).as("not a resource").isNotEmpty();
+        //
+        // }
+
     }
 
 }

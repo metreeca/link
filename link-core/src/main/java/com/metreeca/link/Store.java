@@ -18,10 +18,7 @@ package com.metreeca.link;
 
 import org.eclipse.rdf4j.model.IRI;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Data storage engine.
@@ -138,5 +135,37 @@ public interface Store {
      * @throws NullPointerException if either {@code shape} or {@code frame} is null
      */
     public boolean delete(final IRI id, final Shape shape);
+
+
+    /**
+     * Configures resource shapes.
+     *
+     * @param shapes the resource shapes to be used for model driven validation of resources managed by the data storage
+     *               backend
+     *
+     * @return this storage engine
+     *
+     * @throws NullPointerException if {@code shapes} is null or contains null item
+     */
+    public default Store validate(final Shape... shapes) {
+
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return validate(List.of(shapes));
+    }
+
+    /**
+     * Configures resource shapes.
+     *
+     * @param shapes the resource shapes to be used for model driven validation of resources managed by the data storage
+     *               backend
+     *
+     * @return this storage engine
+     *
+     * @throws NullPointerException if {@code shapes} is null or contains null item
+     */
+    public Store validate(final Collection<Shape> shapes);
 
 }

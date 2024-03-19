@@ -143,7 +143,7 @@ public abstract class StoreTest {
     public static Shape Employee() {
         return shape(Resource(),
 
-                clazz(EMPLOYEE_TYPE),
+                type(EMPLOYEE_TYPE),
 
                 property(FORENAME, shape(required(), datatype(XSD.STRING))),
                 property(SURNAME, shape(required(), datatype(XSD.STRING))),

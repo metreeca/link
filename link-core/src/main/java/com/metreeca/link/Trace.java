@@ -19,10 +19,12 @@ package com.metreeca.link;
 import org.eclipse.rdf4j.model.IRI;
 
 import java.util.*;
+import java.util.stream.Stream;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.stream.Collectors.*;
 
 /**
@@ -30,13 +32,16 @@ import static java.util.stream.Collectors.*;
  */
 public final class Trace {
 
+    private static final Trace EMPTY=new Trace(Set.of(), Map.of());
+
+
     public static Trace trace(final String error) {
 
         if ( error == null ) {
             throw new NullPointerException("null error");
         }
 
-        return new Trace(error.isBlank() ? List.of() : List.of(error.trim()), Map.of());
+        return error.isBlank() ? EMPTY : new Trace(Set.of(error.trim()), Map.of());
     }
 
     public static Trace trace(final IRI predicate, final Trace trace) {
@@ -49,7 +54,7 @@ public final class Trace {
             throw new NullPointerException("null trace");
         }
 
-        return new Trace(List.of(), Map.of(predicate, trace));
+        return trace.empty() ? EMPTY : new Trace(Set.of(), Map.of(predicate, trace));
     }
 
 
@@ -68,8 +73,8 @@ public final class Trace {
             throw new NullPointerException("null errors");
         }
 
-        return new Trace(
-                traces.stream().flatMap(t -> t.errors().stream()).distinct().collect(toList()),
+        return traces.isEmpty() ? EMPTY : traces.size() == 1 ? traces.iterator().next() : new Trace(
+                traces.stream().flatMap(t -> t.errors().stream()).distinct().collect(toSet()),
                 traces.stream().flatMap(t -> t.entries().entrySet().stream()).collect(groupingBy(
                         Map.Entry::getKey, mapping(Map.Entry::getValue, collectingAndThen(toList(), Trace::trace))
                 ))
@@ -79,12 +84,12 @@ public final class Trace {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private final List<String> errors;
+    private final Set<String> errors;
     private final Map<IRI, Trace> entries;
 
 
-    private Trace(final List<String> errors, final Map<IRI, Trace> entries) {
-        this.errors=unmodifiableList(errors);
+    private Trace(final Set<String> errors, final Map<IRI, Trace> entries) {
+        this.errors=unmodifiableSet(errors);
         this.entries=unmodifiableMap(entries);
     }
 
@@ -94,12 +99,26 @@ public final class Trace {
     }
 
 
-    public List<String> errors() {
+    public Set<String> errors() {
         return errors;
     }
 
     public Map<IRI, Trace> entries() {
         return entries;
+    }
+
+
+    @Override public String toString() {
+        return Stream.concat(
+
+                errors.stream(),
+
+                entries.entrySet().stream().map(e -> format("<%s> : %s",
+                        e.getKey(),
+                        e.getValue().toString().replace("\n", "\n\t")
+                ))
+
+        ).collect(joining("\n\t", "{\n\t", "\n}"));
     }
 
 }

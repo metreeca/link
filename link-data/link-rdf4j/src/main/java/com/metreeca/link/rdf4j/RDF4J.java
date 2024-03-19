@@ -20,17 +20,21 @@ import com.metreeca.link.Frame;
 import com.metreeca.link.Shape;
 import com.metreeca.link.Store;
 
+import org.eclipse.rdf4j.common.exception.ValidationException;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import static java.util.concurrent.CompletableFuture.allOf;
-import static java.util.stream.Collectors.toList;
+import static org.eclipse.rdf4j.model.vocabulary.RDF4J.SHACL_SHAPE_GRAPH;
 
 /**
  * RDF4J graph storage driver.
@@ -59,41 +63,6 @@ public final class RDF4J implements Store {
     }
 
     // !!! target contexts
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public RDF4J shape(final Shape shape, final IRI context) {
-
-        if ( shape == null ) {
-            throw new NullPointerException("null shape");
-        }
-
-        final Collection<Statement> model=new SHACLCodec().encode(shape).collect(toList());
-
-        try ( final RepositoryConnection connection=repository.getConnection() ) {
-
-            try { // !!! review ontotext-specific assumptions
-
-                connection.begin();
-
-                connection.clear(context);
-                connection.add(model, context);
-                // !!! connection.add(this.context != null ? this.context : NIL, SHACL.SHAPES_GRAPH, context, SHACL_SHAPE_GRAPH);
-                connection.commit();
-
-            } catch ( final Throwable t ) {
-
-                connection.rollback();
-
-                throw t;
-
-            }
-
-        }
-
-        return this;
-    }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,6 +151,50 @@ public final class RDF4J implements Store {
             return new StoreDeleter(new Context(connection)).delete(id);
 
         }
+    }
+
+
+    @Override public RDF4J validate(final Collection<Shape> shapes) {
+
+        if ( shapes == null || shapes.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        final Collection<Statement> model=new SHACLCodec().encode(shapes);
+
+        try ( final RepositoryConnection connection=repository.getConnection() ) { // !!! pool
+
+            try { // !!! review rdf4j-specific assumptions
+
+                connection.begin();
+
+                connection.clear(SHACL_SHAPE_GRAPH);
+                connection.add(model, SHACL_SHAPE_GRAPH);
+                connection.commit();
+
+            } catch ( final Throwable t ) {
+
+                connection.rollback();
+
+                throw t;
+
+            }
+
+        } catch ( final RepositoryException e ) {
+
+            if ( e.getCause() instanceof ValidationException ) {
+
+                Rio.write(((ValidationException)e.getCause()).validationReportAsModel(), System.err, RDFFormat.TURTLE);
+
+            } else {
+
+                throw e;
+            }
+
+
+        }
+
+        return this;
     }
 
 

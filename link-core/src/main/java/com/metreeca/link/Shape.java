@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 
 import static com.metreeca.link.Frame.*;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toUnmodifiableMap;
@@ -103,23 +104,6 @@ public abstract class Shape {
     }
 
 
-    public static Shape clazz(final IRI clazz) {
-
-        if ( clazz == null ) {
-            throw new NullPointerException("null class");
-        }
-
-        final Optional<IRI> value=Optional.of(clazz)
-                .filter(not(NIL::equals))
-                .filter(not(RDFS.RESOURCE::equals));
-
-        return new Shape() {
-
-            @Override public Optional<IRI> clazz() { return value; }
-
-        };
-    }
-
     public static Shape datatype(final IRI datatype) {
 
         if ( datatype == null ) {
@@ -152,7 +136,7 @@ public abstract class Shape {
     public static Shape string(final int length) {
 
         if ( length < 0 ) {
-            throw new IllegalArgumentException(String.format("negative length <%d>", length));
+            throw new IllegalArgumentException(format("negative length <%d>", length));
         }
 
         return shape(string(), maxLength(length));
@@ -169,7 +153,7 @@ public abstract class Shape {
     public static Shape integer(final int lower, final int upper) {
 
         if ( lower > upper ) {
-            throw new IllegalArgumentException(String.format("inconsistent range [%d, %s]", lower, upper));
+            throw new IllegalArgumentException(format("inconsistent range [%d, %s]", lower, upper));
         }
 
         return shape(integer(),
@@ -189,7 +173,7 @@ public abstract class Shape {
     public static Shape decimal(final double lower, final double upper) {
 
         if ( lower > upper ) {
-            throw new IllegalArgumentException(String.format("inconsistent range [%d, %s]", lower, upper));
+            throw new IllegalArgumentException(format("inconsistent range [%d, %s]", lower, upper));
         }
 
         return shape(decimal(),
@@ -224,6 +208,37 @@ public abstract class Shape {
 
     public static Shape local() {
         return datatype(RDF.LANGSTRING);
+    }
+
+
+    public static Shape type(final IRI... types) {
+
+        if ( types == null || Arrays.stream(types).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return type(List.of(types));
+    }
+
+    public static Shape type(final Collection<IRI> types) {
+
+        if ( types == null || types.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        final Optional<Set<IRI>> value=Optional
+                .of(types.stream()
+                        .filter(not(NIL::equals))
+                        .filter(not(RDFS.RESOURCE::equals))
+                        .collect(toUnmodifiableSet())
+                )
+                .filter(not(Set::isEmpty));
+
+        return new Shape() {
+
+            @Override public Optional<Set<IRI>> type() { return value; }
+
+        };
     }
 
 
@@ -430,7 +445,8 @@ public abstract class Shape {
             throw new NullPointerException("null values");
         }
 
-        final Optional<Set<Value>> value=Optional.of(values.stream()
+        final Optional<Set<Value>> value=Optional
+                .of(values.stream()
                         .filter(not(NIL::equals))
                         .collect(toUnmodifiableSet())
                 )
@@ -459,7 +475,8 @@ public abstract class Shape {
             throw new NullPointerException("null values");
         }
 
-        final Optional<Set<Value>> value=Optional.of(values.stream()
+        final Optional<Set<Value>> value=Optional
+                .of(values.stream()
                         .filter(not(NIL::equals))
                         .collect(toUnmodifiableSet())
                 )
@@ -578,9 +595,7 @@ public abstract class Shape {
             throw new NullPointerException("null shapes");
         }
 
-        return shapes.length == 0 ? shape()
-                : shapes.length == 1 ? shapes[0]
-                : shape(asList(shapes));
+        return shape(NIL, List.of(shapes));
     }
 
     public static Shape shape(final Collection<Shape> shapes) {
@@ -589,11 +604,33 @@ public abstract class Shape {
             throw new NullPointerException("null shapes");
         }
 
-        if ( shapes.isEmpty() ) {
+        return shape(NIL, shapes);
+    }
+
+    public static Shape shape(final IRI target, final Shape... shapes) {
+
+        if ( target == null ) {
+            throw new NullPointerException("null target");
+        }
+
+        if ( shapes == null || Arrays.stream(shapes).anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        return shape(target, List.of(shapes));
+    }
+
+    public static Shape shape(final IRI target, final Collection<Shape> shapes) {
+
+        if ( shapes == null || shapes.stream().anyMatch(Objects::isNull) ) {
+            throw new NullPointerException("null shapes");
+        }
+
+        if ( target.equals(NIL) && shapes.isEmpty() ) {
 
             return shape();
 
-        } else if ( shapes.size() == 1 ) {
+        } else if ( target.equals(NIL) && shapes.size() == 1 ) {
 
             return shapes.iterator().next();
 
@@ -602,18 +639,25 @@ public abstract class Shape {
             final boolean virtual=shapes.stream().anyMatch(s -> s.virtual());
             final boolean composite=shapes.stream().anyMatch(s -> s.composite());
 
+            final Optional<IRI> clazz=Optional.of(target)
+                    .filter(not(NIL::equals))
+                    .filter(not(RDFS.RESOURCE::equals));
 
-            final Optional<IRI> clazz=shapes.stream()
-                    .flatMap(s -> s.clazz().stream())
-                    .reduce((x, y) -> x.equals(y) ? x : error("conflicting <class> constraints <%s> / <%s>", x, y));
 
-            final Optional<IRI> datatype=shapes.stream()
-                    .flatMap(s -> s.datatype().stream())
+            final Optional<IRI> datatype=Stream
+                    .concat(
+                            clazz.isEmpty() ? Stream.empty() : Stream.of(RESOURCE),
+                            shapes.stream().flatMap(s -> s.datatype().stream())
+                    )
                     .reduce((x, y) -> x.equals(y) ? x
                             : derives(x, y) ? y
                             : derives(y, x) ? x
                             : error("conflicting <datatype> constraints <%s> / <%s>", x, y)
                     );
+
+            final Optional<Set<IRI>> type=shapes.stream()
+                    .flatMap(s -> s.type().stream())
+                    .reduce((x, y) -> Stream.of(x, y).flatMap(Collection::stream).collect(toUnmodifiableSet()));
 
 
             final Optional<Value> minExclusive=shapes.stream()
@@ -698,9 +742,14 @@ public abstract class Shape {
                 }
 
 
-                @Override public Optional<IRI> clazz() { return clazz; }
+                @Override public Optional<IRI> target() {
+                    return clazz;
+                }
+
 
                 @Override public Optional<IRI> datatype() { return datatype; }
+
+                @Override public Optional<Set<IRI>> type() { return type; }
 
 
                 @Override public Optional<Value> minExclusive() { return minExclusive; }
@@ -761,9 +810,12 @@ public abstract class Shape {
     public boolean composite() { return false; }
 
 
-    public Optional<IRI> clazz() { return Optional.empty(); }
+    public Optional<IRI> target() { return Optional.empty(); }
+
 
     public Optional<IRI> datatype() { return Optional.empty(); }
+
+    public Optional<Set<IRI>> type() { return Optional.empty(); }
 
 
     public Optional<Value> minExclusive() { return Optional.empty(); }
@@ -830,8 +882,66 @@ public abstract class Shape {
             throw new NullPointerException("null frame");
         }
 
-        return Optional.empty(); // !!!
+        return Optional.empty();
+
+        // return Optional.of(validate(Set.of(frame))).filter(not(Trace::empty));
     }
 
+
+    // private Trace validate(final Collection<Value> values) {
+    //     return trace(Stream
+    //
+    //             .of(
+    //
+    //                     clazz(values),
+    //
+    //                     predicates(values)
+    //
+    //             )
+    //
+    //             .collect(toList())
+    //     );
+    // }
+    //
+    //
+    // private Trace clazz(final Collection<Value> values) {
+    //     return trace(clazz().stream()
+    //
+    //             .flatMap(clazz -> values.stream().map(value ->
+    //                     value.isResource() ? trace()
+    //                             : trace(format("class(<%s>) / <%s> is not a resource", clazz, value))
+    //             ))
+    //
+    //             .collect(toList()));
+    // }
+    //
+    // private Trace predicates(final Collection<Value> values) {
+    //     return predicates().entrySet().stream()
+    //
+    //             .map(e -> {
+    //
+    //                 final IRI predicate=e.getKey();
+    //                 final Shape shape=e.getValue().getValue().get();
+    //
+    //                 values.stream()
+    //
+    //                         .map(v -> {
+    //
+    //                             if ( v instanceof Frame ) {
+    //
+    //                                 return trace();
+    //
+    //                             } else {
+    //
+    //                                 return trace();
+    //
+    //                             }
+    //
+    //
+    //                         });
+    //
+    //
+    //             });
+    // }
 
 }
