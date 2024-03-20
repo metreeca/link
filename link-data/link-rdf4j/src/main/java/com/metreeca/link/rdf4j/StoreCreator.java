@@ -59,11 +59,11 @@ final class StoreCreator {
 
                 return true;
 
-            } catch ( final Throwable e ) {
+            } finally {
 
-                connection.rollback();
-
-                throw e;
+                if ( connection.isActive() ) {
+                    connection.rollback();
+                }
 
             }
 

@@ -83,6 +83,14 @@ final class StoreUpdater {
         //             }
         //
         //         }
+
+        //  finally {
+        //
+        //     if (connection.isActive() ) {
+        //         connection.rollback();
+        //     }
+        //
+        // }
         //
         //     });
 

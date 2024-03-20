@@ -80,6 +80,13 @@ final class StoreDeleter {
         //             //             }
         //             //
         //             //         }
+        //  finally {
+        //
+        //     if (connection.isActive() ) {
+        //         connection.rollback();
+        //     }
+        //
+        // }
         //             //
         //             //     });
         //

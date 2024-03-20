@@ -20,14 +20,10 @@ import com.metreeca.link.Frame;
 import com.metreeca.link.Shape;
 import com.metreeca.link.Store;
 
-import org.eclipse.rdf4j.common.exception.ValidationException;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.RepositoryException;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -172,27 +168,29 @@ public final class RDF4J implements Store {
                 connection.add(model, SHACL_SHAPE_GRAPH);
                 connection.commit();
 
-            } catch ( final Throwable t ) {
+            } finally {
 
-                connection.rollback();
-
-                throw t;
+                if ( connection.isActive() ) {
+                    connection.rollback();
+                }
 
             }
-
-        } catch ( final RepositoryException e ) {
-
-            if ( e.getCause() instanceof ValidationException ) {
-
-                Rio.write(((ValidationException)e.getCause()).validationReportAsModel(), System.err, RDFFormat.TURTLE);
-
-            } else {
-
-                throw e;
-            }
-
 
         }
+
+        // catch ( final RepositoryException e ) {
+        //
+        //     if ( e.getCause() instanceof ValidationException ) {
+        //
+        //         Rio.write(((ValidationException)e.getCause()).validationReportAsModel(), System.err, RDFFormat.TURTLE);
+        //
+        //     } else {
+        //
+        //         throw e;
+        //     }
+        //
+        //
+        // }
 
         return this;
     }
