@@ -679,11 +679,11 @@ public abstract class Shape {
 
 
             final Optional<Integer> minLength=shapes.stream()
-                    .flatMap(s -> s.minCount().stream())
+                    .flatMap(s -> s.minLength().stream())
                     .reduce((x, y) -> x >= y ? x : y);
 
             final Optional<Integer> maxLength=shapes.stream()
-                    .flatMap(s -> s.maxCount().stream())
+                    .flatMap(s -> s.maxLength().stream())
                     .reduce((x, y) -> x <= y ? x : y);
 
             final Optional<String> pattern=shapes.stream()
