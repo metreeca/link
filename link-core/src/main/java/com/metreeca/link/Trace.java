@@ -111,14 +111,18 @@ public final class Trace {
     @Override public String toString() {
         return Stream.concat(
 
-                errors.stream(),
+                errors.isEmpty() ? Stream.empty() : Stream.of(errors.stream()
+                        .map(e -> format("\"%s\"", e))
+                        .collect(joining(",\n\t", "\"@errors\" : [\n\t", "\n]"))
+                        .replace("\n", "\n\t")
+                ),
 
-                entries.entrySet().stream().map(e -> format("<%s> : %s",
+                entries.entrySet().stream().map(e -> format("\"%s\" : %s",
                         e.getKey(),
                         e.getValue().toString().replace("\n", "\n\t")
                 ))
 
-        ).collect(joining("\n\t", "{\n\t", "\n}"));
+        ).collect(joining(",\n\t", "{\n\t", "\n}"));
     }
 
 }

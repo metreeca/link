@@ -128,8 +128,8 @@ public final class Frame implements Resource {
         final String iri=property.stringValue();
 
         return iri.startsWith(REVERSE_SCHEME)
-                ? iri(iri.substring(REVERSE_SCHEME.length()))
-                : iri(REVERSE_SCHEME+iri);
+               ? iri(iri.substring(REVERSE_SCHEME.length()))
+               : iri(REVERSE_SCHEME+iri);
     }
 
 
@@ -669,8 +669,8 @@ public final class Frame implements Resource {
                     return Stream.concat(
 
                             Stream.of(forward
-                                    ? FACTORY.createStatement(subject, predicate, object)
-                                    : FACTORY.createStatement(object, predicate, subject)
+                                      ? FACTORY.createStatement(subject, predicate, object)
+                                      : FACTORY.createStatement(object, predicate, subject)
                             ),
 
                             frame.stream(object)
@@ -680,8 +680,8 @@ public final class Frame implements Resource {
                 } else {
 
                     return Stream.of(forward
-                            ? FACTORY.createStatement(subject, predicate, value)
-                            : FACTORY.createStatement((Resource)value, predicate, subject)
+                                     ? FACTORY.createStatement(subject, predicate, value)
+                                     : FACTORY.createStatement((Resource)value, predicate, subject)
                     );
 
                 }
@@ -728,14 +728,14 @@ public final class Frame implements Resource {
                                 if ( value instanceof Query ) {
 
                                     return _value instanceof Query ? merge((Query)value, (Query)_value)
-                                            : _value instanceof Frame ? merge((Query)value, (Frame)_value)
-                                            : value;
+                                                                   : _value instanceof Frame ? merge((Query)value, (Frame)_value)
+                                                                                             : value;
 
                                 } else if ( value instanceof Frame ) {
 
                                     return _value instanceof Query ? merge((Frame)value, (Query)_value)
-                                            : _value instanceof Frame ? merge((Frame)value, (Frame)_value)
-                                            : value;
+                                                                   : _value instanceof Frame ? merge((Frame)value, (Frame)_value)
+                                                                                             : value;
 
                                 } else {
 
@@ -766,10 +766,21 @@ public final class Frame implements Resource {
     @Override public String toString() {
         return fields.isEmpty() ? "{}" : fields.entrySet().stream()
 
-                .map(field -> field.getValue().stream()
-                        .map(Object::toString) // !!! format
-                        .collect(joining(",\n\t", format("<%s> : ", field.getKey()), ""))
-                )
+                .map(field -> {
+
+                    final IRI predicate=field.getKey();
+                    final Set<Value> values=field.getValue();
+
+                    return format("<%s> : %s", predicate,
+
+                            values.size() == 1 ? values.iterator().next().toString() : values.stream()
+                                    .map(Value::toString) // !!! format
+                                    .collect(joining(",\n", "[\n\t", "\n]"))
+                                    .replace("\n", "\n\t")
+
+                    ).replace("\n", "\n\t");
+
+                })
 
                 .collect(joining(",\n\t", "{\n\t", "\n}"));
     }
@@ -800,6 +811,16 @@ public final class Frame implements Resource {
             return values;
         }
 
+    }
+
+
+    public static void main(final String... args) {
+        System.out.println(frame(
+                field(RDF.FIRST, literal(0)),
+                field(RDF.REST, frame(
+                        field(RDF.VALUE, literal(""))
+                ))
+        ));
     }
 
 }
