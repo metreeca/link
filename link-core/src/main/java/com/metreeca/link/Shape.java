@@ -367,7 +367,7 @@ public abstract class Shape {
         }
 
         final Optional<Integer> value=Optional.of(limit)
-                .filter(v -> v != 0);
+                .filter(v -> v > 0);
 
         return new Shape() {
 
@@ -383,7 +383,7 @@ public abstract class Shape {
         }
 
         final Optional<Integer> value=Optional.of(limit)
-                .filter(v -> v != 0);
+                .filter(v -> v > 0);
 
         return new Shape() {
 
@@ -808,6 +808,10 @@ public abstract class Shape {
     public boolean virtual() { return false; }
 
     public boolean composite() { return false; }
+
+    public boolean localized() {
+        return datatype().filter(RDF.LANGSTRING::equals).isPresent();
+    }
 
 
     public Optional<IRI> target() { return Optional.empty(); }

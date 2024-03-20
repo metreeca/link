@@ -174,7 +174,7 @@ final class JSONEncoder {
         writer.string(label);
         writer.colon();
 
-        if ( shape.datatype().filter(RDF.LANGSTRING::equals).isPresent() ) {
+        if ( shape.localized() ) {
 
             locals(shape, values);
 

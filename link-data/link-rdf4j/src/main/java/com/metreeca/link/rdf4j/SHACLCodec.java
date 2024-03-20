@@ -36,6 +36,7 @@ import static com.metreeca.link.Frame.*;
 import static java.util.function.UnaryOperator.identity;
 import static java.util.stream.Collectors.toList;
 
+@SuppressWarnings("NonBooleanMethodNameMayNotStartWithQuestion")
 final class SHACLCodec {
 
     Collection<Statement> encode(final Collection<Shape> shapes) {
@@ -180,9 +181,10 @@ final class SHACLCodec {
     }
 
     private Stream<Field> maxCount(final Shape shape) {
-        return shape.maxCount().stream().flatMap(limit -> Stream.of(
+        return shape.maxCount().stream().flatMap(limit -> Stream.of(shape.localized()
 
-                field(SHACL.MAX_COUNT, literal(integer(limit)))
+                ? field(SHACL.UNIQUE_LANG, literal(limit == 1))
+                : field(SHACL.MAX_COUNT, literal(integer(limit)))
 
         ));
     }

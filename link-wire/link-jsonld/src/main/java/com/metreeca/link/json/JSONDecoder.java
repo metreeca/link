@@ -21,7 +21,6 @@ import com.metreeca.link.*;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -84,10 +83,7 @@ final class JSONDecoder {
 
             case LBRACE:
 
-                return shape.datatype()
-                        .filter(RDF.LANGSTRING::equals)
-                        .map(iri -> locals())
-                        .orElseGet(() -> Set.of(object(shape)));
+                return shape.localized() ? locals() : Set.of(object(shape));
 
             case LBRACKET:
 
