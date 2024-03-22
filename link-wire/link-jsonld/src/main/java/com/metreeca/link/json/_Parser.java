@@ -170,19 +170,19 @@ final class _Parser {
     }
 
     private static IRI iri(final String iri, final URI base) {
-        try {
+        if ( iri.isEmpty() ) { // ignore if provided within models
 
-            final URI uri=base.resolve(iri); // !!! resolve
+            return NIL;
+
+        } else {
+
+            final URI uri=base.resolve(iri);
 
             if ( !uri.isAbsolute() ) {
                 throw new IllegalArgumentException(format("relative iri <%s>", uri.toASCIIString()));
             }
 
             return Frame.iri(uri);
-
-        } catch ( final IllegalArgumentException e ) {
-
-            throw new IllegalArgumentException(format("malformed iri <%s>: %s", iri, e.getMessage()));
 
         }
     }

@@ -16,6 +16,7 @@
 
 package com.metreeca.link.json;
 
+import com.metreeca.link.Frame;
 import com.metreeca.link.Probe;
 import com.metreeca.link.Shape;
 
@@ -23,12 +24,12 @@ import org.eclipse.rdf4j.model.IRI;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
 import java.util.List;
 
 import static com.metreeca.link.Expression.expression;
 import static com.metreeca.link.Frame.iri;
-import static com.metreeca.link.Shape.property;
-import static com.metreeca.link.Shape.shape;
+import static com.metreeca.link.Shape.*;
 import static com.metreeca.link.Transform.*;
 import static com.metreeca.link.json._Parser.expression;
 import static com.metreeca.link.json._Parser.predicate;
@@ -223,6 +224,16 @@ final class _ParserTest {
         @Test void testReportMalformedExpressions() {
             assertThatIllegalArgumentException()
                     .isThrownBy(() -> expression("not an expression", test()));
+        }
+
+    }
+
+    @Nested
+    final class Values {
+
+        @Test void testParseEmptyIRISAsNil() {
+            assertThat(_Parser.value("", id(), URI.create("https://example.net/")))
+                    .isEqualTo(Frame.NIL);
         }
 
     }

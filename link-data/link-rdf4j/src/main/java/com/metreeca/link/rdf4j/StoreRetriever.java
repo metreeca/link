@@ -19,6 +19,7 @@ package com.metreeca.link.rdf4j;
 import com.metreeca.link.*;
 
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 
@@ -32,8 +33,19 @@ import static com.metreeca.link.rdf4j.SPARQL.join;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 final class StoreRetriever {
+
+    private static final Set<Value> DEFAULTS=Set.of(
+            NIL,
+            literal(false),
+            literal(integer(0)),
+            literal(decimal(0))
+    );
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private final RDF4J.Context context;
 
@@ -117,13 +129,13 @@ final class StoreRetriever {
                             .collect(toList())
                     ))
 
-                    .thenApply(frames -> field(property, virtual && frames.isEmpty() ? Set.of(model) : frames));
+                    .thenApply(frames -> field(property, virtual && frames.isEmpty() ? prune(model) : frames));
 
         } else {
 
             return fetcher.fetch(id, property)
 
-                    .thenApply(values -> field(property, virtual && values.isEmpty() ? Set.of(model) : values));
+                    .thenApply(values -> field(property, virtual && values.isEmpty() ? prune(model) : values));
 
         }
     }
@@ -207,6 +219,40 @@ final class StoreRetriever {
 
         }
 
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*
+     * Recursively removes default values from models.
+     */
+    private Set<Value> prune(final Value model) {
+
+        return DEFAULTS.contains(model) ? Set.of()
+                : model.isLiteral() ? prune((Literal)model)
+                : model instanceof Frame ? prune((Frame)model)
+                : Set.of(model);
+    }
+
+    private Set<Value> prune(final Literal model) {
+        return model.stringValue().isEmpty() ? Set.of() : Set.of(model);
+    }
+
+    private Set<Value> prune(final Frame model) {
+
+        final Frame frame=frame(model.fields().entrySet().stream()
+
+                .map(e -> field(e.getKey(), e.getValue().stream()
+                        .map(this::prune)
+                        .flatMap(Collection::stream)
+                        .collect(toSet())
+                ))
+
+                .collect(toList())
+        );
+
+        return frame.empty() ? Set.of() : Set.of(frame);
     }
 
 }

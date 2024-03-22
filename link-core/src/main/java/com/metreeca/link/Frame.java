@@ -128,8 +128,8 @@ public final class Frame implements Resource {
         final String iri=property.stringValue();
 
         return iri.startsWith(REVERSE_SCHEME)
-               ? iri(iri.substring(REVERSE_SCHEME.length()))
-               : iri(REVERSE_SCHEME+iri);
+                ? iri(iri.substring(REVERSE_SCHEME.length()))
+                : iri(REVERSE_SCHEME+iri);
     }
 
 
@@ -559,6 +559,10 @@ public final class Frame implements Resource {
     }
 
 
+    public boolean empty() {
+        return fields.isEmpty();
+    }
+
     public boolean tabular() {
         return fields.keySet().stream().anyMatch(Probe.class::isInstance);
     }
@@ -669,8 +673,8 @@ public final class Frame implements Resource {
                     return Stream.concat(
 
                             Stream.of(forward
-                                      ? FACTORY.createStatement(subject, predicate, object)
-                                      : FACTORY.createStatement(object, predicate, subject)
+                                    ? FACTORY.createStatement(subject, predicate, object)
+                                    : FACTORY.createStatement(object, predicate, subject)
                             ),
 
                             frame.stream(object)
@@ -680,8 +684,8 @@ public final class Frame implements Resource {
                 } else {
 
                     return Stream.of(forward
-                                     ? FACTORY.createStatement(subject, predicate, value)
-                                     : FACTORY.createStatement((Resource)value, predicate, subject)
+                            ? FACTORY.createStatement(subject, predicate, value)
+                            : FACTORY.createStatement((Resource)value, predicate, subject)
                     );
 
                 }
@@ -728,14 +732,14 @@ public final class Frame implements Resource {
                                 if ( value instanceof Query ) {
 
                                     return _value instanceof Query ? merge((Query)value, (Query)_value)
-                                                                   : _value instanceof Frame ? merge((Query)value, (Frame)_value)
-                                                                                             : value;
+                                            : _value instanceof Frame ? merge((Query)value, (Frame)_value)
+                                            : value;
 
                                 } else if ( value instanceof Frame ) {
 
                                     return _value instanceof Query ? merge((Frame)value, (Query)_value)
-                                                                   : _value instanceof Frame ? merge((Frame)value, (Frame)_value)
-                                                                                             : value;
+                                            : _value instanceof Frame ? merge((Frame)value, (Frame)_value)
+                                            : value;
 
                                 } else {
 
