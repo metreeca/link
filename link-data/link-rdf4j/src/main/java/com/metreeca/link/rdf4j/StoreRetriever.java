@@ -167,19 +167,10 @@ final class StoreRetriever {
 
                                                 return join(model.values(p).map(m -> { // !!! refactor
 
-                                                    if ( m instanceof Frame ) {
+                                                    if ( v.isResource() && !v.equals(NIL) && m instanceof Frame ) {
 
-                                                        if ( v.isResource() && !v.equals(NIL) ) {
-
-                                                            return process((Resource)v, shape, (Frame)m)
-                                                                    .thenApply(o -> o.orElseGet(() -> frame(field(ID, v))));
-
-                                                        } else {
-
-                                                            return completedFuture(v);
-
-                                                        }
-
+                                                        return process((Resource)v, shape, (Frame)m)
+                                                                .thenApply(o -> o.orElseGet(() -> frame(field(ID, v))));
 
                                                     } else {
 
