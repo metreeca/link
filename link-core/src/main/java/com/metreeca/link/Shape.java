@@ -206,7 +206,7 @@ public abstract class Shape {
         return shape(datatype(XSD.DURATION));
     }
 
-    public static Shape local() {
+    public static Shape text() {
         return datatype(RDF.LANGSTRING);
     }
 
