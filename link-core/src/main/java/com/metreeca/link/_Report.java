@@ -70,9 +70,16 @@ public final class _Report {
     }
 
     private static IRI path(final _Focus result) { // !!! reverse
-        return result.shift(SHACL.RESULT_PATH).value(asIRI()).orElseThrow(() ->
-                new IllegalArgumentException("sh:ValidationResult without sh:resultPath")
-        );
+
+        final _Focus path=result.shift(SHACL.RESULT_PATH);
+
+        if ( path.empty() ) {
+            throw new IllegalArgumentException("sh:ValidationResult without sh:resultPath");
+        }
+
+        return path.value(asIRI())
+                .or(() -> path.shift(SHACL.INVERSE_PATH).value(asIRI()).map(Frame::reverse))
+                .orElseThrow(() -> new UnsupportedOperationException("unsupported complex result path"));
     }
 
     private static String constraint(final _Focus result) {

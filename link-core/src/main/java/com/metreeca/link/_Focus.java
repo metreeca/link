@@ -72,8 +72,8 @@ final class _Focus {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Stream<_Focus> split() {
-        return values.stream().map(value -> new _Focus(Set.of(value), statements));
+    public boolean empty() {
+        return values.isEmpty();
     }
 
 
@@ -122,6 +122,11 @@ final class _Focus {
         for (final IRI step : steps) { next=shift(next, step); }
 
         return new _Focus(next, statements);
+    }
+
+
+    public Stream<_Focus> split() {
+        return values.stream().map(value -> new _Focus(Set.of(value), statements));
     }
 
 
